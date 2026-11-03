@@ -1,0 +1,10 @@
+# Solo se versionan las dos apps; el resto de esta carpeta (PDFs, notas, comparativas…) queda fuera
+/*
+!/.gitignore
+!/Vocabulando/
+!/Conjugario/
+
+# basura de Windows y temporales de escritura
+desktop.ini
+Thumbs.db
+*.tmp

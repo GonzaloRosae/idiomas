@@ -1,0 +1,957 @@
+{
+ "app": "vocabulando",
+ "version": 2,
+ "lang": "pt",
+ "savedAt": "2026-11-01T19:36:53.447Z",
+ "deck": [
+  {
+   "id": "mvwsdv3m1e7bz",
+   "esWord": "escoba",
+   "deWord": "a vassoura",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456242,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv3oyx3h7",
+   "esWord": "perejil",
+   "deWord": "a salsa",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456244,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv3pkdcbz",
+   "esWord": "bolsa",
+   "deWord": "o saco",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456245,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv3qinyhd",
+   "esWord": "morado, púrpura",
+   "deWord": "roxo",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456246,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv3rboox0",
+   "esWord": "quedar, sobrar",
+   "deWord": "restar",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456247,
+   "updatedAt": 1793475122593,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv3sho4a8",
+   "esWord": "arreglo, reparación, observación",
+   "deWord": "o reparo",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456248,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv3t2vizd",
+   "esWord": "escaso, poco frecuente",
+   "deWord": "raro",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456249,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv3u92nnf",
+   "esWord": "chica, joven, muchacha",
+   "deWord": "a rapariga",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456250,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv3vxm8pe",
+   "esWord": "habitación, dormitorio, cuarto (1/4)",
+   "deWord": "o quarto",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456251,
+   "autoGender": "-",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv3whfi5o",
+   "esWord": "tirar, halar",
+   "deWord": "puxar",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456252,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv3x9wgrq",
+   "esWord": "tasas académicas, matrícula universitaria",
+   "deWord": "a propina",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456253,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv3y42i9p",
+   "esWord": "jamón curado",
+   "deWord": "o presunto",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456254,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv3z9242h",
+   "esWord": "clavo, bocadillo de ternera",
+   "deWord": "o prego",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456255,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv41bp96x",
+   "esWord": "pulpo",
+   "deWord": "o polvo",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456257,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv42cekxo",
+   "esWord": "piscina",
+   "deWord": "a piscina",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456258,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv43nku2n",
+   "esWord": "barril, tonel",
+   "deWord": "a pipa",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456259,
+   "updatedAt": 1793561813441,
+   "autoGender": "f"
+  },
+  {
+   "id": "mvwsdv44j4jzy",
+   "esWord": "cerca",
+   "deWord": "perto",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456260,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv4502m4x",
+   "esWord": "coger, tomar, agarrar",
+   "deWord": "pegar",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456261,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv46x74o6",
+   "esWord": "pie",
+   "deWord": "o pé",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456262,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv47c83ez",
+   "esWord": "carpeta, maletín, pasta de dientes",
+   "deWord": "a pasta",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456263,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv48xomol",
+   "esWord": "papada, buche (de las aves)",
+   "deWord": "o papo",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456264,
+   "updatedAt": 1793561813441,
+   "autoGender": "m"
+  },
+  {
+   "id": "mvwsdv49vs18m",
+   "esWord": "olla, cacerola",
+   "deWord": "a panela",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456265,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv4bx2dxp",
+   "esWord": "pañol, almacén de munición",
+   "deWord": "o paiol",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456267,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv4c6t3oh",
+   "esWord": "paciencia",
+   "deWord": "a paciência",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456268,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv4d352lo",
+   "esWord": "taller",
+   "deWord": "a oficina",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456269,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv4fuwv2e",
+   "esWord": "nido",
+   "deWord": "o ninho",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456271,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv4gbb97u",
+   "esWord": "muchacho, muchacha, joven",
+   "deWord": "o moço / a moça",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456272,
+   "autoGender": "-",
+   "updatedAt": 1793561813441,
+   "gender": "x"
+  },
+  {
+   "id": "mvwsdv4h7zt06",
+   "esWord": "misa",
+   "deWord": "a missa",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456273,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv4ih2jg9",
+   "esWord": "mantequilla",
+   "deWord": "a manteiga",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456274,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv4jia2t3",
+   "esWord": "maleta, bolso, maletero",
+   "deWord": "a mala",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456275,
+   "autoGender": "x",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv4kvg8mx",
+   "esWord": "lejos",
+   "deWord": "longe",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456276,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv4l4baw9",
+   "esWord": "lobo",
+   "deWord": "o lobo",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456277,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv4m1wkeg",
+   "esWord": "llamar por teléfono, encender, hacer caso",
+   "deWord": "ligar",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456278,
+   "updatedAt": 1793475122593,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv4n39470",
+   "esWord": "lata, caradura, desvergüenza (coloquial)",
+   "deWord": "a lata",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456279,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv4oevjz6",
+   "esWord": "ancho, plaza pública",
+   "deWord": "o largo",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456280,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv4pck6lx",
+   "esWord": "laja, losa, forjado de hormigón",
+   "deWord": "a laje",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456281,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv4qt4khc",
+   "esWord": "cena, cenar",
+   "deWord": "o jantar",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456282,
+   "updatedAt": 1793561813441,
+   "autoGender": "m"
+  },
+  {
+   "id": "mvwsdv4rbrhgk",
+   "esWord": "servilleta",
+   "deWord": "o guardanapo",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456283,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv4sjly77",
+   "esWord": "gritar",
+   "deWord": "gritar",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456284,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv4tn3hak",
+   "esWord": "grave, serio, tono bajo (música)",
+   "deWord": "grave",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456285,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv4ungjai",
+   "esWord": "gracia, nombre de pila",
+   "deWord": "a graça",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456286,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv4vm2f4i",
+   "esWord": "propina",
+   "deWord": "a gorjeta",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456287,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv4whb5d7",
+   "esWord": "almidón, chuche, gominola",
+   "deWord": "a goma",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456288,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv4xbvyy9",
+   "esWord": "hielo",
+   "deWord": "o gelo",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456289,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv4ybpq0h",
+   "esWord": "gato",
+   "deWord": "o gato",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456290,
+   "updatedAt": 1793561813441,
+   "autoGender": "m"
+  },
+  {
+   "id": "mvwsdv4zn6tp0",
+   "esWord": "botella",
+   "deWord": "a garrafa",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456291,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv50y78t3",
+   "esWord": "cocina (electrodoméstico)",
+   "deWord": "o fogão",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456292,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv51i1d6s",
+   "esWord": "chisme, cotilleo",
+   "deWord": "o mexerico",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456293,
+   "updatedAt": 1793561813441,
+   "autoGender": "m"
+  },
+  {
+   "id": "mvwsdv52lz1xs",
+   "esWord": "ficha, expediente, enchufe (clavija)",
+   "deWord": "a ficha",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456294,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv53w91ss",
+   "esWord": "fiesta, caricia, mimo",
+   "deWord": "a festa",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456295,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv544hwhq",
+   "esWord": "traje de vestir",
+   "deWord": "o fato",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456296,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv557o5rw",
+   "esWord": "estadio deportivo",
+   "deWord": "o estádio",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456297,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv56owpik",
+   "esWord": "exprimir",
+   "deWord": "espremer",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456298,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv57zro4r",
+   "esWord": "asombro, sorpresa",
+   "deWord": "o espanto",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456299,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv58fwcyk",
+   "esWord": "español, idioma español",
+   "deWord": "espanhol",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456300,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv594s76b",
+   "esWord": "espaguetis",
+   "deWord": "o esparguete",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456301,
+   "updatedAt": 1793561813441,
+   "autoGender": "m"
+  },
+  {
+   "id": "mvwsdv5a6l4j3",
+   "esWord": "cepillo",
+   "deWord": "a escova",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456302,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv5be1u5q",
+   "esWord": "avergonzar",
+   "deWord": "envergonhar",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456303,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv5cnk3d6",
+   "esWord": "marearse",
+   "deWord": "enjoar",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456304,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv5dlwtds",
+   "esWord": "lustrar, sacar brillo (a los zapatos), hacer la pelota",
+   "deWord": "engraxar",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456305,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv5ech0dl",
+   "esWord": "reunión, cita",
+   "deWord": "o encontro",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456306,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv5ftl1d2",
+   "esWord": "avergonzada, turbada",
+   "deWord": "embaraçada",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456307,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv5g7uc73",
+   "esWord": "dulce",
+   "deWord": "doce",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456308,
+   "updatedAt": 1793475122593,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv5h1f99g",
+   "esWord": "raro, extraño, peculiar",
+   "deWord": "esquisito",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456309,
+   "updatedAt": 1793475122593,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv5inna9n",
+   "esWord": "desnudarse, quitarse la ropa",
+   "deWord": "despir",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456310,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv5juy1tl",
+   "esWord": "corto",
+   "deWord": "curto",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456311,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv5kf230n",
+   "esWord": "criar, cultivar (plantas), crear",
+   "deWord": "criar",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456312,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv5l02b11",
+   "esWord": "cotidiano, diario",
+   "deWord": "quotidiano",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456313,
+   "updatedAt": 1793475122593,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv5m59bhn",
+   "esWord": "espalda",
+   "deWord": "as costas",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456314,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv5n4hjmd",
+   "esWord": "corcho",
+   "deWord": "a cortiça",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456315,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv5oxvznj",
+   "esWord": "vaso",
+   "deWord": "o copo",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456316,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv5p1zpum",
+   "esWord": "largo",
+   "deWord": "comprido",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456317,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv5qzkiw8",
+   "esWord": "cuchara, cosechar, recolectar",
+   "deWord": "a colher",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456318,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv5r3z1ta",
+   "esWord": "cinturón",
+   "deWord": "o cinto",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456319,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv5sp891q",
+   "esWord": "vulgar, grosero, de mal gusto",
+   "deWord": "chulo / chula",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456320,
+   "updatedAt": 1793475122593,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv5tnfmgp",
+   "esWord": "empollar (huevos), chocar (colisionar), escandalizar",
+   "deWord": "chocar",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456321,
+   "updatedAt": 1793475122593,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv5ub0vtk",
+   "esWord": "látigo",
+   "deWord": "o chicote",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456322,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv5vd5jct",
+   "esWord": "cerveza",
+   "deWord": "a cerveja",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456323,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv5wd2qw3",
+   "esWord": "escena",
+   "deWord": "a cena",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456324,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv5xxkq6m",
+   "esWord": "coche, automóvil",
+   "deWord": "o carro",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456325,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv5yb916s",
+   "esWord": "zurdo",
+   "deWord": "canhoto",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456326,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv5z4qx7v",
+   "esWord": "silla",
+   "deWord": "a cadeira",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456327,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv6013se4",
+   "esWord": "moverse, inquietarse, tocar algo insistentemente",
+   "deWord": "bulir",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456328,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv61r217j",
+   "esWord": "jugar",
+   "deWord": "brincar",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456329,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv62t4sdg",
+   "esWord": "goma de borrar",
+   "deWord": "a borracha",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456330,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv64z8e5z",
+   "esWord": "cucaracha",
+   "deWord": "a barata",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456332,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv65kvmlz",
+   "esWord": "mostrador",
+   "deWord": "o balcão",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456333,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv66z295y",
+   "esWord": "mala suerte",
+   "deWord": "o azar",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456334,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv679w4cz",
+   "esWord": "darse prisa, apresurar",
+   "deWord": "apressar",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456335,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv680recy",
+   "esWord": "apunte, nota escrita",
+   "deWord": "o apontamento",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456336,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv6968085",
+   "esWord": "apagar, borrar",
+   "deWord": "apagar",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456337,
+   "autoGender": "-"
+  },
+  {
+   "id": "mvwsdv6a8cwty",
+   "esWord": "almohada, cojín",
+   "deWord": "a almofada",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456338,
+   "autoGender": "f",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv6bmi97i",
+   "esWord": "lebrillo, palangana",
+   "deWord": "o alguidar",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456339,
+   "autoGender": "m",
+   "updatedAt": 1793561813441
+  },
+  {
+   "id": "mvwsdv6cecigm",
+   "esWord": "asir con firmeza, atrapar, detener",
+   "deWord": "agarrar",
+   "esSent": "",
+   "deSent": "",
+   "createdAt": 1793474456340,
+   "autoGender": "-"
+  }
+ ],
+ "review": {
+  "mvwsdv3m1e7bz:word": {
+   "due": "2026-11-01T14:35:15.448Z",
+   "stability": 0.212,
+   "difficulty": 6.4133,
+   "elapsed_days": 0,
+   "scheduled_days": 0,
+   "reps": 1,
+   "lapses": 0,
+   "learning_steps": 0,
+   "state": 1,
+   "last_review": "2026-11-01T14:34:15.448Z"
+  },
+  "mvwsdv3oyx3h7:word": {
+   "due": "2026-11-01T14:44:21.359Z",
+   "stability": 2.3065,
+   "difficulty": 2.11810397,
+   "elapsed_days": 0,
+   "scheduled_days": 0,
+   "reps": 1,
+   "lapses": 0,
+   "learning_steps": 1,
+   "state": 1,
+   "last_review": "2026-11-01T14:34:21.359Z"
+  }
+ },
+ "stats": {
+  "reviewsTotal": 2,
+  "byDay": {
+   "2026-11-01": 2
+  }
+ }
+}

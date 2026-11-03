@@ -1,0 +1,95 @@
+{
+ "summary": "Lens: iPad usability assuming the JS runs. I read the CSS (lines 21-492), the speech code (586-653), makeInput and renderPractice (3424-3615), doCheck (3903), the exam renderers (10163-10447, 10532-10591) and the navigation code (10596-10694). I could not render the page: the browser pane refused to open file:// URLs, so nothing was tested on a device or in Chromium. I changed no project files. I made and deleted one scratch copy in the scratchpad folder.\n\nChecked and fine, no action needed:\n- Viewport meta is `width=device-width, initial-scale=1`. There is no `100vh`/`100dvh` and no `viewport-fit=cover`, so safe-area insets are not needed. The fixed `.voicetoast` is hidden by `translateY(140%)` and is harmless.\n- Every `speak()` call comes from a click handler: lines 737, 3573, and 10208/10212 via exSpeak. There is no autoplay, so the iOS user-gesture rule is met.\n- pickVoice (600-613) goes exact tag, then language prefix, then null. It also sets `u.lang`, so iOS can fall back to its own voice for ca/el/pl. This is reasonable. `isRemote` never matches on iOS (all voices are local) but does no harm.\n- localStorage is used only for the theme key (lines 10, 517, 529), always inside try/catch. There is no sessionStorage, IndexedDB or cookie use. Design note: no progress is persisted, so if iPad Safari discards or reloads the tab in the background, the session (including an exam in progress) returns to the language screen.\n- Breakpoints: widths 641-860 give 2 columns (iPad 744/768/810/820/834 portrait). 861 and up gives 4 columns (1024 portrait and all landscape). I found no layout problem from reading the CSS.\n- Enter handling uses `keydown` with `e.key === 'Enter'` (3429, 10320), which fires on the iPad soft keyboard. The dialogue inputs (10402) have no Enter handler, but a button is available.\n- `window.scrollTo({top:0})` (10670, 10681) is fine on Safari 14 and later.\n\nNot worth a patch without a device: in drill mode `setTimeout(newExercise, 750)` (3928) calls `focus()` outside a user gesture, so the keyboard may or may not stay up. That is hypothesis only.\n\nThe ten findings below are ordered by severity. F1 to F4 are the ones I would apply first. F5 to F10 are polish or hypotheses.",
+ "findings": [
+  {
+   "id": "F1",
+   "severity": "high",
+   "confirmed": true,
+   "location": "index.html:187, 198, 399 (CSS)",
+   "problem": "Text fields are below 16px: `input.ans` 15px (table mode and dictation-easy; gap and drill inputs are already 16px through `.sentence input.ans`, line 275), `textarea.ans` 15px (dictation-hard), `.exhueco` 15.5px (exam production and dialogue). WebKit zooms the page when such a field gets focus. Because renderPractice() focuses the first input on every render (line 3614), the page would zoom as soon as the user taps 'Prácticas'. The code facts are confirmed; the zoom is WebKit's documented behaviour on iPhone and widely reported on iPad, but I could not test it on a device.",
+   "evidence": "187: `font-family:var(--text);font-weight:600;font-size:15px;color:var(--ink);`\n198: `textarea.ans{width:100%;min-height:64px;resize:vertical;font-family:var(--text);font-weight:600;font-size:15px;`\n399: `.exhueco{font:inherit;font-size:15.5px;font-weight:800;...`",
+   "fix": "Three edits, all to 16px.\n1) old: `font-family:var(--text);font-weight:600;font-size:15px;color:var(--ink);`\n   new: `font-family:var(--text);font-weight:600;font-size:16px;color:var(--ink);`\n2) old: `textarea.ans{width:100%;min-height:64px;resize:vertical;font-family:var(--text);font-weight:600;font-size:15px;`\n   new: `textarea.ans{width:100%;min-height:64px;resize:vertical;font-family:var(--text);font-weight:600;font-size:16px;`\n3) old: `.exhueco{font:inherit;font-size:15.5px;`\n   new: `.exhueco{font:inherit;font-size:16px;`"
+  },
+  {
+   "id": "F2",
+   "severity": "high",
+   "confirmed": true,
+   "location": "index.html:3426, 3592, 10310, 10402",
+   "problem": "Four of the five text-entry creation sites miss the iOS autocorrect/autocapitalize protection. The static HTML has no inputs, and the checkboxes at 3438 and 3582 are irrelevant. (a) makeInput (3426), which feeds table, gap, drill, dictation-easy and the per-language L().gap, sets autocomplete/autocapitalize/spellcheck but not `autocorrect`, the attribute WebKit reads on iOS. (b) The dictation-hard textarea (3592) has no attributes at all. (c) The exam production input (10310) has no `autocorrect`. (d) The exam dialogue inputs (10402) have no attributes at all. On an iPad with a Spanish or English keyboard, autocorrect will rewrite Italian, French, Polish and Greek forms, capitalise the first letter, and show spellcheck underlines. The underlines also reveal which word is wrong. The missing attributes are confirmed in code; the iOS effect is Apple-documented but untested here.",
+   "evidence": "3426: `i.type = 'text'; i.autocomplete = 'off'; i.autocapitalize = 'off'; i.spellcheck = false;`\n3592: `const ta = el('textarea','ans');` (no attributes follow)\n10310: `inp.type = 'text'; inp.autocomplete = 'off'; inp.autocapitalize = 'off'; inp.spellcheck = false;`\n10402: `const inp = el('input','exhueco ' + (bien===true?'ok':bien===false?'bad':''));` (no attributes)",
+   "fix": "1) line 3426\nold: `i.type = 'text'; i.autocomplete = 'off'; i.autocapitalize = 'off'; i.spellcheck = false;`\nnew: `i.type = 'text'; i.autocomplete = 'off'; i.autocapitalize = 'off'; i.setAttribute('autocorrect','off'); i.spellcheck = false;`\n2) line 3592\nold: `      const ta = el('textarea','ans');`\nnew: `      const ta = el('textarea','ans');\\n      ta.autocomplete = 'off'; ta.autocapitalize = 'off'; ta.setAttribute('autocorrect','off'); ta.spellcheck = false;`\n3) line 10310\nold: `inp.type = 'text'; inp.autocomplete = 'off'; inp.autocapitalize = 'off'; inp.spellcheck = false;`\nnew: `inp.type = 'text'; inp.autocomplete = 'off'; inp.autocapitalize = 'off'; inp.setAttribute('autocorrect','off'); inp.spellcheck = false;`\n4) line 10402\nold: `      const inp = el('input','exhueco ' + (bien===true?'ok':bien===false?'bad':''));`\nnew: `      const inp = el('input','exhueco ' + (bien===true?'ok':bien===false?'bad':''));\\n      inp.type = 'text'; inp.autocomplete = 'off'; inp.autocapitalize = 'off'; inp.setAttribute('autocorrect','off'); inp.spellcheck = false;`"
+  },
+  {
+   "id": "F3",
+   "severity": "medium",
+   "confirmed": true,
+   "location": "index.html:3613-3614 (renderPractice), reached from 10646-10655, 10633-10636, 3468",
+   "problem": "renderPractice() always focuses the first input, and it runs inside the click handler of 'Prácticas', every time-chip and every mode button. On an iPad this opens the on-screen keyboard (about 40% of the screen) the moment the user enters Practice or switches mode. It also triggers the F1 zoom. In dictation mode the user must press play first, so the keyboard is premature there.",
+   "evidence": "3613: `const firstInput = p.querySelector('input.ans, textarea.ans');`\n3614: `if(firstInput) firstInput.focus({preventScroll:true});`",
+   "fix": "Skip autofocus on touch devices.\nold:\n`  const firstInput = p.querySelector('input.ans, textarea.ans');\\n  if(firstInput) firstInput.focus({preventScroll:true});`\nnew:\n`  const firstInput = p.querySelector('input.ans, textarea.ans');\\n  const touchOnly = window.matchMedia && window.matchMedia('(pointer:coarse)').matches;\\n  if(firstInput && !touchOnly) firstInput.focus({preventScroll:true});`\nTrade-off: an iPad with a hardware keyboard also reports coarse, so it loses the autofocus too."
+  },
+  {
+   "id": "F4",
+   "severity": "medium",
+   "confirmed": true,
+   "location": "index.html:151, 158, 164-165, 393-394, 100-105, 228, 262, 432-433 (CSS)",
+   "problem": "Primary controls are well under 44px. The speaker and 'x0.5' buttons (`.iconbtn`) are 30px, or 26px with `.small`; they sit in example sentences, the irregular-verb rows and the drill prompt, and the 'Pulsa el altavoz cuantas veces necesites' flow depends on them. In the exam 'caza' phase the tappable words `.expal` are about 25px tall (17px font, 2px padding). Borderline: `.chip` about 41px, `.btn.small` about 40px, `.mode.small2` about 37px. The voice-toast close button is about 23x19px.",
+   "evidence": "151: `.iconbtn{width:30px;height:30px;...}`\n158: `.iconbtn.small{width:26px;height:26px}`\n393-394: `.expal{font:inherit;font-size:17px;...padding:2px 1px;margin:0 1px;...}`",
+   "fix": "Insert a coarse-pointer block just before the reduced-motion block.\nold: `@media (prefers-reduced-motion:reduce){`\nnew:\n`@media (pointer:coarse){\\n  .iconbtn{width:44px;height:44px}\\n  .iconbtn.small{width:40px;height:40px}\\n  .iconbtn.spdbtn,.iconbtn.spdbtn.small{width:auto}\\n  .spdbtn{min-width:44px}\\n  .spdbtn.small{min-width:40px}\\n  .ttswrap{gap:8px}\\n  .expal{padding:8px 4px}\\n  .chip{padding:12px 16px}\\n  .btn.small{padding:12px 16px}\\n  .mode.small2{padding:11px 14px}\\n  .voicetoast .close{padding:10px 12px;font-size:22px}\\n}\\n@media (prefers-reduced-motion:reduce){`\nThe order matters: `.iconbtn.spdbtn` must come after `.iconbtn.small`, otherwise the speed button gets a fixed width."
+  },
+  {
+   "id": "F5",
+   "severity": "low",
+   "confirmed": false,
+   "location": "index.html:49-50 (CSS); no touch-action or -webkit-tap-highlight-color anywhere in the file",
+   "problem": "Hypothesis from known WebKit behaviour. With no `touch-action: manipulation`, double-tap-to-zoom stays enabled. The app encourages rapid repeated taps on the speaker, 'x0.5', 'Siguiente verbo →' and 'Comprobar', and a double tap can zoom the whole page. With no `-webkit-tap-highlight-color` set, iOS may draw its grey tap flash over the custom buttons, which already have an `:active` press effect. I could not test this.",
+   "evidence": "grep for `touch-action` and `tap-highlight` returns nothing.",
+   "fix": "old: `html,body{margin:0;padding:0}`\nnew: `html,body{margin:0;padding:0}\\nbutton,a,label.switch,input.ans,textarea.ans,.exhueco{touch-action:manipulation;-webkit-tap-highlight-color:transparent}`"
+  },
+  {
+   "id": "F6",
+   "severity": "low",
+   "confirmed": true,
+   "location": "index.html:78, 95, 107, 155, 223, 259, 309, 353, 384, 395, 440 (CSS :hover rules)",
+   "problem": "The lift effect is applied with plain `:hover`. On iOS a tapped element keeps `:hover` until the user taps elsewhere. Elements that are not rebuilt after the tap stay raised with the big shadow. Examples are 'Comprobar', 'Ver solución' and the other `.btn`s, the main tabs, the speaker buttons and the theme button. The code facts are confirmed; the sticky-hover behaviour is standard WebKit and I did not test it on a device. There are no hover-only affordances: the `title` tooltips duplicate `aria-label`s.",
+   "evidence": "223: `.btn:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}`",
+   "fix": "Wrap each of the 11 rules in `@media (hover:hover){...}`. Mechanically: for the lines listed, replace `^(\\.[^{]*:hover[^{]*\\{[^}]*\\})$` with `@media (hover:hover){$1}`. Leave 116, 392 and 434 alone. Explicit old to new:\n`.choice:hover{transform:translate(-2px,-4px) rotate(-.6deg);box-shadow:var(--sh-l)}` to the same text wrapped in `@media (hover:hover){...}`\n`.tab:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}` to `@media (hover:hover){.tab:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}}`\nThe same wrapping applies to `.chip:hover{...}`, `.iconbtn:hover{transform:translate(-1px,-1px);box-shadow:var(--sh)}`, `.btn:hover{...}`, `.mode:hover{...}`, `.playbtn:hover{transform:translate(-2px,-2px)}`, `.optbtn:hover:not(:disabled){...}`, `.exvbtn:hover:not(:disabled){...}`, `.expal:hover:not(:disabled){border-bottom-color:var(--sky);background:var(--pale)}` and `.themebtn:hover{...}`.\nThe `:active` rules stay unchanged, so the press effect is kept."
+  },
+  {
+   "id": "F7",
+   "severity": "low",
+   "confirmed": false,
+   "location": "index.html:643 and 624 (speak and showVoiceToast)",
+   "problem": "The warning logic is confirmed in code; the iOS trigger is a hypothesis. (a) `pickVoice` returns null when VOICES_CACHE is empty (line 602), and speak() then shows 'Tu navegador no tiene ninguna voz en X'. If iOS WebKit returns an empty getVoices() on the first call (voiceschanged is unreliable there), the user gets a false warning, once per language. (b) The toast advises 'Prueba con Chrome', which is wrong on iPad: every iOS browser uses WebKit and the same voices. It also gives no iOS instructions.",
+   "evidence": "643: `} else if(langCode && LANGS[langCode] && !warnedVoiceLangs.has(langCode)){`\n624: `...se oirá la voz predeterminada. Prueba con Chrome o instala el idioma en los ajustes de voz de tu sistema.`",
+   "fix": "1) line 643\nold: `} else if(langCode && LANGS[langCode] && !warnedVoiceLangs.has(langCode)){`\nnew: `} else if(VOICES_CACHE.length && langCode && LANGS[langCode] && !warnedVoiceLangs.has(langCode)){`\n2) line 624\nold: `: se oirá la voz predeterminada. Prueba con Chrome o instala el idioma en los ajustes de voz de tu sistema.`\nnew: `: se oirá la voz predeterminada. Instala el idioma en los ajustes de voz de tu sistema (iPad: Ajustes › Accesibilidad › Contenido hablado › Voces) o prueba con Chrome en un ordenador.`"
+  },
+  {
+   "id": "F8",
+   "severity": "low",
+   "confirmed": false,
+   "location": "index.html:636 (speak)",
+   "problem": "Hypothesis, not tested. `speechSynthesis.cancel()` is called unconditionally and immediately before `speak()`. Cancel-then-speak in the same tick is a known flaky pattern in WebKit and Chromium, where the new utterance can be dropped. Cancelling only when something is actually queued, speaking or paused avoids the race in the common first-tap case. It also still clears a stuck paused state.",
+   "evidence": "636: `    window.speechSynthesis.cancel();`",
+   "fix": "old: `    window.speechSynthesis.cancel();`\nnew: `    const ss = window.speechSynthesis;\\n    if(ss.speaking || ss.pending || ss.paused) ss.cancel();`\nThe speak() call stays synchronous inside the click handler, so the iOS gesture requirement is still met."
+  },
+  {
+   "id": "F9",
+   "severity": "low",
+   "confirmed": false,
+   "location": "index.html:399-404 (.exhueco) with 10313 and 10405 (`inp.disabled = ...`)",
+   "problem": "Hypothesis, not tested. After an answer the exam blanks are set `disabled`. iOS Safari is known to dim disabled text fields (reduced opacity and its own text fill colour), which would wash out the green/red feedback and the strike-through on `.exhueco.ok/.bad`.",
+   "evidence": "404: `.exhueco.bad{background:var(--bad-bg);border-bottom-color:var(--coral);text-decoration:line-through}`",
+   "fix": "old: `.exhueco.bad{background:var(--bad-bg);border-bottom-color:var(--coral);text-decoration:line-through}`\nnew: `.exhueco.bad{background:var(--bad-bg);border-bottom-color:var(--coral);text-decoration:line-through}\\n.exhueco:disabled{opacity:1;-webkit-text-fill-color:currentColor}`"
+  },
+  {
+   "id": "F10",
+   "severity": "low",
+   "confirmed": true,
+   "location": "index.html:10127-10129 (exCopiar)",
+   "problem": "'Copiar mis fallos' only works if `navigator.clipboard.writeText` exists. There is no fallback, and a rejection is swallowed by `.catch(() => {})`, so the button does nothing and says nothing. This is plausible when the page is opened from a file or a non-HTTPS origin on iPad, where Safari may not expose the async clipboard API; I did not verify that. The missing fallback and silent failure are confirmed in code.",
+   "evidence": "`if(navigator.clipboard && navigator.clipboard.writeText){\\n    navigator.clipboard.writeText(txt).then(done).catch(() => {});\\n  }`",
+   "fix": "old:\n`  if(navigator.clipboard && navigator.clipboard.writeText){\\n    navigator.clipboard.writeText(txt).then(done).catch(() => {});\\n  }`\nnew:\n`  const legacy = () => {\\n    try{\\n      const ta = document.createElement('textarea');\\n      ta.value = txt; ta.setAttribute('readonly','');\\n      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px';\\n      document.body.appendChild(ta);\\n      ta.focus(); ta.select(); ta.setSelectionRange(0, txt.length);\\n      const ok = document.execCommand('copy');\\n      document.body.removeChild(ta);\\n      if(ok) done();\\n    }catch(e){}\\n  };\\n  if(navigator.clipboard && navigator.clipboard.writeText){\\n    navigator.clipboard.writeText(txt).then(done).catch(legacy);\\n  } else {\\n    legacy();\\n  }`"
+  }
+ ]
+}
