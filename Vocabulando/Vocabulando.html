@@ -4641,7 +4641,11 @@
     function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
     function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
     function pad(n) { return n < 10 ? "0" + n : "" + n; }
-    function dateKey(ts) { var d = new Date(ts); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+    // «Día de estudio»: empieza a las 4:00, no a medianoche. Lo que repasas de madrugada cuenta como el día anterior.
+    var DAY_START = 4;
+    function studyDay(ts) { var d = new Date(ts); if (d.getHours() < DAY_START) d.setDate(d.getDate() - 1); return d; }
+    function studyDayStart(ts) { var d = studyDay(ts); d.setHours(DAY_START, 0, 0, 0); return d.getTime(); }
+    function dateKey(ts) { var d = studyDay(ts); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
     function todayKey() { return dateKey(Date.now()); }
 
     // ---- género gramatical ----
@@ -4832,6 +4836,24 @@
     }
     function reviveCard(o) { var c = {}; for (var k in o) c[k] = o[k]; c.due = new Date(o.due); if (o.last_review) c.last_review = new Date(o.last_review); return c; }
     function getCard(key) { var raw = S.review[key]; return raw ? reviveCard(raw) : FS.createEmptyCard(new Date()); }
+
+    // FSRS cuenta los días transcurridos por fecha UTC (medianoche UTC = la 1:00 o las 2:00 en España). Para que el día cambie a las 4:00
+    // locales se le dan las fechas «corridas»: su fecha UTC pasa a ser el día de estudio. Los plazos (minutos o días) no cambian, y lo que
+    // devuelve se traduce otra vez a la hora real; las tarjetas ya guardadas valen tal cual (se guardan siempre en hora real).
+    function fsTime(d) { return new Date(d.getTime() - d.getTimezoneOffset() * 60000 - DAY_START * 3600000); }
+    function fsIn(c) { var o = {}; for (var k in c) o[k] = c[k]; o.due = fsTime(c.due); if (c.last_review) o.last_review = fsTime(c.last_review); return o; }
+    function fsOut(c, now, nowFs) {
+      var o = {}; for (var k in c) o[k] = c[k];
+      o.due = new Date(now.getTime() + (c.due.getTime() - nowFs.getTime()));
+      if (c.last_review) o.last_review = new Date(now.getTime());
+      return o;
+    }
+    function schedNext(card, rating) { var now = new Date(), nf = fsTime(now); return fsOut(scheduler.next(fsIn(card), nf, rating).card, now, nf); }
+    function schedPreview(card) { // { Again, Hard, Good, Easy } → tarjeta resultante de cada valoración
+      var now = new Date(), nf = fsTime(now), rec = scheduler.repeat(fsIn(card), nf), out = {};
+      ["Again", "Hard", "Good", "Easy"].forEach(function (r) { out[r] = fsOut(rec[FS.Rating[r]].card, now, nf); });
+      return out;
+    }
     function findEntry(id) { for (var i = 0; i < S.deck.length; i++) { if (S.deck[i].id === id) return S.deck[i]; } return null; }
 
     // ---- carpeta de datos (File System Access API: Chrome / Edge) ----
@@ -5052,11 +5074,24 @@
     async function rate(key, ratingName) {
       var ok = await commit(function (b) {
         var raw = b.review[key], card = raw ? reviveCard(raw) : FS.createEmptyCard(new Date());
-        b.review[key] = scheduler.next(card, new Date(), FS.Rating[ratingName]).card;
+        b.review[key] = schedNext(card, FS.Rating[ratingName]);
         var d = todayKey(); b.stats.reviewsTotal += 1; b.stats.byDay[d] = (b.stats.byDay[d] || 0) + 1;
       });
       if (!ok) toast("No se pudo guardar el repaso.", true);
       return ok;
+    }
+
+    // Un repaso a la vez: con la carpeta conectada guardar tarda un instante y, sin este freno, una doble pulsación (o doble clic)
+    // puntuaba dos veces la misma tarjeta antes de pasar a la siguiente.
+    var rateBusy = false;
+    async function rateCurrent(name, btn) {
+      if (rateBusy || !S.current) return;
+      rateBusy = true;
+      try {
+        if (btn) btn.classList.add("pressed");
+        await rate(S.current.key, name);
+        pickNext(); render();
+      } finally { rateBusy = false; }
     }
 
     // ---- copia de seguridad ----
@@ -5293,19 +5328,26 @@
 
     // ---- cola de estudio ----
     function usable(e, mode) { return mode === "sentence" ? !!(e.esSent && e.deSent) : !!(e.esWord && e.deWord); }
-    function candidates(mode) {
+    // Cuándo toca una tarjeta: las que están en repaso (intervalo de días) tocan al empezar su día de estudio (4:00); las que están en
+    // aprendizaje o reaprendizaje (minutos), a su hora exacta. Las nuevas tocan siempre, detrás de los repasos atrasados.
+    function dueAt(card) { return card.state === FS.State.Review ? studyDayStart(card.due.getTime()) : card.due.getTime(); }
+    function byDue(a, b) { return a.due - b.due || a.at - b.at; } // primero lo que toca antes y, a igual día, lo más atrasado
+    function candidates(mode, now) {
+      now = now || Date.now();
       var out = [];
       S.deck.forEach(function (e) {
         if (!usable(e, mode)) return;
-        var key = e.id + ":" + mode, card = getCard(key);
-        out.push({ key: key, entry: e, due: card.due.getTime(), isNew: card.state === 0 });
+        var key = e.id + ":" + mode, raw = S.review[key];
+        if (!raw || raw.state === FS.State.New) { out.push({ key: key, entry: e, due: now, at: now, isNew: true }); return; }
+        var card = reviveCard(raw);
+        out.push({ key: key, entry: e, due: dueAt(card), at: card.due.getTime(), isNew: false });
       });
       return out;
     }
-    function dueQueue(mode) { var now = Date.now(); return candidates(mode).filter(function (c) { return c.due <= now; }).sort(function (a, b) { return a.due - b.due; }); }
+    function dueQueue(mode) { var now = Date.now(); return candidates(mode, now).filter(function (c) { return c.due <= now; }).sort(byDue); }
     function pickNext() {
       var chosen = dueQueue(S.mode)[0];
-      if (!chosen && S.studyAhead) chosen = candidates(S.mode).sort(function (a, b) { return a.due - b.due; })[0];
+      if (!chosen && S.studyAhead) chosen = candidates(S.mode).sort(byDue)[0];
       S.flipped = false; S.showSentence = S.autoSentence;
       S.current = chosen ? { key: chosen.key, entry: chosen.entry } : null;
     }
@@ -5314,11 +5356,16 @@
       var min = Math.round(ms / 60000);
       if (min < 60) return (min < 1 ? "<1" : min) + " min";
       var h = Math.round(min / 60); if (h < 24) return h + " h";
-      var d = Math.round(h / 24); if (d < 31) return d + " d";
+      return fmtDays(Math.round(h / 24));
+    }
+    function fmtDays(d) {
+      if (d < 31) return d + " d";
       var mo = Math.round(d / 30); if (mo < 12) return mo + " mes" + (mo > 1 ? "es" : "");
       return Math.round(d / 365) + " a";
     }
-    function nextDueLabel(mode) { var all = candidates(mode).sort(function (a, b) { return a.due - b.due; }); return all.length ? fmtIn(new Date(all[0].due)) : null; }
+    // lo que se muestra en los botones de valorar: el intervalo programado (2 d), no el tiempo que falta hasta las 4:00 de ese día
+    function fmtCard(c) { return c.scheduled_days >= 1 ? fmtDays(c.scheduled_days) : fmtIn(c.due); }
+    function nextDueLabel(mode) { var all = candidates(mode).sort(byDue); return all.length ? fmtIn(new Date(all[0].due)) : null; }
 
     // ---- render ----
     var view = document.getElementById("view");
@@ -6008,7 +6055,7 @@
         "<li>El botón <b>Sugerir frases</b> (la burbuja dentro de la oración en español) trae frases reales de Tatoeba que contienen la palabra y, si has rellenado las dos palabras, solo las que la usan con el significado de tu traducción (si Tatoeba falla o no tiene la palabra, ejemplos del Wikcionario, con traducción al inglés: el español se traduce solo al elegirlos); el botón <b>Traducir</b> (icono de idiomas, aparece en la oración que está vacía) traduce la que hayas escrito (MyMemory). Las traducciones automáticas pueden fallar: revísalas antes de guardar. En portugués se avisa de las frases con rasgos de Brasil. Las oraciones se guardan sin el punto final (se conservan «…», «?», «!» y los signos combinados).</li>" +
         "<li>El botón ✨ abre ChatGPT con una petición que se adapta a lo que hayas rellenado: con una sola palabra, la traduce y propone una frase; con las dos, genera una frase con ese significado concreto; con oraciones, las traduce o revisa la traducción. Al pasar el ratón ves qué va a pedir.</li></ul>" +
         "<h3>Estudiar</h3>" +
-        "<p>Se muestra la palabra (o la frase) en español, pulsas «Mostrar respuesta» y la valoras con <i>Otra vez, Difícil, Bien</i> o <i>Fácil</i>. La app programa el siguiente repaso con el algoritmo FSRS: cuanto mejor la sabes, más tarde vuelve. Hay dos modos, Palabras y Frases. Atajos: punto o espacio para mostrar la respuesta; J, K, L, Ñ (o 0, 1, 2, 3) para valorar.</p>" +
+        "<p>Se muestra la palabra (o la frase) en español, pulsas «Mostrar respuesta» y la valoras con <i>Otra vez, Difícil, Bien</i> o <i>Fácil</i>. La app programa el siguiente repaso con el algoritmo FSRS: cuanto mejor la sabes, más tarde vuelve. Las tarjetas con plazo de días tocan desde las 4:00 de su día, y el día nuevo (también para los contadores de Actividad) empieza a las 4:00: lo que repases de madrugada cuenta como el día anterior. Hay dos modos, Palabras y Frases. Atajos: punto o espacio para mostrar la respuesta; J, K, L, Ñ (o 0, 1, 2, 3) para valorar.</p>" +
         "<h3>Dónde se guardan tus datos</h3>" +
         '<div class="info-status"><i class="sdot' + (ok ? " ok" : "") + '"></i><span>' + status + "</span></div>" +
         "<p>Tus palabras, frases y el estado de cada repaso se guardan en una <b>carpeta de tu disco que eliges tú</b>, con un archivo por idioma: " + esc(files) + ". Cada palabra nueva o repaso se escribe al instante. Son archivos de texto (JSON): puedes copiarlos como copia de seguridad o guardarlos en una carpeta de OneDrive.</p>" +
@@ -6355,8 +6402,8 @@
               '<span class="k-sent-de">' + hlHTML(e.deSent, e.deWord, genderInfo(e).g, S.lang) + "</span></div>";
           }
         }
-        var preview = scheduler.repeat(getCard(S.current.key), new Date());
-        function iv(r) { return fmtIn(preview[FS.Rating[r]].card.due); }
+        var preview = schedPreview(getCard(S.current.key));
+        function iv(r) { return fmtCard(preview[r]); }
         inner += '<div class="rate">' +
           '<button class="r r-again" data-rate="Again"><span>Otra vez</span><em>' + iv("Again") + "</em></button>" +
           '<button class="r r-hard" data-rate="Hard"><span>Difícil</span><em>' + iv("Hard") + "</em></button>" +
@@ -6538,7 +6585,7 @@
       if (t.closest("#expCsv")) { exportCSV(); return; }
       if (t.closest("#impBtn")) { var fi = document.getElementById("impFile"); if (fi) { fi.onchange = function () { if (fi.files && fi.files[0]) { var f = fi.files[0]; fi.value = ""; importJSON(f); } }; fi.click(); } return; }
       var rb = t.closest("[data-rate]");
-      if (rb && S.current) { rb.classList.add("pressed"); await rate(S.current.key, rb.getAttribute("data-rate")); pickNext(); render(); return; }
+      if (rb && S.current) { await rateCurrent(rb.getAttribute("data-rate"), rb); return; }
     });
 
     view.addEventListener("input", function (ev) {
@@ -6575,9 +6622,7 @@
       var kk = ev.key.length === 1 ? ev.key.toLowerCase() : ev.key;
       if (map[kk]) {
         ev.preventDefault();
-        var btn = document.querySelector('[data-rate="' + map[kk] + '"]');
-        if (btn) btn.classList.add("pressed");
-        rate(S.current.key, map[kk]).then(function () { pickNext(); render(); });
+        rateCurrent(map[kk], document.querySelector('[data-rate="' + map[kk] + '"]'));
       }
     });
 
