@@ -393,6 +393,25 @@
     border-top: 0;
   }
 
+  .deck-more {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 14px;
+    padding: 14px 2px 2px;
+    border-top: 1px solid var(--line);
+  }
+
+  .deck-more-info {
+    color: var(--muted);
+    font-size: 13px;
+    flex: 1 1 100%;
+  }
+
+  .deck-more .link-btn {
+    margin-top: 0;
+  }
+
   .row-top {
     display: flex;
     align-items: center;
@@ -4720,9 +4739,10 @@
     var ICON_MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
     var ICON_SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
 
+    var DECK_PAGE = 100; // filas de la lista del mazo que se dibujan de una vez (el resto, con «Mostrar más»)
     var S = {
       lang: null, tab: "crear", deckDir: "es-it", autoSentence: false, theme: "dark",
-      editing: null, confirmDelete: null, expanded: {}, mode: "word",
+      editing: null, confirmDelete: null, expanded: {}, deckShown: DECK_PAGE, mode: "word",
       current: null, flipped: false, showSentence: false, studyAhead: false, bannerOff: false,
       formGender: "", formEsGender: "", formWikt: null, formBusy: false, suggErr: null, autoGen: true, detecting: false, autoSugg: true, sugg: null, suggBusy: false, sents: null, sentsBusy: false, sentsSlow: false, transBusy: false, tatDownAt: 0,
       deck: [], review: {}, stats: { reviewsTotal: 0, byDay: {} }
@@ -4749,9 +4769,16 @@
     }
     function prune(b) { var ids = {}; b.deck.forEach(function (e) { ids[e.id] = 1; }); Object.keys(b.review).forEach(function (k) { if (!ids[k.split(":")[0]]) delete b.review[k]; }); }
     function fileName(code) { return LANG_BY[code].file + ".json"; }
+    // Sin sangrado (ocupa ~20 % menos y se escribe antes), pero con una entrada del mazo y un repaso por línea: el archivo sigue siendo
+    // legible, editable a mano y comparable en git. Sigue siendo JSON normal: el formato (version 2) no cambia.
     function stringifyLang(code) {
-      var b = bucket(code);
-      return JSON.stringify({ app: "vocabulando", version: 2, lang: code, savedAt: new Date().toISOString(), deck: b.deck, review: b.review, stats: b.stats }, null, 1);
+      var b = bucket(code), J = JSON.stringify, rkeys = Object.keys(b.review);
+      var deck = b.deck.map(function (e) { return J(e); });
+      var review = rkeys.map(function (k) { return J(k) + ":" + J(b.review[k]); });
+      return '{\n"app":' + J("vocabulando") + ',\n"version":2,\n"lang":' + J(code) + ',\n"savedAt":' + J(new Date().toISOString()) +
+        ',\n"deck":[' + (deck.length ? "\n" + deck.join(",\n") + "\n" : "") + "]" +
+        ',\n"review":{' + (review.length ? "\n" + review.join(",\n") + "\n" : "") + "}" +
+        ',\n"stats":' + J(b.stats) + "\n}\n";
     }
     // null = no es un archivo de este idioma (JSON roto, sin "deck" o de otro idioma)
     function parseLang(text, code) {
@@ -4924,12 +4951,14 @@
       var cur = S.lang;
       var run = chain.then(async function () {
         for (var i = 0; i < codes.length; i++) { if (!loaded[codes[i]]) await doLoad(codes[i]); await refreshIfChanged(codes[i]); }
-        var snap = JSON.stringify(DATA.languages);
+        // copia para deshacer solo de los idiomas que van a cambiar (no de todos los abiertos en la sesión)
+        var snap = {};
+        codes.forEach(function (c) { if (DATA.languages[c]) snap[c] = JSON.stringify(DATA.languages[c]); });
         if (fn(bucket(cur)) === false) { bindLang(); return false; }
         bindLang();
         var ok = true;
         for (var j = 0; j < codes.length; j++) { if (!(await persistLang(codes[j]))) ok = false; }
-        if (!ok) { DATA.languages = JSON.parse(snap); bindLang(); }
+        if (!ok) { Object.keys(snap).forEach(function (c) { DATA.languages[c] = JSON.parse(snap[c]); }); bindLang(); }
         return ok;
       });
       chain = run.catch(function () { });
@@ -5369,7 +5398,7 @@
     function route() {
       var code = location.hash.replace(/^#/, ""), lang = LANG_BY[code] ? code : null;
       if (lang !== S.lang) {
-        S.lang = lang; S.tab = "crear"; S.editing = null; S.formGender = ""; S.formEsGender = ""; S.suggErr = null; S.formWikt = null; S.sugg = null; S.sents = null; S.suggBusy = false; S.confirmDelete = null; S.expanded = {};
+        S.lang = lang; S.tab = "crear"; S.editing = null; S.formGender = ""; S.formEsGender = ""; S.suggErr = null; S.formWikt = null; S.sugg = null; S.sents = null; S.suggBusy = false; S.confirmDelete = null; S.expanded = {}; S.deckShown = DECK_PAGE;
         S.current = null; S.flipped = false; S.studyAhead = false; S.mode = "word";
         bindLang(); window.scrollTo(0, 0);
         if (lang && initDone) { if (loaded[lang]) syncFromFile(); else openLang(lang); }
@@ -6170,29 +6199,78 @@
       if (val("deWord") !== w) scheduleFormLookup(); // siguió escribiendo mientras tanto
     }
 
+    // ---- lista del mazo: más reciente primero, por tramos (con miles de palabras, dibujarlas todas a la vez es lo que ralentiza la pestaña) ----
+    function rowHtml(e) {
+      var hasS = e.esSent && e.deSent;
+      var open = !!S.expanded[e.id];
+      var esSpan = '<span class="row-es"' + esGenderStyle(e) + '>' + esc(e.esWord) + '</span>';
+      var deSpan = '<span class="row-de"' + genderStyle(e) + '>' + esc(e.deWord) + '</span>';
+      var arrow = '<span class="row-arrow">→</span>';
+      var main = S.deckDir === "it-es" ? deSpan + arrow + esSpan : esSpan + arrow + deSpan;
+      var frase = "";
+      if (hasS && open) { // la frase (con el resaltado) solo se calcula si está abierta
+        var fEs = '<span class="rf-es">' + hlHTML(e.esSent, e.esWord, esGenderInfo(e).g, "es") + '</span>';
+        var fDe = '<span class="rf-de">' + hlHTML(e.deSent, e.deWord, genderInfo(e).g, S.lang) + '</span>';
+        frase = '<div class="row-frase">' + (S.deckDir === "it-es" ? fDe + fEs : fEs + fDe) + '</div>';
+      }
+      return '<li class="row' + (e.id === S.editing ? " is-editing" : "") + '" data-id="' + esc(e.id) + '">' +
+        '<div class="row-top"><div class="row-main">' + main + '</div>' +
+        '<div class="row-meta">' +
+        (hasS ? '<button class="chip-btn' + (open ? " on" : "") + '" data-frase="' + esc(e.id) + '">frase</button>' : "") +
+        '<button class="edit" data-edit="' + esc(e.id) + '" aria-label="Editar">✎</button>' +
+        '<button class="del" data-del="' + esc(e.id) + '" aria-label="Eliminar">×</button></div></div>' +
+        frase + "</li>";
+    }
+    function rowsHtml(from, to) { // filas from..to-1 de la lista (0 = la más reciente)
+      var out = [];
+      for (var k = from; k < to; k++) out.push(rowHtml(S.deck[S.deck.length - 1 - k]));
+      return out.join("");
+    }
+    // S.deckShown es un tope (DECK_PAGE, 2 × DECK_PAGE… o Infinity tras «Mostrar todas»); las filas dibujadas son min(tope, palabras)
+    function shownCount() { return Math.min(Math.max(S.deckShown, DECK_PAGE), S.deck.length); }
+    function deckMoreLabels() {
+      var shown = shownCount(), left = S.deck.length - shown;
+      return { info: "Se muestran " + shown + " de " + S.deck.length, more: "Mostrar " + Math.min(DECK_PAGE, left) + " más", all: "Mostrar todas (" + left + " restantes)" };
+    }
+    function deckMoreHtml() {
+      if (shownCount() >= S.deck.length) return "";
+      var l = deckMoreLabels();
+      return '<div class="deck-more" id="deckMoreBar"><span class="deck-more-info" id="deckMoreInfo">' + l.info + '</span>' +
+        '<button class="btn btn-ghost btn-sm" id="deckMore">' + l.more + '</button>' +
+        '<button class="link-btn" id="deckAll">' + l.all + '</button></div>';
+    }
+    // «Mostrar más»: añade las filas que faltan al final de la lista sin redibujar el resto ni el formulario (no se pierde lo que estés escribiendo)
+    function showMoreRows(all) {
+      var ul = view.querySelector(".deck-list"), from = shownCount();
+      if (!ul || from >= S.deck.length) return;
+      S.deckShown = all ? Infinity : Math.max(S.deckShown, DECK_PAGE) + DECK_PAGE;
+      ul.insertAdjacentHTML("beforeend", rowsHtml(from, shownCount()));
+      var bar = document.getElementById("deckMoreBar");
+      if (!bar) return;
+      if (shownCount() >= S.deck.length) { bar.remove(); return; }
+      var l = deckMoreLabels();
+      document.getElementById("deckMoreInfo").textContent = l.info;
+      document.getElementById("deckMore").textContent = l.more;
+      document.getElementById("deckAll").textContent = l.all;
+    }
+    // abrir / cerrar la frase de una fila: solo se vuelve a dibujar esa fila
+    function toggleFrase(btn) {
+      var id = btn.getAttribute("data-frase"), li = btn.closest(".row"), e = findEntry(id);
+      S.expanded[id] = !S.expanded[id];
+      if (!li || !e) { render(); return; }
+      li.insertAdjacentHTML("afterend", rowHtml(e));
+      var nli = li.nextElementSibling;
+      li.remove();
+      var nb = nli && nli.querySelector("[data-frase]");
+      if (nb) nb.focus({ preventScroll: true });
+    }
+
     function renderCrear() {
       if (S.editing && !findEntry(S.editing)) S.editing = null;
       var editing = S.editing ? findEntry(S.editing) : null;
       var e0 = editing || {};
       var count = S.deck.length;
-      var rows = S.deck.slice().reverse().map(function (e) {
-        var hasS = e.esSent && e.deSent;
-        var open = !!S.expanded[e.id];
-        var esSpan = '<span class="row-es"' + esGenderStyle(e) + '>' + esc(e.esWord) + '</span>';
-        var deSpan = '<span class="row-de"' + genderStyle(e) + '>' + esc(e.deWord) + '</span>';
-        var arrow = '<span class="row-arrow">→</span>';
-        var main = S.deckDir === "it-es" ? deSpan + arrow + esSpan : esSpan + arrow + deSpan;
-        var fEs = '<span class="rf-es">' + hlHTML(e.esSent, e.esWord, esGenderInfo(e).g, "es") + '</span>';
-        var fDe = '<span class="rf-de">' + hlHTML(e.deSent, e.deWord, genderInfo(e).g, S.lang) + '</span>';
-        var frase = (hasS && open) ? '<div class="row-frase">' + (S.deckDir === "it-es" ? fDe + fEs : fEs + fDe) + '</div>' : "";
-        return '<li class="row' + (e.id === S.editing ? " is-editing" : "") + '" data-id="' + esc(e.id) + '">' +
-          '<div class="row-top"><div class="row-main">' + main + '</div>' +
-          '<div class="row-meta">' +
-          (hasS ? '<button class="chip-btn' + (open ? " on" : "") + '" data-frase="' + esc(e.id) + '">frase</button>' : "") +
-          '<button class="edit" data-edit="' + esc(e.id) + '" aria-label="Editar">✎</button>' +
-          '<button class="del" data-del="' + esc(e.id) + '" aria-label="Eliminar">×</button></div></div>' +
-          frase + "</li>";
-      }).join("");
+      var rows = rowsHtml(0, shownCount());
 
       var pend = S.deck.filter(needsAny).length;
       var legend = legendHtml(pend ? '<button class="link-btn js-detect">' + detectLabel(pend) + "</button>" : "");
@@ -6223,7 +6301,7 @@
           : flag("es") + '<span class="dir-arrow">→</span>' + flag(S.lang)) +
         "</button></div></div>" +
         legend +
-        (count ? '<ul class="deck-list">' + rows + "</ul>"
+        (count ? '<ul class="deck-list">' + rows + "</ul>" + deckMoreHtml()
           : '<div class="empty">Todavía no hay palabras. Añade la primera arriba.</div>') +
         "</section>";
     }
@@ -6439,7 +6517,9 @@
         return;
       }
       var fr = t.closest("[data-frase]");
-      if (fr) { var fid = fr.getAttribute("data-frase"); S.expanded[fid] = !S.expanded[fid]; render(); return; }
+      if (fr) { toggleFrase(fr); return; }
+      if (t.closest("#deckMore")) { showMoreRows(false); return; }
+      if (t.closest("#deckAll")) { showMoreRows(true); return; }
       var del = t.closest("[data-del]");
       if (del) { S.confirmDelete = del.getAttribute("data-del"); render(); return; }
       if (t.closest("#confirmYes")) { var did = S.confirmDelete; S.confirmDelete = null; var okd = await deleteEntry(did); if (!okd) toast("No se pudo eliminar.", true); render(); return; }
