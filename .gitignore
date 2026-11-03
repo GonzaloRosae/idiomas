@@ -8,3 +8,6 @@
 desktop.ini
 Thumbs.db
 *.tmp
+
+# Los mazos de Vocabulando (un JSON por idioma, con tus palabras y repasos) son datos personales: viven en la carpeta que elige la app y no se suben
+/Vocabulando/*.json
