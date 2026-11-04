@@ -4,6 +4,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#2748D6" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Vocabulando" />
   <title>Vocabulando</title>
   <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAADJklEQVR42sWX2U8TURTG75/iu4iIiogLKi6AbIVCbUGsCEgVaoHSEiSgGNdojGIwuIVFYsKDBR9EedQovtXlhYIr0L0wnVZQCXq8F0szt52hM6ZpT3LTzCSd33fuOXf5EAoJhZFVlxhYU3ETy8ibvCDXe6GokYHCBgZk9XNQQIZuFvJPzUKe1gO5dR7IIaPWDQdPuiH7hAuyNC7I1Dghs8YJB447YH+1g9lXZTftrbKrkVAojL4kPMwYDhgOUYQDhgOGQ0alDTKO2cx7KqxJfHAmBnDAcNhdYWV2HeWIiFHmK3DAcEhXz5i5NY81HNKPzMDO8mk1CjRcPOCwo3zahKLc7VLgsP3wFIOE4NUdXjjd6ZME11+dhbJml1g4bCubAsQHb73lg5X4MLkoCv7O8iv4n4YrHlHwtNJvgPim/dHIAnCj+YY3Yubc6Bn2iYKnqbAAvpq33GSpD76fWFy15m852ZPQXXaLgm9VfQUk1HAEyg11q4cXTmrODfP4T9HwVCUWINTt1/v91IdHx37wdvvzV3S5Lt2bEw3fcugLFrDKUnN4lqiPl7e4KXipkc7e7l6SBE9RYAGrrfNrfT56Fl4vUOv8WUj2F+/OSYKnlHwGFGmdh87CyjpXGZ3h2UuEbyYCIm0ytwfpWegd9i9vMr3D9PvOAa9k+KZiLCDSJiPTOcE//ycI8s//BqXBufzLfZddY5UM3yj/hAWI2Nv7nvjDppsbD0zsf8GTi7AAMQdLvtZBZcwN8j6rZoYXLqt8AxrtEBRUjPHCkws/AhJ7qvWE1DyY/WOWF27QPwQYWhMc+ob+MPgGIkDskapscvAKkNfbeKfdNpBKCSDPofAk2SQgKef5yMt5Cv70xXfBmvsGEygB5DkUvr6ACJBwmVA02unsdVbBhrtzrp0S0H22LQyemD8BSOpNpu6CC+7juteed0bs9jPGLujuaIN2QxcvPDEPCwiYBinXKMlLTQi+Ls/CoIBjiQccEnItJkTsUpzgsDbH8s+qBexSjOHj5qAzIl4tYJdiBWfwoP0h8WrELsUi8zA4N4hdIo6FmIZodjtpuGDNOfEXCVdifgl/vbcAAAAASUVORK5CYII=">
   <link rel="icon" type="image/svg+xml" sizes="any" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%235B7BF4'/%3E%3Cstop offset='1' stop-color='%232748D6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='15' fill='url(%23g)'/%3E%3Cpath d='M14.5 19 L27 45.5 L39.5 19' fill='none' stroke='%23FFFFFF' stroke-width='7.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='49' cy='44.2' r='4.9' fill='%23FFB020'/%3E%3C/svg%3E">
@@ -401,6 +405,39 @@
     padding: 14px 2px 2px;
     border-top: 1px solid var(--line);
   }
+
+
+  .stats { flex-wrap: wrap; align-items: center; }
+
+  .stats .undo-btn { margin: 0 0 0 auto; font-size: 12.5px; }
+
+  .k-tools { display: flex; align-items: center; gap: 12px; }
+
+  .say { display: none; border: 0; background: transparent; color: #AEB8C5; cursor: pointer; padding: 3px 5px; border-radius: 7px; line-height: 0; }
+  body.tts-on .say { display: inline-flex; align-items: center; }
+  .say svg { width: 17px; height: 17px; }
+  .say:hover { color: var(--accent); }
+  .k-say { padding: 6px; color: var(--muted); }
+  .k-say svg { width: 21px; height: 21px; }
+
+  .sw-row { margin-top: 14px; }
+  .sel { width: auto; min-width: 190px; }
+
+  .st-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .st-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .fc { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 8px; }
+  .fc-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .fc-bar { width: 100%; height: 64px; background: var(--accent-soft); border-radius: 6px; display: flex; align-items: flex-end; overflow: hidden; }
+  .fc-bar i { display: block; width: 100%; background: var(--accent); border-radius: 6px 6px 0 0; }
+  .fc-n { font-size: 12px; font-weight: 600; color: var(--ink); }
+  .fc-d { font-size: 11px; color: var(--muted); }
+  @media (max-width: 520px) { .st-grid { grid-template-columns: 1fr 1fr; } }
+
+
+  .list-imp { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .list-imp textarea { min-height: 120px; resize: vertical; margin-bottom: 10px; }
+  .list-prev { margin-top: 14px; font-size: 13.5px; color: var(--ink); }
+  .list-prev ul { margin: 8px 0 14px; padding-left: 18px; color: var(--muted); }
 
   .deck-more-info {
     color: var(--muted);
@@ -4631,7 +4668,7 @@
     });
 
     // ---- almacenamiento local (solo una copia espejo por idioma; la fuente de verdad son los archivos de la carpeta) ----
-    var K_DATA = "vocabulando:data:", K_DIRTY = "vocabulando:dirty:", K_THEME = "vocabulando:theme", K_SHARED_THEME = "idiomas:theme", K_AUTO = "vocabulando:autoSent", K_AUTOGEN = "vocabulando:autoGender", K_AUTOSUGG = "vocabulando:autoSuggest";
+    var K_DATA = "vocabulando:data:", K_DIRTY = "vocabulando:dirty:", K_THEME = "vocabulando:theme", K_SHARED_THEME = "idiomas:theme", K_AUTO = "vocabulando:autoSent", K_AUTOGEN = "vocabulando:autoGender", K_AUTOSUGG = "vocabulando:autoSuggest", K_NEWDAY = "vocabulando:newPerDay", K_REV = "vocabulando:rev", K_SPEAK = "vocabulando:autoSpeak";
     var LS = null;
     try { LS = window.localStorage; LS.setItem("vocabulando:probe", "1"); LS.removeItem("vocabulando:probe"); } catch (e) { LS = null; }
     function lsGet(k) { try { return LS ? LS.getItem(k) : null; } catch (e) { return null; } }
@@ -4740,13 +4777,15 @@
     }
     var ICON_SUGG = gsvg('<path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M8 8h8M8 12h5"/>');
     var ICON_TRANS = gsvg('<path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/>');
+    var ICON_SPEAK = gsvg('<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a9 9 0 0 1 0 14"/>');
     var ICON_MOON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
     var ICON_SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
 
+    var LOG_MAX = 10000; // repasos que se conservan en el registro de cada idioma (los más antiguos se descartan)
     var DECK_PAGE = 100; // filas de la lista del mazo que se dibujan de una vez (el resto, con «Mostrar más»)
     var S = {
       lang: null, tab: "crear", deckDir: "es-it", autoSentence: false, theme: "dark",
-      editing: null, confirmDelete: null, expanded: {}, deckShown: DECK_PAGE, mode: "word",
+      editing: null, confirmDelete: null, expanded: {}, deckShown: DECK_PAGE, undo: [], newExtra: {}, newPerDay: 20, revOn: false, autoSpeak: false, mode: "word",
       current: null, flipped: false, showSentence: false, studyAhead: false, bannerOff: false,
       formGender: "", formEsGender: "", formWikt: null, formBusy: false, suggErr: null, autoGen: true, detecting: false, autoSugg: true, sugg: null, suggBusy: false, sents: null, sentsBusy: false, sentsSlow: false, transBusy: false, tatDownAt: 0,
       deck: [], review: {}, stats: { reviewsTotal: 0, byDay: {} }
@@ -4758,7 +4797,7 @@
     var DATA = { languages: {} };
     var loaded = {};        // code → true cuando su archivo ya se leyó en esta sesión
     var initDone = false;
-    function emptyBucket() { return { deck: [], review: {}, stats: { reviewsTotal: 0, byDay: {} } }; }
+    function emptyBucket() { return { deck: [], review: {}, stats: { reviewsTotal: 0, byDay: {}, newByDay: {} }, log: [] }; }
     function bucket(code) { return DATA.languages[code] || (DATA.languages[code] = emptyBucket()); }
     function normBucket(b) {
       b = b && typeof b === "object" ? b : {};
@@ -4767,10 +4806,17 @@
       var st = b.stats && typeof b.stats === "object" ? b.stats : {};
       if (typeof st.reviewsTotal !== "number") st.reviewsTotal = 0;
       if (!st.byDay || typeof st.byDay !== "object") st.byDay = {};
-      var out = { deck: deck, review: review, stats: st };
+      if (!st.newByDay || typeof st.newByDay !== "object" || Array.isArray(st.newByDay)) st.newByDay = {};
+      // registro de repasos: [segundos, "id:modo", nota 1-4, estado anterior 0-3]
+      var log = Array.isArray(b.log) ? b.log.filter(function (r) { return Array.isArray(r) && r.length >= 4 && typeof r[0] === "number" && typeof r[1] === "string"; }) : [];
+      var out = { deck: deck, review: review, stats: st, log: log };
       prune(out);
+      // el total nunca baja de los repasos que ya constan en las tarjetas (datos anteriores a las estadísticas o importados sin ellas)
+      st.reviewsTotal = Math.max(st.reviewsTotal, repsOf(out.review));
       return out;
     }
+    function repsOf(review) { var n = 0; Object.keys(review).forEach(function (k) { n += (review[k] && review[k].reps) || 0; }); return n; }
+    function trimLog(b) { if (b.log.length > LOG_MAX) b.log.splice(0, b.log.length - LOG_MAX); }
     function prune(b) { var ids = {}; b.deck.forEach(function (e) { ids[e.id] = 1; }); Object.keys(b.review).forEach(function (k) { if (!ids[k.split(":")[0]]) delete b.review[k]; }); }
     function fileName(code) { return LANG_BY[code].file + ".json"; }
     // Sin sangrado (ocupa ~20 % menos y se escribe antes), pero con una entrada del mazo y un repaso por línea: el archivo sigue siendo
@@ -4779,10 +4825,12 @@
       var b = bucket(code), J = JSON.stringify, rkeys = Object.keys(b.review);
       var deck = b.deck.map(function (e) { return J(e); });
       var review = rkeys.map(function (k) { return J(k) + ":" + J(b.review[k]); });
+      var log = (b.log || []).map(function (r) { return J(r); });
       return '{\n"app":' + J("vocabulando") + ',\n"version":2,\n"lang":' + J(code) + ',\n"savedAt":' + J(new Date().toISOString()) +
         ',\n"deck":[' + (deck.length ? "\n" + deck.join(",\n") + "\n" : "") + "]" +
         ',\n"review":{' + (review.length ? "\n" + review.join(",\n") + "\n" : "") + "}" +
-        ',\n"stats":' + J(b.stats) + "\n}\n";
+        ',\n"stats":' + J(b.stats) +
+        ',\n"log":[' + (log.length ? "\n" + log.join(",\n") + "\n" : "") + "]\n}\n";
     }
     // null = no es un archivo de este idioma (JSON roto, sin "deck" o de otro idioma)
     function parseLang(text, code) {
@@ -4809,7 +4857,13 @@
       });
       out.stats.reviewsTotal = Math.max(a.stats.reviewsTotal, b.stats.reviewsTotal);
       [a.stats.byDay, b.stats.byDay].forEach(function (bd) { Object.keys(bd).forEach(function (d) { out.stats.byDay[d] = Math.max(out.stats.byDay[d] || 0, bd[d]); }); });
+      [a.stats.newByDay, b.stats.newByDay].forEach(function (bd) { Object.keys(bd || {}).forEach(function (d) { out.stats.newByDay[d] = Math.max(out.stats.newByDay[d] || 0, bd[d]); }); });
+      var seen = {};
+      (a.log || []).concat(b.log || []).forEach(function (r) { var k = r[0] + "|" + r[1]; if (!seen[k]) { seen[k] = 1; out.log.push(r); } });
+      out.log.sort(function (x, y) { return x[0] - y[0]; });
+      trimLog(out);
       prune(out);
+      out.stats.reviewsTotal = Math.max(out.stats.reviewsTotal, repsOf(out.review));
       return out;
     }
 
@@ -5066,19 +5120,30 @@
       return ok ? id : false;
     }
     async function deleteEntry(id) {
+      S.undo = S.undo.filter(function (u) { return u.key.split(":")[0] !== id; });
       return commit(function (b) {
         b.deck = b.deck.filter(function (e) { return e.id !== id; });
-        delete b.review[id + ":word"]; delete b.review[id + ":sentence"];
+        delete b.review[id + ":word"]; delete b.review[id + ":sentence"]; delete b.review[id + ":rev"];
       });
     }
     async function rate(key, ratingName) {
+      var code = S.lang, rec = null;
       var ok = await commit(function (b) {
         var raw = b.review[key], card = raw ? reviveCard(raw) : FS.createEmptyCard(new Date());
-        b.review[key] = schedNext(card, FS.Rating[ratingName]);
-        var d = todayKey(); b.stats.reviewsTotal += 1; b.stats.byDay[d] = (b.stats.byDay[d] || 0) + 1;
+        var wasNew = !raw || raw.state === FS.State.New, now = new Date(), day = dateKey(now.getTime()), mode = key.split(":")[1];
+        var next = schedNext(card, FS.Rating[ratingName]);
+        b.review[key] = next;
+        b.stats.reviewsTotal += 1; b.stats.byDay[day] = (b.stats.byDay[day] || 0) + 1;
+        if (wasNew) { var nk = day + ":" + mode; b.stats.newByDay[nk] = (b.stats.newByDay[nk] || 0) + 1; }
+        var cut = dateKey(now.getTime() - 14 * 86400000); // de las nuevas por día solo interesan los últimos días
+        Object.keys(b.stats.newByDay).forEach(function (k) { if (k.slice(0, 10) < cut) delete b.stats.newByDay[k]; });
+        var row = [Math.floor(now.getTime() / 1000), key, FS.Rating[ratingName], wasNew ? 0 : raw.state];
+        b.log.push(row); trimLog(b);
+        rec = { code: code, key: key, prev: raw ? JSON.stringify(raw) : null, after: next.last_review.getTime(), wasNew: wasNew, day: day, mode: mode, row: row };
       });
-      if (!ok) toast("No se pudo guardar el repaso.", true);
-      return ok;
+      if (!ok) { toast("No se pudo guardar el repaso.", true); return false; }
+      S.undo.push(rec); if (S.undo.length > 20) S.undo.shift();
+      return true;
     }
 
     // Un repaso a la vez: con la carpeta conectada guardar tarda un instante y, sin este freno, una doble pulsación (o doble clic)
@@ -5089,8 +5154,41 @@
       rateBusy = true;
       try {
         if (btn) btn.classList.add("pressed");
-        await rate(S.current.key, name);
+        var ok = await rate(S.current.key, name);
+        if (!ok) { if (btn) btn.classList.remove("pressed"); return; } // no se guardó: sigue la misma tarjeta para volver a valorarla
         pickNext(); render();
+      } finally { rateBusy = false; }
+    }
+    // Deshace los últimos repasos de esta sesión, de uno en uno (Z). Solo si la tarjeta sigue como la dejó ese repaso.
+    async function undoLast() {
+      if (rateBusy) return;
+      var u = S.undo[S.undo.length - 1];
+      if (!u || u.code !== S.lang) return;
+      rateBusy = true;
+      try {
+        var why = "";
+        var ok = await commit(function (b) {
+          var id = u.key.split(":")[0], cur = b.review[u.key];
+          if (!b.deck.some(function (e) { return e.id === id; })) { why = "La palabra ya no existe."; return false; }
+          if (!cur || cardTime(cur) !== u.after) { why = "La tarjeta ha cambiado desde entonces."; return false; }
+          if (u.prev) b.review[u.key] = JSON.parse(u.prev); else delete b.review[u.key];
+          b.stats.reviewsTotal = Math.max(0, b.stats.reviewsTotal - 1);
+          b.stats.byDay[u.day] = (b.stats.byDay[u.day] || 0) - 1; if (b.stats.byDay[u.day] <= 0) delete b.stats.byDay[u.day];
+          if (u.wasNew) { var nk = u.day + ":" + u.mode; b.stats.newByDay[nk] = (b.stats.newByDay[nk] || 0) - 1; if (b.stats.newByDay[nk] <= 0) delete b.stats.newByDay[nk]; }
+          var last = b.log[b.log.length - 1];
+          if (last && last[0] === u.row[0] && last[1] === u.row[1]) b.log.pop();
+        });
+        if (!ok) {
+          if (why) S.undo.pop(); // ese repaso ya no se puede deshacer
+          toast(why ? "No se puede deshacer. " + why : "No se pudo deshacer. Reintenta.", true);
+          if (why) render();
+          return;
+        }
+        S.undo.pop();
+        S.tab = "estudiar"; S.studyAhead = false; S.showSentence = S.autoSentence;
+        if (u.mode !== "rev" || S.revOn) { S.mode = u.mode; S.current = { key: u.key, entry: findEntry(u.key.split(":")[0]) }; S.flipped = true; }
+        else S.current = null;
+        render(); toast("Repaso deshecho");
       } finally { rateBusy = false; }
     }
 
@@ -5108,8 +5206,7 @@
     }
     function stamp() { var d = new Date(); return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()); }
     function exportJSON() {
-      var data = { app: "vocabulando", version: 2, lang: S.lang, exportedAt: new Date().toISOString(), deck: S.deck, review: S.review, stats: S.stats };
-      var ok = download("vocabulando-" + S.lang + "-" + stamp() + ".json", JSON.stringify(data, null, 2), "application/json");
+      var ok = download("vocabulando-" + S.lang + "-" + stamp() + ".json", stringifyLang(S.lang), "application/json");
       toast(ok ? "Copia descargada" : "El navegador bloqueó la descarga.", !ok);
     }
     function csvCell(s) { s = String(s == null ? "" : s); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
@@ -5129,39 +5226,126 @@
           Object.keys(data.languages).forEach(function (c) { if (LANG_BY[c] && data.languages[c]) plan[c] = data.languages[c]; });
         } else {
           var incoming = Array.isArray(data) ? data : (data && Array.isArray(data.deck) ? data.deck : null);
-          if (incoming) plan[data && LANG_BY[data.lang] ? data.lang : S.lang] = { deck: incoming, review: data && data.review };
+          if (incoming) plan[data && LANG_BY[data.lang] ? data.lang : S.lang] = { deck: incoming, review: data && data.review, stats: data && data.stats, log: data && data.log };
         }
         var codes = Object.keys(plan);
         if (!codes.length) { toast("El archivo no tiene un mazo válido.", true); return; }
-        var added = 0, skipped = 0;
+        var added = 0, skipped = 0, updated = 0, any = false, nothing = false;
+        // Fusión sin pérdidas: se añade lo que falta y, de las tarjetas que ya existen, gana el repaso más reciente (así sirve para
+        // pasar el progreso de un dispositivo a otro). Una palabra con la misma pareja que otra de distinto id se considera repetida.
         var ok = await commit(function () {
           codes.forEach(function (c) {
-            var b = bucket(c), src = normBucket({ deck: plan[c].deck, review: plan[c].review });
-            var byId = {}, byPair = {};
-            b.deck.forEach(function (e) { byId[e.id] = 1; byPair[normDup(e.esWord) + "|" + normDup(e.deWord)] = 1; });
-            src.deck.forEach(function (e) {
-              var pair = normDup(e.esWord) + "|" + normDup(e.deWord);
-              if (byId[e.id] || byPair[pair]) { skipped++; return; }
-              var ne = { id: e.id, esWord: e.esWord, deWord: e.deWord, esSent: e.esSent || "", deSent: e.deSent || "", createdAt: e.createdAt || Date.now() };
-              if (e.gender) ne.gender = e.gender;
-              if (e.autoGender) ne.autoGender = e.autoGender;
-              if (e.esGender) ne.esGender = e.esGender;
-              if (e.esAutoGender) ne.esAutoGender = e.esAutoGender;
-              b.deck.push(ne);
-              byId[e.id] = 1; byPair[pair] = 1; added++;
+            var b = bucket(c), src = normBucket(plan[c]);
+            var pair = function (e) { return normDup(e.esWord) + "|" + normDup(e.deWord); };
+            var byId = {}, byPair = {}, drop = {};
+            b.deck.forEach(function (e) { byId[e.id] = 1; byPair[pair(e)] = e.id; });
+            src.deck = src.deck.filter(function (e) {
+              var p = pair(e);
+              if (!byId[e.id] && byPair[p] && byPair[p] !== e.id) { skipped++; drop[e.id] = 1; return false; }
+              if (!byId[e.id]) byPair[p] = e.id;
+              return true;
             });
-            Object.keys(src.review).forEach(function (k) { if (!(k in b.review)) b.review[k] = src.review[k]; });
-            prune(b);
+            Object.keys(src.review).forEach(function (k) { if (drop[k.split(":")[0]]) delete src.review[k]; });
+            var upd = 0;
+            Object.keys(src.review).forEach(function (k) { if (b.review[k] && cardTime(src.review[k]) > cardTime(b.review[k])) upd++; });
+            var merged = mergeBucket(b, src), addedC = merged.deck.length - b.deck.length;
+            var changed = addedC > 0 || upd > 0 || merged.stats.reviewsTotal !== b.stats.reviewsTotal || merged.log.length !== b.log.length;
+            if (!changed) return;
+            DATA.languages[c] = merged; added += addedC; updated += upd; any = true;
           });
-          if (!added) return false;
+          if (!any) { nothing = true; return false; }
         }, codes);
-        if (!added) { toast("Ya estaban todas en el mazo (" + skipped + " repetida" + (skipped === 1 ? "" : "s") + ")."); render(); return; }
+        if (nothing) { toast("No hay nada nuevo: ya estaba todo en el mazo" + (skipped ? " (" + skipped + " repetida" + (skipped === 1 ? "" : "s") + ")" : "") + "."); render(); return; }
         if (!ok) { toast("No se pudo guardar. Reintenta.", true); return; }
         render();
-        toast(added + " añadida" + (added === 1 ? "" : "s") + (skipped ? " · " + skipped + " ya estaba" + (skipped === 1 ? "" : "n") : "") + (codes.length > 1 ? " · en " + codes.length + " idiomas" : ""));
+        var parts = [];
+        if (added) parts.push(added + " añadida" + (added === 1 ? "" : "s"));
+        if (updated) parts.push(updated + " repaso" + (updated === 1 ? "" : "s") + " actualizado" + (updated === 1 ? "" : "s"));
+        if (!parts.length) parts.push("Estadísticas actualizadas");
+        if (skipped) parts.push(skipped + " ya estaba" + (skipped === 1 ? "" : "n"));
+        if (codes.length > 1) parts.push("en " + codes.length + " idiomas");
+        toast(parts.join(" · "));
       } catch (e) {
         toast("No se pudo leer el archivo: " + (e && e.message ? e.message : "JSON inválido"), true);
       }
+    }
+
+    // ---- importar una lista de palabras (texto pegado o CSV) ----
+    var listPlan = null;
+    function splitDelim(line, d) { // un campo puede ir entre comillas ("a;b"; "" = comilla)
+      var out = [], cur = "", q = false;
+      for (var i = 0; i < line.length; i++) {
+        var ch = line.charAt(i);
+        if (q) { if (ch === '"') { if (line.charAt(i + 1) === '"') { cur += '"'; i++; } else q = false; } else cur += ch; }
+        else if (ch === '"' && cur === "") q = true;
+        else if (ch === d) { out.push(cur); cur = ""; }
+        else cur += ch;
+      }
+      out.push(cur);
+      return out.map(function (x) { return x.trim(); });
+    }
+    function parseList(text) {
+      var lines = String(text || "").replace(/^﻿/, "").split(/\r?\n/).filter(function (l) { return l.trim() && l.trim().charAt(0) !== "#"; });
+      var delims = ["\t", ";", "|", ","], d = ",";
+      for (var i = 0; i < delims.length; i++) {
+        var n = lines.filter(function (l) { return l.indexOf(delims[i]) >= 0; }).length;
+        if (n && n >= lines.length / 2) { d = delims[i]; break; }
+      }
+      var rows = lines.map(function (l) { return splitDelim(l, d); });
+      if (rows.length && /^(palabra_es|español|espanol|spanish)$/i.test(rows[0][0])) rows.shift(); // cabecera (también la de «Exportar CSV»)
+      return rows;
+    }
+    function planList(text) {
+      var rows = parseList(text), have = {}, seen = {}, out = [], dup = 0, bad = 0;
+      S.deck.forEach(function (e) { have[normDup(e.esWord) + "|" + normDup(e.deWord)] = 1; });
+      rows.forEach(function (r) {
+        var es = (r[0] || "").trim(), de = (r[1] || "").trim();
+        if (!es || !de) { bad++; return; }
+        var k = normDup(es) + "|" + normDup(de);
+        if (have[k] || seen[k]) { dup++; return; }
+        seen[k] = 1;
+        var es2 = noEndDot(r[2] || ""), de2 = noEndDot(r[3] || "");
+        if (!es2 || !de2) { es2 = ""; de2 = ""; } // la frase necesita las dos versiones
+        out.push({ es: es, de: de, esSent: es2, deSent: de2 });
+      });
+      return { rows: out, dup: dup, bad: bad, total: rows.length };
+    }
+    function listPreviewHtml(p) {
+      if (!p.total) return '<div class="list-prev"><p>No hay ninguna línea que leer.</p></div>';
+      var n = p.rows.length;
+      var sample = p.rows.slice(0, 5).map(function (r) { return "<li><b>" + esc(r.es) + "</b> → " + esc(r.de) + "</li>"; }).join("");
+      return '<div class="list-prev"><p><b>' + n + "</b> palabra" + (n === 1 ? "" : "s") + " nueva" + (n === 1 ? "" : "s") +
+        (p.dup ? " · " + p.dup + " repetida" + (p.dup === 1 ? "" : "s") + " (se omiten)" : "") +
+        (p.bad ? " · " + p.bad + " línea" + (p.bad === 1 ? "" : "s") + " sin las dos palabras (se omiten)" : "") + "</p>" +
+        (n ? "<ul>" + sample + (n > 5 ? "<li>…</li>" : "") + '</ul><button class="btn btn-primary btn-sm" id="listAdd">Añadir ' + n + " palabra" + (n === 1 ? "" : "s") + "</button>" : "") + "</div>";
+    }
+    function checkList() {
+      var ta = document.getElementById("listText"), pv = document.getElementById("listPrev");
+      if (!ta || !pv) return;
+      listPlan = planList(ta.value);
+      pv.innerHTML = listPreviewHtml(listPlan);
+    }
+    async function addList() {
+      if (!listPlan || !listPlan.rows.length) return;
+      var rows = listPlan.rows, ids = [], skipped = 0;
+      var ok = await commit(function (b) {
+        var have = {}, used = {};
+        b.deck.forEach(function (e) { have[normDup(e.esWord) + "|" + normDup(e.deWord)] = 1; used[e.id] = 1; });
+        var t = Date.now();
+        rows.forEach(function (r, i) {
+          var k = normDup(r.es) + "|" + normDup(r.de);
+          if (have[k]) { skipped++; return; }
+          have[k] = 1;
+          var id; do { id = uid(); } while (used[id]);
+          used[id] = 1; ids.push(id);
+          b.deck.push({ id: id, esWord: r.es, deWord: r.de, esSent: r.esSent, deSent: r.deSent, createdAt: t + i });
+        });
+        if (!ids.length) return false;
+      });
+      if (!ok) { toast(ids.length ? "No se pudo guardar. Reintenta." : "No había nada nuevo que añadir.", !!ids.length); return; }
+      listPlan = null; render();
+      toast(ids.length + " palabra" + (ids.length === 1 ? "" : "s") + " añadida" + (ids.length === 1 ? "" : "s") + (skipped ? " · " + skipped + " ya estaba" + (skipped === 1 ? "" : "n") : ""));
+      if (S.autoGen && hasGender(S.lang)) detectGenders({ ids: ids });
     }
 
     // fetch con tiempo máximo: si un servicio externo no responde, la acción falla con aviso en lugar de quedarse "buscando" para siempre
@@ -5344,10 +5528,23 @@
       });
       return out;
     }
-    function dueQueue(mode) { var now = Date.now(); return candidates(mode, now).filter(function (c) { return c.due <= now; }).sort(byDue); }
+    // Nuevas por día: cada idioma y modo tiene su tope (S.newPerDay, 0 = sin límite). «Estudiar más» suma 10 solo hasta que acabe el día.
+    function modeKey(mode) { return todayKey() + ":" + mode; }
+    function newToday(mode) { return (S.stats.newByDay && S.stats.newByDay[modeKey(mode)]) || 0; }
+    function newAllowance(mode) { return S.newPerDay ? Math.max(0, S.newPerDay + (S.newExtra[S.lang + "|" + modeKey(mode)] || 0) - newToday(mode)) : Infinity; }
+    // reviews: repasos que tocan ya · news: nuevas que se ofrecen hoy · waiting: nuevas que esperan a mañana · future: repasos aún no vencidos
+    function studyQueue(mode, now) {
+      now = now || Date.now();
+      var all = candidates(mode, now), reviews = [], news = [], future = [];
+      all.forEach(function (c) { if (c.isNew) news.push(c); else if (c.due <= now) reviews.push(c); else future.push(c); });
+      reviews.sort(byDue); future.sort(byDue);
+      var allow = newAllowance(mode), shown = allow >= news.length ? news : news.slice(0, allow);
+      return { all: all, reviews: reviews, news: shown, waiting: news.length - shown.length, queue: reviews.concat(shown), future: future };
+    }
+    function dueQueue(mode) { return studyQueue(mode).queue; }
     function pickNext() {
-      var chosen = dueQueue(S.mode)[0];
-      if (!chosen && S.studyAhead) chosen = candidates(S.mode).sort(byDue)[0];
+      var q = studyQueue(S.mode), chosen = q.queue[0];
+      if (!chosen && S.studyAhead) chosen = q.future[0]; // repasar por adelantado: solo tarjetas ya vistas, nunca más nuevas de las del tope
       S.flipped = false; S.showSentence = S.autoSentence;
       S.current = chosen ? { key: chosen.key, entry: chosen.entry } : null;
     }
@@ -5365,7 +5562,7 @@
     }
     // lo que se muestra en los botones de valorar: el intervalo programado (2 d), no el tiempo que falta hasta las 4:00 de ese día
     function fmtCard(c) { return c.scheduled_days >= 1 ? fmtDays(c.scheduled_days) : fmtIn(c.due); }
-    function nextDueLabel(mode) { var all = candidates(mode).sort(byDue); return all.length ? fmtIn(new Date(all[0].due)) : null; }
+    function nextDueLabel(mode, q) { q = q || studyQueue(mode); return q.future.length ? fmtIn(new Date(q.future[0].due)) : null; }
 
     // ---- render ----
     var view = document.getElementById("view");
@@ -5445,12 +5642,13 @@
     function route() {
       var code = location.hash.replace(/^#/, ""), lang = LANG_BY[code] ? code : null;
       if (lang !== S.lang) {
-        S.lang = lang; S.tab = "crear"; S.editing = null; S.formGender = ""; S.formEsGender = ""; S.suggErr = null; S.formWikt = null; S.sugg = null; S.sents = null; S.suggBusy = false; S.confirmDelete = null; S.expanded = {}; S.deckShown = DECK_PAGE;
+        S.lang = lang; S.tab = "crear"; S.editing = null; S.formGender = ""; S.formEsGender = ""; S.suggErr = null; S.formWikt = null; S.sugg = null; S.sents = null; S.suggBusy = false; S.confirmDelete = null; S.expanded = {}; S.deckShown = DECK_PAGE; S.undo = [];
         S.current = null; S.flipped = false; S.studyAhead = false; S.mode = "word";
         bindLang(); window.scrollTo(0, 0);
         if (lang && initDone) { if (loaded[lang]) syncFromFile(); else openLang(lang); }
       }
       updateSibling();
+      updateTtsClass();
       renderBanners();
       document.getElementById("picker").hidden = !!lang;
       document.getElementById("app").hidden = !lang;
@@ -5503,7 +5701,7 @@
         txt = "<b>No se pudo escribir en la carpeta " + nm + ".</b> Mientras tanto tus cambios solo se guardan en este navegador.";
         acts = b("reconnect", "Reconectar", true) + b("pick-folder", "Elegir otra");
       } else {
-        txt = "<b>Este navegador no puede guardar en una carpeta.</b> Usa Chrome o Edge, o descarga copias de seguridad desde Actividad.";
+        txt = "<b>Este navegador no puede guardar en una carpeta.</b> Usa Chrome o Edge de escritorio, o descarga copias de seguridad desde Actividad. En el iPad, abre la web desde «Añadir a pantalla de inicio» para que Safari no borre los datos por falta de uso.";
         acts = '<button class="databar-x" data-act="bar-off" aria-label="Cerrar aviso">×</button>';
       }
       return '<div class="databar"><div class="databar-txt">' + txt + '</div><div class="databar-act">' + acts + "</div></div>";
@@ -6055,11 +6253,18 @@
         "<li>El botón <b>Sugerir frases</b> (la burbuja dentro de la oración en español) trae frases reales de Tatoeba que contienen la palabra y, si has rellenado las dos palabras, solo las que la usan con el significado de tu traducción (si Tatoeba falla o no tiene la palabra, ejemplos del Wikcionario, con traducción al inglés: el español se traduce solo al elegirlos); el botón <b>Traducir</b> (icono de idiomas, aparece en la oración que está vacía) traduce la que hayas escrito (MyMemory). Las traducciones automáticas pueden fallar: revísalas antes de guardar. En portugués se avisa de las frases con rasgos de Brasil. Las oraciones se guardan sin el punto final (se conservan «…», «?», «!» y los signos combinados).</li>" +
         "<li>El botón ✨ abre ChatGPT con una petición que se adapta a lo que hayas rellenado: con una sola palabra, la traduce y propone una frase; con las dos, genera una frase con ese significado concreto; con oraciones, las traduce o revisa la traducción. Al pasar el ratón ves qué va a pedir.</li></ul>" +
         "<h3>Estudiar</h3>" +
-        "<p>Se muestra la palabra (o la frase) en español, pulsas «Mostrar respuesta» y la valoras con <i>Otra vez, Difícil, Bien</i> o <i>Fácil</i>. La app programa el siguiente repaso con el algoritmo FSRS: cuanto mejor la sabes, más tarde vuelve. Las tarjetas con plazo de días tocan desde las 4:00 de su día, y el día nuevo (también para los contadores de Actividad) empieza a las 4:00: lo que repases de madrugada cuenta como el día anterior. Hay dos modos, Palabras y Frases. Atajos: punto o espacio para mostrar la respuesta; J, K, L, Ñ (o 0, 1, 2, 3) para valorar.</p>" +
+        "<p>Se muestra la palabra (o la frase) en español, pulsas «Mostrar respuesta» y la valoras con <i>Otra vez, Difícil, Bien</i> o <i>Fácil</i>. La app programa el siguiente repaso con el algoritmo FSRS: cuanto mejor la sabes, más tarde vuelve. Las tarjetas con plazo de días tocan desde las 4:00 de su día, y el día nuevo (también para los contadores de Actividad) empieza a las 4:00: lo que repases de madrugada cuenta como el día anterior. Hay dos modos, Palabras y Frases (y, si lo activas, Inversa: del idioma al español). Atajos: punto o espacio para mostrar la respuesta; J, K, L, Ñ (o 0, 1, 2, 3) para valorar; Z para deshacer el último repaso; P para oír la pronunciación.</p>" +
+        "<ul>" +
+        "<li><b>Palabras nuevas por día:</b> en Actividad → Estudio eliges cuántas se te ofrecen cada día (por defecto 20, o sin límite); el resto espera su turno. Si te quedas con ganas, el botón «Estudiar nuevas más» añade 10. Los repasos que toquen salen siempre.</li>" +
+        "<li><b>Deshacer</b> (Z o el botón «Deshacer») anula los últimos repasos de esta sesión, de uno en uno, mientras sigas en este idioma.</li>" +
+        "<li><b>Pronunciación:</b> usa la voz que tenga tu navegador para el idioma. Si no hay ninguna, no aparecen los botones de audio.</li>" +
+        "<li><b>Actividad</b> muestra tu racha, la retención de los últimos 30 días y cuántos repasos vencen en los próximos 7.</li></ul>" +
         "<h3>Dónde se guardan tus datos</h3>" +
         '<div class="info-status"><i class="sdot' + (ok ? " ok" : "") + '"></i><span>' + status + "</span></div>" +
         "<p>Tus palabras, frases y el estado de cada repaso se guardan en una <b>carpeta de tu disco que eliges tú</b>, con un archivo por idioma: " + esc(files) + ". Cada palabra nueva o repaso se escribe al instante. Son archivos de texto (JSON): puedes copiarlos como copia de seguridad o guardarlos en una carpeta de OneDrive.</p>" +
         "<p>El navegador solo conserva una copia de apoyo, de modo que <b>borrar la caché no pierde nada</b>: vuelves a elegir la carpeta y todo reaparece. Esto funciona en Chrome y Edge de escritorio; el permiso sobre la carpeta puede pedirse de nuevo al abrir una sesión nueva. En Actividad puedes cambiar de carpeta, exportar e importar copias.</p>" +
+        "<h3>En el iPad o el móvil</h3>" +
+        "<p>Safari no puede guardar en una carpeta. Abre la web publicada y usa «Añadir a pantalla de inicio»: funciona sin conexión y Safari no borra sus datos por falta de uso. Para pasar tu progreso entre dispositivos usa Exportar JSON e Importar JSON en Actividad: al importar se fusiona (se quedan los repasos más recientes), no se pierde nada. También puedes importar listas de palabras pegando texto o un CSV.</p>" +
         "<h3>Qué sale de tu navegador</h3>" +
         "<p>Vocabulando no usa ningún servidor propio. Solo se consulta internet para ayudarte: el <b>Wikcionario</b> (la palabra en español que escribes, y la palabra del idioma para el género) y, únicamente cuando pulsas sus botones, <b>Tatoeba</b> y <b>MyMemory</b> (frases; si Tatoeba falla, ejemplos del Wikcionario). Las consultas automáticas se pueden apagar en Actividad.</p>" +
         '<div class="diag"><button type="button" class="btn btn-ghost btn-sm" id="diagBtn">Probar conexión</button><div id="diagOut" class="diag-out" aria-live="polite"></div></div>' +
@@ -6263,6 +6468,7 @@
       return '<li class="row' + (e.id === S.editing ? " is-editing" : "") + '" data-id="' + esc(e.id) + '">' +
         '<div class="row-top"><div class="row-main">' + main + '</div>' +
         '<div class="row-meta">' +
+        '<button class="say" data-say="' + esc(e.id) + '" aria-label="Escuchar" title="Escuchar">' + ICON_SPEAK + "</button>" +
         (hasS ? '<button class="chip-btn' + (open ? " on" : "") + '" data-frase="' + esc(e.id) + '">frase</button>' : "") +
         '<button class="edit" data-edit="' + esc(e.id) + '" aria-label="Editar">✎</button>' +
         '<button class="del" data-del="' + esc(e.id) + '" aria-label="Eliminar">×</button></div></div>' +
@@ -6353,49 +6559,92 @@
         "</section>";
     }
 
+    // ---- pronunciación: voces del propio navegador (la app no envía nada a internet para esto) ----
+    var TTS_TAGS = { fr: ["fr-FR", "fr"], it: ["it-IT", "it"], pt: ["pt-PT", "pt-BR", "pt"], ca: ["ca-ES", "ca"], pl: ["pl-PL", "pl"], en: ["en-GB", "en-US", "en"], de: ["de-DE", "de"], el: ["el-GR", "el"] };
+    var ttsVoices = [];
+    function ttsLoad() {
+      try { ttsVoices = (window.speechSynthesis && typeof SpeechSynthesisUtterance !== "undefined") ? (window.speechSynthesis.getVoices() || []) : []; } catch (e) { ttsVoices = []; }
+      updateTtsClass();
+    }
+    function ttsInit() {
+      if (!window.speechSynthesis) return;
+      ttsLoad();
+      try { if (window.speechSynthesis.addEventListener) window.speechSynthesis.addEventListener("voiceschanged", ttsLoad); else window.speechSynthesis.onvoiceschanged = ttsLoad; } catch (e) { }
+    }
+    function ttsVoice(code) { // la mejor voz para el idioma, o null: sin voz de ese idioma no se muestran los botones (mejor nada que mal pronunciado)
+      var tags = TTS_TAGS[code] || [code], best = null;
+      for (var i = 0; i < tags.length && !best; i++) {
+        var t = tags[i].toLowerCase(), pre = t.split("-")[0], regional = t.indexOf("-") > 0;
+        var m = ttsVoices.filter(function (v) { var l = String(v.lang || "").replace("_", "-").toLowerCase(); return regional ? l === t : (l === pre || l.indexOf(pre + "-") === 0); });
+        if (m.length) best = m.filter(function (v) { return v.localService; })[0] || m[0];
+      }
+      return best;
+    }
+    function updateTtsClass() { document.body.classList.toggle("tts-on", !!(S.lang && ttsVoice(S.lang))); }
+    function speakClean(t) { return String(t || "").replace(/\([^)]*\)/g, " ").replace(/\s*\/\s*/g, ", ").replace(/\s+/g, " ").trim(); }
+    function speak(text) {
+      var v = S.lang && ttsVoice(S.lang), t = speakClean(text);
+      if (!v || !t) return false;
+      try { window.speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(t); u.voice = v; u.lang = v.lang; u.rate = 0.9; window.speechSynthesis.speak(u); return true; } catch (e) { return false; }
+    }
+    function cardTarget(e, mode) { return mode === "sentence" ? e.deSent : e.deWord; } // lo que se pronuncia: siempre el idioma que estudias
+    function flipCard() {
+      S.flipped = true; render();
+      if (S.autoSpeak && S.current) speak(cardTarget(findEntry(S.current.entry.id) || S.current.entry, S.mode));
+    }
+    function modeNoun(m) { return m === "sentence" ? "frases" : "palabras"; }
+
     function renderEstudiar() {
-      var mode = S.mode, cands = candidates(mode), due = dueQueue(mode).length;
-      var news = cands.filter(function (c) { return c.isNew; }).length;
-      var header = '<div class="seg">' +
-        '<button class="seg-btn ' + (mode === "word" ? "is-active" : "") + '" data-mode="word">Palabras</button>' +
-        '<button class="seg-btn ' + (mode === "sentence" ? "is-active" : "") + '" data-mode="sentence">Frases</button></div>' +
-        '<div class="stats"><span class="stat"><b>' + due + '</b> por repasar</span>' +
-        '<span class="stat stat-muted"><b>' + news + '</b> nuevas</span></div>';
+      if (S.mode === "rev" && !S.revOn) S.mode = "word";
+      var mode = S.mode, q = studyQueue(mode);
+      var canUndo = S.undo.length && S.undo[S.undo.length - 1].code === S.lang;
+      var segs = [["word", "Palabras"], ["sentence", "Frases"]].concat(S.revOn ? [["rev", "Inversa"]] : []);
+      var header = '<div class="seg">' + segs.map(function (g) {
+          return '<button class="seg-btn ' + (mode === g[0] ? "is-active" : "") + '" data-mode="' + g[0] + '">' + g[1] + "</button>";
+        }).join("") + "</div>" +
+        '<div class="stats"><span class="stat"><b>' + q.reviews.length + '</b> por repasar</span>' +
+        '<span class="stat stat-muted"><b>' + q.news.length + "</b> " + (q.news.length === 1 ? "nueva" : "nuevas") + (S.newPerDay ? " hoy" : "") + "</span>" +
+        (q.waiting ? '<span class="stat stat-muted">' + q.waiting + " en espera</span>" : "") +
+        (canUndo ? '<button class="link-btn undo-btn" id="undoBtn" title="Deshacer el último repaso (Z)">↶ Deshacer</button>' : "") + "</div>";
       var body;
-      if (!cands.length) {
+      if (!q.all.length) {
         body = '<div class="empty">' + (mode === "sentence"
           ? "No hay frases guardadas. Añade una oración de ejemplo al crear una palabra."
           : "El mazo está vacío. Ve a <b>Crear</b> para añadir palabras.") + "</div>";
       } else {
         if (!S.current) pickNext();
         if (!S.current) {
-          var nx = nextDueLabel(mode);
+          var nx = nextDueLabel(mode, q);
           body = '<div class="empty done"><div class="done-mark">✓</div>' +
             "<p>Todo al día en este modo.</p>" +
+            (q.waiting ? '<p class="muted">Hoy ya has visto ' + newToday(mode) + " " + modeNoun(mode) + " nuevas (tope diario). Quedan " + q.waiting + " en espera: mañana, desde las 4:00, se te ofrecerán de nuevo.</p>" : "") +
             (nx ? '<p class="muted">Próximo repaso en ' + nx + ".</p>" : "") +
-            '<button class="btn btn-ghost" id="ahead">Repasar de todos modos</button></div>';
+            (q.waiting ? '<button class="btn btn-primary" id="moreNew">Estudiar ' + Math.min(10, q.waiting) + " nuevas más</button>" : "") +
+            (q.future.length ? '<button class="btn btn-ghost" id="ahead">Repasar de todos modos</button>' : "") + "</div>";
         } else { body = renderCard(); }
       }
       return '<section class="study">' + header + body + "</section>";
     }
 
     function renderCard() {
-      var e = findEntry(S.current.entry.id) || S.current.entry, mode = S.mode;
-      var front = mode === "word" ? e.esWord : e.esSent;
-      var back = mode === "word" ? e.deWord : e.deSent;
-      var sw = mode === "word"
+      var e = findEntry(S.current.entry.id) || S.current.entry, mode = S.mode, isSent = mode === "sentence", isRev = mode === "rev";
+      var front = isSent ? e.esSent : isRev ? e.deWord : e.esWord;
+      var back = isSent ? e.deSent : isRev ? e.esWord : e.deWord;
+      var say = (isRev || S.flipped) ? '<button class="say k-say" data-say="card" aria-label="Escuchar" title="Escuchar (P)">' + ICON_SPEAK + "</button>" : "";
+      var sw = !isSent
         ? '<button class="switch' + (S.autoSentence ? " on" : "") + '" id="autoSent" role="switch" aria-checked="' + (S.autoSentence ? "true" : "false") + '"><span class="switch-label">Frase</span><span class="switch-track"><span class="switch-thumb"></span></span></button>'
         : "";
-      var inner = '<div class="k-head"><div class="k-tag">' + (mode === "word" ? "palabra" : "frase") + " · es → " + S.lang + "</div>" + sw + "</div>" +
-        '<div class="k-front"' + (mode === "word" ? esGenderStyle(e) + ">" + esc(front) : ">" + hlHTML(front, e.esWord, esGenderInfo(e).g, "es")) + "</div>";
+      var tag = (isSent ? "frase" : "palabra") + " · " + (isRev ? S.lang + " → es" : "es → " + S.lang);
+      var inner = '<div class="k-head"><div class="k-tag">' + tag + '</div><div class="k-tools">' + say + sw + "</div></div>" +
+        '<div class="k-front"' + (isSent ? ">" + hlHTML(front, e.esWord, esGenderInfo(e).g, "es") : (isRev ? genderStyle(e) : esGenderStyle(e)) + ">" + esc(front)) + "</div>";
       if (!S.flipped) {
         inner += '<button class="btn btn-primary reveal" id="show">Mostrar respuesta</button>';
       } else {
         inner += '<div class="k-divider"></div>';
-        inner += mode === "word"
-          ? '<div class="k-back"' + genderStyle(e) + ">" + esc(back) + "</div>"
-          : '<div class="k-back k-back-sent">' + hlHTML(back, e.deWord, genderInfo(e).g, S.lang) + "</div>";
-        if (mode === "word" && e.esSent && e.deSent) {
+        inner += isSent
+          ? '<div class="k-back k-back-sent">' + hlHTML(back, e.deWord, genderInfo(e).g, S.lang) + "</div>"
+          : '<div class="k-back"' + (isRev ? esGenderStyle(e) : genderStyle(e)) + ">" + esc(back) + "</div>";
+        if (!isSent && e.esSent && e.deSent) {
           inner += '<button class="link-btn" id="seeSent">' + (S.showSentence ? "Ocultar frase" : "Ver frase") + "</button>";
           if (S.showSentence) {
             inner += '<div class="k-sent"><span class="k-sent-es">' + hlHTML(e.esSent, e.esWord, esGenderInfo(e).g, "es") + "</span>" +
@@ -6413,6 +6662,58 @@
       return '<div class="karte ' + (S.flipped ? "is-flipped" : "") + '">' + inner + "</div>";
     }
 
+    function switchBtn(id, on, label) {
+      return '<button class="switch' + (on ? " on" : "") + '" id="' + id + '" role="switch" aria-checked="' + (on ? "true" : "false") + '"><span class="switch-label">' + label + '</span><span class="switch-track"><span class="switch-thumb"></span></span></button>';
+    }
+    function streakDays() { // días de estudio seguidos con algún repaso; sigue viva si hoy aún no has repasado pero ayer sí
+      var by = S.stats.byDay || {}, d = studyDay(Date.now()), n = 0;
+      var key = function (x) { return x.getFullYear() + "-" + pad(x.getMonth() + 1) + "-" + pad(x.getDate()); };
+      if (!by[key(d)]) d.setDate(d.getDate() - 1);
+      while (by[key(d)]) { n++; d.setDate(d.getDate() - 1); }
+      return n;
+    }
+    function retention30() { // de los repasos de tarjetas ya en repaso (no nuevas ni en aprendizaje), qué parte no fue «Otra vez»
+      var cut = Date.now() / 1000 - 30 * 86400, n = 0, good = 0;
+      (bucket(S.lang).log || []).forEach(function (r) { if (r[0] >= cut && r[3] === FS.State.Review) { n++; if (r[2] >= 2) good++; } });
+      return { n: n, pct: n >= 20 ? Math.round(100 * good / n) : null };
+    }
+    function forecast(days) { // repasos que vencen cada día de estudio (los atrasados cuentan en hoy)
+      var out = [], base = studyDayStart(Date.now());
+      for (var i = 0; i < days; i++) out.push(0);
+      Object.keys(S.review).forEach(function (k) {
+        var raw = S.review[k];
+        if (!raw || raw.state === FS.State.New || (k.slice(-4) === ":rev" && !S.revOn)) return;
+        var off = Math.round((dueAt(reviveCard(raw)) - base) / 86400000);
+        if (off < 0) off = 0;
+        if (off < days) out[off]++;
+      });
+      return out;
+    }
+    function statsPanel() {
+      var st = streakDays(), r = retention30(), fc = forecast(7), mx = Math.max.apply(null, fc.concat([1])), base = studyDay(Date.now());
+      function card(label, big, sub) { return '<div class="act-card"><div class="act-label">' + label + '</div><div class="act-nums"><div class="act-n"><b>' + big + '</b></div></div><div class="st-sub">' + sub + "</div></div>"; }
+      var bars = fc.map(function (n, i) {
+        var d = new Date(base.getTime()); d.setDate(d.getDate() + i);
+        var lab = i === 0 ? "hoy" : i === 1 ? "mañ." : d.toLocaleDateString("es-ES", { weekday: "short" }).replace(".", "");
+        return '<div class="fc-col"><span class="fc-n">' + n + '</span><div class="fc-bar"><i style="height:' + Math.round(100 * n / mx) + '%"></i></div><span class="fc-d">' + lab + "</span></div>";
+      }).join("");
+      return '<section class="panel"><h2 class="panel-title">Progreso · ' + LANG_BY[S.lang].name + '</h2><div class="st-grid">' +
+        card("Racha", st, st === 1 ? "día seguido" : "días seguidos") +
+        card("Retención", r.pct === null ? "—" : r.pct + " %", r.pct === null ? "faltan repasos de los últimos 30 días" : "de " + r.n + " repasos en 30 días") +
+        card("Repasos hoy", fc[0], "pendientes de repasar") + "</div>" +
+        '<div class="act-label" style="margin:22px 0 4px">Próximos 7 días</div><div class="fc">' + bars + "</div></section>";
+    }
+    function studyPanel() {
+      var opts = [5, 10, 15, 20, 30, 50, 0].map(function (n) { return '<option value="' + n + '"' + (S.newPerDay === n ? " selected" : "") + ">" + (n ? n + " por día" : "Sin límite") + "</option>"; }).join("");
+      var hasVoice = !!ttsVoice(S.lang);
+      return '<section class="panel"><h2 class="panel-title">Estudio</h2>' +
+        '<p class="act-sub" style="margin-top:0">Las palabras nuevas se introducen poco a poco: no se te ofrecen más de las que elijas cada día (el día empieza a las 4:00). Los repasos que toquen salen siempre.</p>' +
+        '<label class="lab" for="newPerDay">Palabras nuevas</label><select id="newPerDay" class="in sel">' + opts + "</select>" +
+        '<div class="sw-row">' + switchBtn("revSw", S.revOn, "Practicar también del idioma al español (tarjeta inversa)") + "</div>" +
+        (hasVoice ? '<div class="sw-row">' + switchBtn("autoSpeakSw", S.autoSpeak, "Pronunciar al mostrar la respuesta") + "</div>"
+          : '<p class="act-sub" style="margin:14px 0 0">Este navegador no tiene una voz para ' + langName() + ', así que no hay botones de pronunciación.</p>') +
+        "</section>";
+    }
     function renderActividad() {
       var tk = todayKey();
       var addedToday = S.deck.filter(function (e) { return dateKey(e.createdAt) === tk; }).length;
@@ -6432,7 +6733,7 @@
         '<div class="act-grid">' +
         card("Palabras añadidas", addedToday, addedTotal) +
         card("Palabras repasadas", revToday, revTotal) +
-        "</div></section>" + suggPanel() + genderPanel() + filePanel() + backupPanel();
+        "</div></section>" + statsPanel() + studyPanel() + suggPanel() + genderPanel() + filePanel() + backupPanel();
     }
     function suggPanel() {
       return '<section class="panel">' +
@@ -6473,13 +6774,20 @@
     function backupPanel() {
       return '<section class="panel">' +
         '<h2 class="panel-title">Copia de seguridad</h2>' +
-        '<p class="act-sub">Descarga el vocabulario de ' + langName() + ' o restáuralo desde un archivo (acepta también copias y archivos de datos de versiones anteriores).</p>' +
+        '<p class="act-sub">Descarga el vocabulario de ' + langName() + ' o restáuralo desde un archivo. Al importar se fusiona con lo que ya tienes: se añaden las palabras que faltan y, en las tarjetas que coinciden, se queda el repaso más reciente (sirve para pasar tu progreso de un dispositivo a otro). Acepta también copias y archivos de datos de versiones anteriores.</p>' +
         '<div class="backup-row">' +
         '<button class="btn btn-ghost" id="expJson">Exportar JSON</button>' +
         '<button class="btn btn-ghost" id="expCsv">Exportar CSV</button>' +
         '<button class="btn btn-ghost" id="impBtn">Importar JSON</button>' +
+        '<button class="btn btn-ghost" id="impListBtn">Importar lista</button>' +
         "</div>" +
         '<input type="file" id="impFile" accept=".json,application/json" hidden />' +
+        '<div class="list-imp" id="listImp" hidden>' +
+        '<p class="act-sub" style="margin-top:0">Una palabra por línea: <b>español ; ' + langName() + '</b> y, si quieres, <b>; frase en español ; frase en ' + langName() + '</b>. Vale separar con punto y coma, tabulador o barra | (también sirve el CSV de «Exportar CSV»). Las palabras repetidas se omiten.</p>' +
+        '<textarea id="listText" class="in" rows="6" spellcheck="false" autocomplete="off" placeholder="la casa ; (la palabra en ' + langName() + ')"></textarea>' +
+        '<div class="backup-row"><button class="btn btn-ghost btn-sm" id="listFile">Elegir archivo…</button><button class="btn btn-primary btn-sm" id="listCheck">Revisar</button></div>' +
+        '<input type="file" id="listFileIn" accept=".csv,.txt,text/csv,text/plain" hidden />' +
+        '<div id="listPrev"></div></div>' +
         "</section>";
     }
 
@@ -6577,17 +6885,33 @@
       var seg = t.closest(".seg-btn");
       if (seg) { S.mode = seg.dataset.mode; S.studyAhead = false; S.current = null; render(); return; }
       if (t.closest("#ahead")) { S.studyAhead = true; pickNext(); render(); return; }
-      if (t.closest("#show")) { S.flipped = true; render(); return; }
+      if (t.closest("#moreNew")) { var xk = S.lang + "|" + modeKey(S.mode); S.newExtra[xk] = (S.newExtra[xk] || 0) + 10; S.current = null; render(); return; }
+      if (t.closest("#undoBtn")) { undoLast(); return; }
+      var sy = t.closest("[data-say]");
+      if (sy) { var sid = sy.getAttribute("data-say"), se = sid === "card" ? (S.current && (findEntry(S.current.entry.id) || S.current.entry)) : findEntry(sid); if (se) speak(sid === "card" ? cardTarget(se, S.mode) : se.deWord); return; }
+      if (t.closest("#revSw")) { S.revOn = !S.revOn; lsSet(K_REV, S.revOn ? "1" : "0"); if (!S.revOn && S.mode === "rev") { S.mode = "word"; S.current = null; } render(); return; }
+      if (t.closest("#autoSpeakSw")) { S.autoSpeak = !S.autoSpeak; lsSet(K_SPEAK, S.autoSpeak ? "1" : "0"); render(); return; }
+      if (t.closest("#show")) { flipCard(); return; }
       if (t.closest("#seeSent")) { S.showSentence = !S.showSentence; render(); return; }
       if (t.closest("#autoSent")) { S.autoSentence = !S.autoSentence; S.showSentence = S.autoSentence; lsSet(K_AUTO, S.autoSentence ? "1" : "0"); render(); return; }
       if (t.closest("#dirToggle")) { S.deckDir = S.deckDir === "es-it" ? "it-es" : "es-it"; render(); return; }
       if (t.closest("#expJson")) { exportJSON(); return; }
       if (t.closest("#expCsv")) { exportCSV(); return; }
+      if (t.closest("#impListBtn")) { var lbox = document.getElementById("listImp"); if (lbox) { lbox.hidden = !lbox.hidden; if (!lbox.hidden) document.getElementById("listText").focus(); } return; }
+      if (t.closest("#listFile")) { var lf = document.getElementById("listFileIn"); if (lf) { lf.onchange = function () { if (lf.files && lf.files[0]) { var f0 = lf.files[0]; lf.value = ""; f0.text().then(function (tx) { document.getElementById("listText").value = tx; checkList(); }); } }; lf.click(); } return; }
+      if (t.closest("#listCheck")) { checkList(); return; }
+      if (t.closest("#listAdd")) { addList(); return; }
       if (t.closest("#impBtn")) { var fi = document.getElementById("impFile"); if (fi) { fi.onchange = function () { if (fi.files && fi.files[0]) { var f = fi.files[0]; fi.value = ""; importJSON(f); } }; fi.click(); } return; }
       var rb = t.closest("[data-rate]");
       if (rb && S.current) { await rateCurrent(rb.getAttribute("data-rate"), rb); return; }
     });
 
+    view.addEventListener("change", function (ev) {
+      if (ev.target && ev.target.id === "newPerDay") {
+        S.newPerDay = Math.max(0, parseInt(ev.target.value, 10) || 0); lsSet(K_NEWDAY, String(S.newPerDay)); S.current = null;
+        toast(S.newPerDay ? "Hasta " + S.newPerDay + " palabras nuevas al día" : "Sin límite de palabras nuevas");
+      }
+    });
     view.addEventListener("input", function (ev) {
       if (ev.target && (ev.target.id === "esWord" || ev.target.id === "deWord")) updateDupUI();
       if (ev.target && ev.target.id === "deWord") { updateGenderUI(); scheduleFormLookup(); updateSuggUI(); }
@@ -6612,10 +6936,12 @@
       if (ev.key === "Enter" && ev.target && /^(esSent|deSent)$/.test(ev.target.id)) { ev.preventDefault(); return; }
       if (ev.key === "Escape") { closeGenderMenu(); closeInfo(); }
       if (S.confirmDelete) { if (ev.key === "Escape") { S.confirmDelete = null; render(); } return; }
+      if (S.lang && S.tab === "estudiar" && (ev.key === "z" || ev.key === "Z") && !ev.altKey && !(ev.target && /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName))) { ev.preventDefault(); undoLast(); return; }
       if (!S.lang || S.tab !== "estudiar" || !S.current) return;
-      if (ev.target && /^(INPUT|TEXTAREA)$/.test(ev.target.tagName)) return;
+      if (ev.target && /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
+      if ((ev.key === "p" || ev.key === "P") && !ev.ctrlKey && !ev.metaKey && !ev.altKey && (S.flipped || S.mode === "rev")) { speak(cardTarget(findEntry(S.current.entry.id) || S.current.entry, S.mode)); return; }
       if (!S.flipped) {
-        if (ev.key === "." || ev.key === " ") { ev.preventDefault(); S.flipped = true; render(); }
+        if (ev.key === "." || ev.key === " ") { ev.preventDefault(); flipCard(); }
         return;
       }
       var map = { "j": "Again", "0": "Again", "k": "Hard", "1": "Hard", "l": "Good", "2": "Good", "ñ": "Easy", "3": "Easy" };
@@ -6648,6 +6974,15 @@
       S.autoSentence = lsGet(K_AUTO) === "1";
       S.autoGen = lsGet(K_AUTOGEN) !== "0";
       S.autoSugg = lsGet(K_AUTOSUGG) !== "0";
+      var npd = lsGet(K_NEWDAY); S.newPerDay = npd === null ? 20 : Math.max(0, parseInt(npd, 10) || 0); // 0 = sin límite
+      S.revOn = lsGet(K_REV) === "1";
+      S.autoSpeak = lsGet(K_SPEAK) === "1";
+      ttsInit();
+      try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { } // pide que el navegador no borre los datos locales
+      if (/^https?:$/.test(location.protocol)) { // servida como web: instalable y con copia sin conexión (abierta como archivo no hace falta)
+        var ml = document.createElement("link"); ml.rel = "manifest"; ml.href = "manifest.webmanifest"; document.head.appendChild(ml);
+        if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost" || location.hostname === "127.0.0.1")) navigator.serviceWorker.register("sw.js").catch(function () { });
+      }
       migrateOldCache();
       renderBanners();
       route();
