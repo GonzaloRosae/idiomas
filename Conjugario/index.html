@@ -737,6 +737,11 @@ body.vcb .chip.gold:hover{border-color:var(--gold-fg)}
 .goldnote.soft{background:var(--foam);border:1px dashed var(--hair-2);color:var(--ink-soft)}
 .goldnote .gstar{flex:none;width:20px;height:20px;margin-top:1px}
 .goldnote .gstar svg{width:100%;height:100%;display:block}
+:root{--gold-text:#7A5200}
+:root[data-theme="dark"]{--gold-text:#F6D777}
+.choice .cstar{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-family:var(--mono);font-size:12.5px;color:var(--ink-soft)}
+.choice .cstar.on{color:var(--gold-text);font-weight:600}
+.retrynote{font-size:13px;color:var(--ink-soft);margin:0 0 12px}
 body.vcb .mode{border:1px solid var(--line);background:var(--chipbg);box-shadow:none;border-radius:10px;font-family:var(--text);font-weight:600;color:var(--ink)}
 body.vcb .mode:hover{border-color:var(--accent)}
 body.vcb .mode[aria-selected="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
@@ -901,7 +906,7 @@ body.vcb footer{font-family:var(--mono);font-size:11px;letter-spacing:.04em;colo
   </div>
   <footer>
     <span>Conjugario · sala de conjugación</span>
-    <span id="footRight" hidden><button class="btn small" id="btnReset" title="Reinicia los aciertos y repasos de esta sesión. Los tiempos dorados se conservan.">Reiniciar sesión</button></span>
+    <span id="footRight" hidden><button class="btn small" id="btnReset" title="Reinicia los aciertos de esta sesión. Los tiempos dorados y las formas falladas se conservan.">Reiniciar sesión</button></span>
   </footer>
 </div>
 <script>
@@ -3952,7 +3957,7 @@ const S  = () => state.byLang[state.lang];
 /* =========================================================
    8. ESTADO
    ========================================================= */
-const state = { lang:null, tab:'theory', mode:'table', current:null, includeIrregulars:true, dictIrregulars:true, slowAudio:false, byLang:{}, timer:null, testSession:null, examSession:null };
+const state = { lang:null, tab:'theory', mode:'table', current:null, includeIrregulars:true, mix:false, dictIrregulars:true, slowAudio:false, byLang:{}, timer:null, testSession:null, examSession:null };
 function clearAdvance(){ if(state.timer){ clearTimeout(state.timer); state.timer = null; } }
 function firstUnlockedTense(code){
   const t = LANGS[code].tenses.find(isUnlocked);
@@ -4034,6 +4039,7 @@ function progApply(code){
   });
 }
 function progRefreshUI(){
+  buildWelcome();
   if(!state.lang) return;
   renderSubtabs();
   if(state.tab === 'practice' && !state.testSession && !state.examSession) updateTestCta(T(S().currentTense));
@@ -4054,6 +4060,79 @@ function goldNote(sess, t){
         : 'Para dejar «' + esc(t.name) + '» en dorado ★ hay que superar el test final (nota necesaria: ' + lim + ').') + '</div>';
   return box;
 }
+/* =========================================================
+   FORMAS FALLADAS: lo que fallas (verbo, persona y tiempo) se recuerda de un día para otro
+   localStorage «conjugario:fallos» → { v:1, d:{ <idioma>:{ <tiempo>:[ [infinitivo, persona, paso, 'aaaa-mm-dd'], … ] } } }
+   Al volver a practicar ese tiempo salen primero; al acertarlas se olvidan. Máximo FALLOS_MAX por tiempo y se descartan las de más de FALLOS_DIAS días.
+   ========================================================= */
+const FALLOS_KEY = 'conjugario:fallos', FALLOS_MAX = 40, FALLOS_DIAS = 45;
+const fallos = { ok:true };
+let fallosSaved = {};
+function fallosCut(){ const d = new Date(Date.now() - FALLOS_DIAS * 86400000), p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+function fallosParse(raw){   /* lee con cuidado: lo que no cuadre se ignora */
+  const out = {};
+  try{
+    const o = JSON.parse(raw);
+    if(!o || o.v !== 1 || !o.d || typeof o.d !== 'object') return out;
+    Object.keys(o.d).forEach(code => {
+      const langs = o.d[code];
+      if(!Object.prototype.hasOwnProperty.call(LANGS, code) || !langs || typeof langs !== 'object') return;
+      Object.keys(langs).forEach(tid => {
+        const arr = langs[tid];
+        if(!/^[A-Za-z0-9_-]{1,40}$/.test(tid) || !Array.isArray(arr)) return;
+        const items = arr.filter(x => Array.isArray(x) && typeof x[0] === 'string' && x[0].length < 60 && Number.isInteger(x[1]) && x[1] >= 0 && x[1] < 12 && Number.isInteger(x[2]))
+          .slice(0, FALLOS_MAX).map(x => [x[0], x[1], Math.max(1, Math.min(4, x[2])), /^\d{4}-\d{2}-\d{2}$/.test(x[3]) ? x[3] : progToday()]).filter(x => x[3] >= fallosCut());
+        if(items.length) (out[code] || (out[code] = {}))[tid] = items;
+      });
+    });
+  }catch(e){ /* ilegible: como si no hubiera nada */ }
+  return out;
+}
+function fallosLoad(){
+  let raw = null;
+  try{ raw = localStorage.getItem(FALLOS_KEY); fallos.ok = true; }catch(e){ fallos.ok = false; }
+  fallosSaved = raw ? fallosParse(raw) : {};
+}
+function fallosSave(){   /* se llama en cada fallo y en cada acierto de una forma pendiente: es poco texto */
+  const d = {}, cut = fallosCut();
+  Object.keys(state.byLang).forEach(code => {
+    const r = state.byLang[code].retry;
+    Object.keys(r).forEach(tid => {
+      const items = r[tid].filter(x => !x.day || x.day >= cut).sort((a, b) => b.step - a.step).slice(0, FALLOS_MAX);
+      if(items.length) (d[code] || (d[code] = {}))[tid] = items.map(x => [x.inf, x.i, x.step, x.day || progToday()]);
+    });
+  });
+  fallosSaved = d;
+  try{
+    if(Object.keys(d).length) localStorage.setItem(FALLOS_KEY, JSON.stringify({ v:1, d })); else localStorage.removeItem(FALLOS_KEY);
+    fallos.ok = true;
+  }catch(e){ fallos.ok = false; }
+}
+function fallosCount(){ let n = 0; Object.keys(state.byLang).forEach(c => Object.keys(state.byLang[c].retry).forEach(t => { n += state.byLang[c].retry[t].length; })); return n; }
+function fallosApply(code){   /* pasa lo guardado a la sesión: salen en cuanto toque ese tiempo */
+  const saved = fallosSaved[code]; if(!saved) return;
+  const lg = LANGS[code], r = state.byLang[code].retry;
+  lg.tenses.forEach(t => {
+    const items = saved[t.id]; if(!items || !isUnlocked(t)) return;
+    const persons = t.persons || lg.pron.map((_, i) => i), valid = new Set(t.pool.concat(lg.irr.map(v => v.inf)));
+    items.forEach(([inf, i, step, day]) => {
+      if(!persons.includes(i) || !valid.has(inf)) return;
+      const list = r[t.id] || (r[t.id] = []);
+      if(!list.some(x => x.inf === inf && x.i === i)) list.push({ inf, i, step, due:0, day });
+    });
+  });
+}
+function fallosClear(){
+  Object.keys(state.byLang).forEach(c => { state.byLang[c].retry = {}; });
+  fallosSaved = {};
+  try{ localStorage.removeItem(FALLOS_KEY); }catch(e){}
+}
+function progLang(code){   /* tiempos dorados de un idioma y tiempos que tiene */
+  let n = 0, tot = 0;
+  LANGS[code].tenses.forEach(t => { if(!isUnlocked(t)) return; tot++; if(progEntry(code, t.id)) n++; });
+  return { n, tot };
+}
+function progStarsHtml(code){ const c = progLang(code); return '<span class="cstar' + (c.n ? ' on' : '') + '">★ ' + c.n + ' de ' + c.tot + '</span>'; }
 function initLangState(code){
   const stats = {};
   LANGS[code].tenses.forEach(t => stats[t.id] = {
@@ -4064,19 +4143,23 @@ function initLangState(code){
   });
   state.byLang[code] = { currentTense:firstUnlockedTense(code), queues:{}, drillQueue:[], stats, retry:{}, turn:0 };
   progApply(code);
+  fallosApply(code);
 }
 progLoad();
+fallosLoad();
 Object.keys(LANGS).forEach(initLangState);
-/* Repetición adaptativa, solo dentro de la sesión (no se guarda nada: al recargar o con «Reiniciar sesión» empieza de cero).
-   Lo que fallas (verbo + persona + tiempo) vuelve a los 3 ejercicios; si lo vuelves a fallar, a los 5, 7, 9…; al acertarlo se olvida. */
+/* Repetición adaptativa. Lo que fallas (verbo + persona + tiempo) vuelve a los 3 ejercicios; si lo vuelves a fallar, a los 5, 7, 9…; al acertarlo se olvida.
+   Las formas falladas se guardan (ver «formas falladas») y la próxima vez que practiques ese tiempo salen primero. */
 function retryList(tid){ const st = S(); return st.retry[tid] || (st.retry[tid] = []); }
 function noteResult(tid, inf, i, ok){
   const list = retryList(tid), st = S();
   let it = list.find(x => x.inf === inf && x.i === i);
-  if(ok){ if(it) list.splice(list.indexOf(it), 1); return; }
+  if(ok){ if(it){ list.splice(list.indexOf(it), 1); fallosSave(); } return; }
   if(!it){ it = {inf, i, step:0, due:0}; list.push(it); }
   it.step = Math.min(it.step + 1, 4);
   it.due = st.turn + 2 * it.step + 1;
+  it.day = progToday();
+  fallosSave();
 }
 function dueRetry(tid, n){ const st = S(); return retryList(tid).filter(x => x.due <= st.turn).sort((a, b) => a.due - b.due).slice(0, n || 1); }
 function takeRetry(it){ it.due = S().turn + 2 * it.step + 1; }   // si no llega a contestarse, no se repite en bucle
@@ -4294,9 +4377,20 @@ function renderTheory(){
 /* =========================================================
    10. PRÁCTICA
    ========================================================= */
+/* «Mezclar tiempos»: cada ejercicio nuevo sale en un tiempo distinto del anterior, entre los disponibles del idioma */
+function pickMixTense(){
+  const pool = L().tenses.filter(isUnlocked);
+  if(pool.length < 2) return;
+  let t; do{ t = pool[Math.floor(Math.random()*pool.length)]; }while(t.id === S().currentTense);
+  S().currentTense = t.id;
+  renderSubtabs();
+  const on = document.querySelector('.chip[aria-selected="true"]');
+  if(on && on.scrollIntoView) on.scrollIntoView({block:'nearest', inline:'nearest'});   /* el botón del tiempo en uso queda a la vista */
+}
 function newExercise(){
   if(!state.lang) return;               /* el salto automático puede llegar tarde */
   clearAdvance();
+  if(state.mix) pickMixTense();
   const t = T(S().currentTense);
   S().turn++;
   if(state.mode === 'drill'){
@@ -4394,6 +4488,13 @@ function irregularSwitch(){
   lab.appendChild(cb); lab.appendChild(el('span','track')); lab.appendChild(el('span','','Incluir verbos irregulares'));
   return lab;
 }
+function mixSwitch(){
+  const lab = el('label','switch');
+  const cb = el('input'); cb.type = 'checkbox'; cb.checked = state.mix; cb.id = 'mixSw';
+  cb.onchange = () => { state.mix = cb.checked; newExercise(); };
+  lab.appendChild(cb); lab.appendChild(el('span','track')); lab.appendChild(el('span','','Mezclar tiempos'));
+  return lab;
+}
 function renderPractice(){
   const t = T(S().currentTense);
   const p = $('panelPractice');
@@ -4423,6 +4524,8 @@ function renderPractice(){
     modes.appendChild(b);
   });
   p.appendChild(modes);
+  const pend = retryList(t.id).length;
+  if(pend) p.appendChild(Object.assign(el('div','retrynote','↻ ' + pend + (pend === 1 ? ' forma fallada pendiente' : ' formas falladas pendientes') + ' en este tiempo: irán saliendo entre los ejercicios.'), {id:'retrynote'}));
   const testcta = Object.assign(el('div','testcta'), {id:'testcta'});
   p.appendChild(testcta);
   updateTestCta(t);
@@ -4569,6 +4672,7 @@ function renderPractice(){
   sol.onclick = cur.kind === 'dictation' ? revealDictation : reveal;
   ctr.appendChild(check); ctr.appendChild(next); ctr.appendChild(sol);
   if(cur.kind === 'table' || cur.kind === 'gap'){ ctr.appendChild(irregularSwitch()); }
+  ctr.appendChild(mixSwitch());
   card.appendChild(ctr);
   card.appendChild(Object.assign(el('div','banner'), {id:'banner'}));
   card.appendChild(Object.assign(el('div','explainbox'), {id:'explainbox', hidden:true}));
@@ -11607,6 +11711,7 @@ function buildWelcome(){
     b.innerHTML = FLAGS[code] +
       '<span class="cname">'+esc(lg.name)+'</span>' +
       '<span class="cnative">'+esc(lg.native)+'</span>' +
+      progStarsHtml(code) +
       '<span class="cgo">Practicar '+esc(lg.code)+' →</span>';
     b.onclick = () => chooseLang(code);
     box.appendChild(b);
@@ -11632,6 +11737,7 @@ function renderSubtabs(){
         c.setAttribute('aria-label', t.name + ', dominado');
       }
       c.onclick = () => {
+        state.mix = false;
         st.currentTense = t.id;
         if(state.tab === 'theory') renderTheory(); else newExercise();
         renderSubtabs();
@@ -11682,7 +11788,7 @@ function chooseLang(code){
   clearAdvance();
   state.lang = code;
   state.current = null;
-  state.mode = 'table';
+  state.mode = 'table'; state.mix = false;
   exStopAll(state.examSession);
   state.testSession = null; state.examSession = null;
   $('welcome').hidden = true;
@@ -11707,6 +11813,7 @@ function backToWelcome(){
   document.title = 'Conjugario';
   vcbSkin('');
   syncLangHash('');
+  buildWelcome();
   window.scrollTo({top:0});
 }
 buildWelcome();
@@ -11742,15 +11849,15 @@ function openLangMenu(){
 let infoAsk = false;   /* se está pidiendo confirmación para borrar el progreso guardado */
 function infoProgHtml(){
   let access = true; try{ localStorage.getItem(PROG_KEY); }catch(e){ access = false; }
-  const c = progCount(), ok = access && prog.ok;
+  const c = progCount(), fn = fallosCount(), ok = access && prog.ok && fallos.ok;
   const status = !ok
-    ? 'Este navegador no deja guardar datos (¿navegación privada o bloqueo del almacenamiento?). Los tiempos que dejes en dorado se verán así solo hasta que recargues o cierres la página.'
-    : c.n ? 'Llevas <b>' + c.n + ' de ' + c.tot + ' tiempos</b> en dorado, guardados en este navegador.'
-    : 'Todavía no hay ningún tiempo en dorado guardado en este navegador.';
+    ? 'Este navegador no deja guardar datos (¿navegación privada o bloqueo del almacenamiento?). Los tiempos que dejes en dorado y las formas que falles se recordarán solo hasta que recargues o cierres la página.'
+    : !c.n && !fn ? 'Todavía no hay nada guardado en este navegador: ni tiempos en dorado ni formas falladas.'
+    : 'Guardado en este navegador: <b>' + c.n + ' de ' + c.tot + ' tiempos</b> en dorado y <b>' + fn + (fn === 1 ? ' forma fallada' : ' formas falladas') + '</b> para repasar.';
   let html = '<div class="info-status"><i class="sdot' + (ok ? ' ok' : '') + '"></i><span>' + status + '</span></div>';
-  if(c.n){
+  if(c.n || fn){
     html += infoAsk
-      ? '<p>¿Seguro? Se quitarán los ' + c.n + ' tiempos en dorado de este navegador y no se puede deshacer.</p><div class="info-actions"><button type="button" class="btn small primary" id="progDelYes">Sí, borrar</button><button type="button" class="btn small" id="progDelNo">Cancelar</button></div>'
+      ? '<p>¿Seguro? Se quitarán los ' + c.n + ' tiempos en dorado y las ' + fn + ' formas falladas de este navegador, y no se puede deshacer.</p><div class="info-actions"><button type="button" class="btn small primary" id="progDelYes">Sí, borrar</button><button type="button" class="btn small" id="progDelNo">Cancelar</button></div>'
       : '<div class="info-actions"><button type="button" class="btn small" id="progDel">Borrar progreso guardado</button></div>';
   }
   return html;
@@ -11769,16 +11876,17 @@ function infoHtml(){
     '<li><b>Rellena el hueco:</b> frases con huecos que completas con la forma verbal correcta.</li>' +
     '<li><b>Verbos irregulares:</b> una sola forma de un verbo irregular, rápido y sin pensarlo mucho; si aciertas, salta solo al siguiente.</li>' +
     '<li><b>Transcripción:</b> escuchas una frase y escribes solo el verbo conjugado (modo fácil) o la frase entera (modo difícil). Puedes oírla más despacio con el botón x0.5.</li>' +
-    '<li>El interruptor «Incluir verbos irregulares» mezcla irregulares con regulares (viene activado). Pulsa «Comprobar» (o Intro): si fallas, ves la forma correcta bajo el hueco y la regla que la explica.</li></ul>' +
+    '<li>El interruptor «Incluir verbos irregulares» mezcla irregulares con regulares (viene activado). Pulsa «Comprobar» (o Intro): si fallas, ves la forma correcta bajo el hueco y la regla que la explica.</li>' +
+    '<li><b>Mezclar tiempos:</b> con este interruptor, cada ejercicio nuevo sale en un tiempo distinto de los disponibles en el idioma (el botón del tiempo en uso va cambiando). Mezclar suele fijar mejor que practicar de uno en uno. Al elegir un tiempo a mano se apaga.</li></ul>' +
     '<h3>Acentos y repetición de fallos</h3>' +
     '<p>Los acentos no cuentan, salvo donde distinguen dos formas distintas del idioma (en alemán fährt y fahrt, en portugués falámos y falamos). Si aciertas sin un acento que no era obligatorio, se acepta y se te enseña cómo se escribe.</p>' +
-    '<p>Dentro de la sesión, lo que fallas (un verbo, en una persona y un tiempo) vuelve a salir pasados 3 ejercicios; si lo fallas otra vez, a los 5, 7, 9…; al acertarlo se olvida.</p>' +
+    '<p>Lo que fallas (un verbo, en una persona y un tiempo) vuelve a salir pasados 3 ejercicios; si lo fallas otra vez, a los 5, 7, 9…; al acertarlo se olvida. Y no se pierde al cerrar: las formas falladas se guardan en este navegador (hasta 40 por tiempo y durante 45 días) y la próxima vez que practiques ese tiempo salen primero.</p>' +
     '<h3>Test final y tiempos dorados</h3>' +
     '<p>Cuando has practicado los cuatro modos de un tiempo se desbloquea su <b>test final</b> (el examen), por fases o con preguntas cerradas según el tiempo. Al terminarlo ves tu nota y tus fallos uno a uno.</p>' +
     '<p>Si lo <b>superas</b>, el botón del tiempo se vuelve <b>dorado ★</b> (dominado) y queda guardado. Se supera con la nota que marca la propia pantalla de resultados: <b>95 de 100</b> en los exámenes por fases y <b>80 %</b> (7 aciertos de 8) en los tests de preguntas cerradas. Si no llegas, o lo dejas a medias, no se guarda nada y puedes repetirlo. Un tiempo dorado no pierde el dorado por un mal intento posterior; se conserva su mejor nota (la ves al pasar el ratón por el botón).</p>' +
     '<h3>Dónde se guarda tu progreso</h3>' +
     '<div id="infoProg">' + infoProgHtml() + '</div>' +
-    '<p>Conjugario solo guarda los tiempos cuyo test final has superado, con tu mejor nota y la fecha. Se guardan en este navegador (no hay ningún servidor), así que siguen ahí al recargar o cerrar la página, pero no pasan solos de un navegador o dispositivo a otro y se pierden si borras los datos del sitio. La práctica suelta (aciertos, tablas perfectas, repetición de fallos) no se guarda: «Reiniciar sesión» la pone a cero, pero no quita los tiempos dorados.</p>' +
+    '<p>Conjugario guarda dos cosas, solo en este navegador (no hay ningún servidor): los tiempos cuyo test final has superado, con tu mejor nota y la fecha, y las formas que has fallado (verbo, persona y tiempo) para que vuelvan a salir. Siguen ahí al recargar o cerrar la página, pero no pasan solos de un navegador o dispositivo a otro y se pierden si borras los datos del sitio. Lo demás de la práctica (aciertos, tablas perfectas) no se guarda: «Reiniciar sesión» lo pone a cero, pero no quita los tiempos dorados ni las formas falladas.</p>' +
     '<h3>En el iPad o el móvil</h3>' +
     '<p>Funciona igual en cualquier navegador. Cada navegador guarda sus propios tiempos dorados. Safari puede borrar los datos de una web que lleva tiempo sin visitarse; si la añades a la pantalla de inicio, no lo hace.</p>' +
     '<h3>Qué sale de tu navegador</h3>' +
@@ -11809,6 +11917,7 @@ function infoRefreshProg(focusId){
 function progClear(){
   prog.d = {};
   try{ localStorage.removeItem(PROG_KEY); }catch(e){}
+  fallosClear();
   Object.keys(LANGS).forEach(progApply);
   progRefreshUI();
 }
