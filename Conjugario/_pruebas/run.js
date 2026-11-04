@@ -120,7 +120,7 @@ test("Repetición adaptativa · lo fallado vuelve a los 3 ejercicios, se explica
   eq(await p.evaluate(() => S().retry.present), [], "al acertarlo se olvida");
   await b(/Siguiente/).click(); await p.fill("#panelPractice input.ans", "qqq"); for (let k = 0; k < 4; k++) await b(/Comprobar/).click();
   eq(await p.evaluate(() => S().retry.present.map((x) => x.step)), [1], "pulsar «Comprobar» varias veces con la misma respuesta no lo agrava");
-  await p.click("#btnReset"); eq(await p.evaluate(() => S().retry), { present: [] }, "«Reiniciar sesión» lo borra");
+  await p.click("#btnReset"); eq(await p.evaluate(() => [S().retry.present.length, state.current.retry === true]), [1, true], "«Reiniciar sesión» no borra lo fallado: se conserva y sale primero");
   noErrors(p);
 });
 
@@ -219,12 +219,12 @@ test("Progreso · otra pestaña abierta se entera al momento y el borrado se hac
   await b.waitForFunction(() => document.querySelectorAll(".chip.gold").length === 1, null, { timeout: 4000 });
   ok(true, "la otra pestaña muestra el dorado sin recargar");
   await b.click("#infoBtn");
-  ok(/Llevas 1 de 68 tiempos/.test(await txt(b.locator("#infoProg"))), "la ayuda cuenta los tiempos dorados: «" + await txt(b.locator("#infoProg .info-status")) + "»");
+  ok(/1 de 68 tiempos en dorado y 0 formas falladas/.test(await txt(b.locator("#infoProg"))), "la ayuda cuenta los tiempos dorados: «" + await txt(b.locator("#infoProg .info-status")) + "»");
   await b.click("#progDel"); ok(await b.locator("#progDelYes").isVisible() && await b.locator(".chip.gold").count() === 1, "borrar pide confirmación y todavía no borra");
   await b.click("#progDelNo"); ok(await b.locator("#progDel").isVisible() && (await stored(b)) !== null, "«Cancelar» lo deja todo como estaba");
   await b.click("#progDel"); await b.click("#progDelYes");
   ok(await b.locator(".chip.gold").count() === 0 && (await stored(b)) === null, "«Sí, borrar» quita los dorados y lo guardado");
-  ok(/Todavía no hay ningún tiempo/.test(await txt(b.locator("#infoProg"))) && await b.locator("#progDel").count() === 0, "la ayuda lo refleja y el botón de borrar desaparece");
+  ok(/Todavía no hay nada guardado/.test(await txt(b.locator("#infoProg"))) && await b.locator("#progDel").count() === 0, "la ayuda lo refleja y el botón de borrar desaparece");
   await a.waitForFunction(() => document.querySelectorAll(".chip.gold").length === 0, null, { timeout: 4000 });
   ok(true, "y la primera pestaña también se entera");
   noErrors(a); noErrors(b);
@@ -241,7 +241,7 @@ test("Ayuda · botón «Cómo funciona» junto al del tema, con el mismo conteni
   for (const h of ["Cómo funciona Conjugario", "Teoría", "Prácticas", "Acentos y repetición de fallos", "Test final y tiempos dorados", "Dónde se guarda tu progreso", "En el iPad o el móvil", "Qué sale de tu navegador", "Créditos"])
     ok(cuerpo.includes(h), "tiene la sección «" + h + "»");
   ok(/95 de 100/.test(cuerpo) && /80 %/.test(cuerpo), "dice con qué nota se consigue el dorado");
-  ok(/Todavía no hay ningún tiempo en dorado/.test(cuerpo), "y el estado de lo guardado");
+  ok(/Todavía no hay nada guardado/.test(cuerpo), "y el estado de lo guardado");
   await p.keyboard.press("Escape"); ok(await p.locator("#infoOverlay").count() === 0 && await p.evaluate(() => document.activeElement.id) === "infoBtn", "Escape la cierra y el foco vuelve al botón");
   await p.click("#infoBtn"); await p.click("#infoClose"); ok(await p.locator("#infoOverlay").count() === 0, "la × la cierra");
   await p.click("#infoBtn"); await p.mouse.click(5, 5); ok(await p.locator("#infoOverlay").count() === 0, "pulsar fuera la cierra");
@@ -288,6 +288,110 @@ test("Idioma · la lista cabe en una pantalla de móvil", async () => {
   await p.click("#langChip");
   eq(await p.evaluate(() => { const m = document.getElementById("langMenu").getBoundingClientRect(); return [m.left >= 0, m.right <= innerWidth, document.documentElement.scrollWidth > innerWidth + 1]; }), [true, true, false], "la lista queda dentro de la pantalla");
   await p.click('.langopt[data-lang="pl"]'); eq(await p.evaluate(() => state.lang), "pl", "y se puede elegir con el dedo");
+  noErrors(p);
+});
+
+// =====================================================================================================================
+// FORMAS FALLADAS (se recuerdan de un día para otro), MEZCLAR TIEMPOS Y DORADOS POR IDIOMA
+// =====================================================================================================================
+const FKEY = "conjugario:fallos";
+const fstored = (p) => p.evaluate((k) => localStorage.getItem(k), FKEY);
+const failOne = async (p, tense) => {   // falla a propósito una forma del modo «hueco» y dice cuál
+  await p.evaluate((t) => { state.mode = "gap"; S().currentTense = t; setTab("practice"); newExercise(); }, tense);
+  const c = await p.evaluate(() => ({ v: state.current.a.inf, i: state.current.i }));
+  await p.fill("#panelPractice input.ans", "zzz"); await p.locator("#panelPractice button", { hasText: /Comprobar/ }).click();
+  return c;
+};
+
+test("Formas falladas · se guardan, vuelven al abrir otro día y se olvidan al acertarlas", async () => {
+  const p = await open("fr"); const c = await failOne(p, "present");
+  const raw = JSON.parse(await fstored(p));
+  eq([raw.v, Object.keys(raw.d), Object.keys(raw.d.fr), raw.d.fr.present.length, raw.d.fr.present[0].slice(0, 3)], [1, ["fr"], ["present"], 1, [c.v, c.i, 1]], "lo fallado queda guardado: verbo, persona, paso y fecha");
+  eq(await stored(p), null, "y eso no da ningún dorado");
+  await p.reload(); await p.waitForFunction(() => window.__booted === true);
+  eq(await p.evaluate(() => S().retry.present.map((x) => [x.inf, x.i, x.step, x.due])), [[c.v, c.i, 1, 0]], "al recargar (otro día, otra sesión) sigue pendiente y sale en cuanto toca");
+  await p.evaluate(() => { state.mode = "gap"; S().currentTense = "present"; setTab("practice"); });
+  ok(await p.evaluate((v) => state.current.retry === true && state.current.a.inf === v, c.v), "el primer ejercicio es esa forma fallada");
+  ok(/1 forma fallada pendiente/.test(await txt(p.locator("#retrynote"))), "y se avisa: «" + await txt(p.locator("#retrynote")) + "»");
+  const a = await p.evaluate(() => document.querySelector("#panelPractice input.ans").dataset.answer);
+  await p.fill("#panelPractice input.ans", a.split("|")[0]); await p.locator("#panelPractice button", { hasText: /Comprobar/ }).click();
+  eq(await fstored(p), null, "al acertarla se olvida, y con nada pendiente no queda ni la clave");
+  await p.reload(); await p.waitForFunction(() => window.__booted === true);
+  eq(await p.evaluate(() => S().retry), {}, "y al recargar ya no hay nada");
+  noErrors(p);
+});
+
+test("Formas falladas · fallar de nuevo la agrava, el botón de borrar la quita y lo ajeno o caducado se ignora", async () => {
+  const p = await open("fr"); await failOne(p, "present");
+  await p.evaluate(() => { const r = S().retry.present[0]; r.due = 0; });   // para que salga ya
+  await p.evaluate(() => { state.mode = "gap"; S().currentTense = "present"; setTab("practice"); newExercise(); });
+  ok(await p.evaluate(() => state.current.retry === true), "sale la forma pendiente");
+  await p.fill("#panelPractice input.ans", "zzz"); await p.locator("#panelPractice button", { hasText: /Comprobar/ }).click();
+  eq(JSON.parse(await fstored(p)).d.fr.present.map((x) => x[2]), [2], "fallarla otra vez sube el paso (vuelve más tarde)");
+  await p.click("#infoBtn"); ok(/1 forma fallada/.test(await txt(p.locator("#infoProg"))), "la ayuda la cuenta");
+  await p.click("#progDel"); await p.click("#progDelYes");
+  eq([await fstored(p), await p.evaluate(() => S().retry)], [null, {}], "«Borrar progreso guardado» quita también las formas falladas");
+  await p.keyboard.press("Escape");
+  const v = await p.evaluate(() => LANGS.fr.tenses.find((t) => t.id === "present").pool[0]);
+  const hoy = await p.evaluate(() => progToday());
+  const viejo = new Date(Date.now() - 80 * 86400000).toISOString().slice(0, 10);
+  await p.evaluate(([k, o]) => localStorage.setItem(k, JSON.stringify(o)), [FKEY, { v: 1, d: { fr: { present: [[v, 0, 9, "no es fecha"], ["toString", 0, 1, hoy], [v, 99, 1, hoy], [v, 1, 2, viejo], [v, 2, 2, hoy]], inexistente: [[v, 0, 1, hoy]] }, zz: { present: [[v, 0, 1, hoy]] } } }]);
+  await p.reload(); await p.waitForFunction(() => window.__booted === true);
+  eq(await p.evaluate(() => Object.fromEntries(Object.entries(S().retry).map(([k, l]) => [k, l.map((x) => [x.i, x.step])]))), { present: [[0, 4], [2, 2]] }, "solo entran las válidas (paso máximo 4, fecha corregida); caducadas, de otro idioma o con datos raros, no");
+  for (const basura of ["{roto", "null", '{"v":2,"d":{}}']) { await p.evaluate(([k, b]) => localStorage.setItem(k, b), [FKEY, basura]); await p.reload(); await p.waitForFunction(() => window.__booted === true); eq(await p.evaluate(() => S().retry), {}, "guardado ilegible «" + basura + "»: se ignora"); }
+  noErrors(p);
+});
+
+test("Formas falladas · si el navegador no deja guardar, sigue funcionando en la sesión", async () => {
+  const ctx = await browser.newContext(); ctxs.push(ctx); await ctx.route((u) => !u.href.startsWith(BASE), (r) => r.abort());
+  await ctx.addInitScript(() => { Storage.prototype.setItem = function () { throw new Error("cuota"); }; });
+  const p = await ctx.newPage(); p.errs = []; p.on("pageerror", (e) => p.errs.push(String(e)));
+  await p.goto(BASE + "index.html#fr"); await p.waitForFunction(() => window.__booted === true);
+  await failOne(p, "present");
+  eq(await p.evaluate(() => S().retry.present.length), 1, "la forma fallada se recuerda dentro de la sesión");
+  await p.click("#infoBtn"); ok(/no deja guardar datos/.test(await txt(p.locator("#infoProg"))), "y la ayuda avisa de que no se guarda");
+  noErrors(p);
+});
+
+test("Mezclar tiempos · cada ejercicio sale en un tiempo distinto y elegir uno a mano lo apaga", async () => {
+  const p = await open("fr"); await practice(p, "present", "table");
+  const mixClick = () => p.locator("label.switch", { hasText: "Mezclar tiempos" }).click();
+  ok(await p.locator("#mixSw").count() === 1 && !(await p.locator("#mixSw").isChecked()), "el interruptor existe y viene apagado");
+  const sel = () => p.evaluate(() => [S().currentTense, document.querySelectorAll('.chip[aria-selected="true"]').length, document.querySelector('.chip[aria-selected="true"]').innerText.replace(/\s+/g, " ").trim()]);
+  await mixClick();
+  const visto = new Set(), hist = [], marcados = [];
+  for (let k = 0; k < 14; k++) { const [t, n] = await sel(); hist.push(t); visto.add(t); marcados.push(n); await p.locator("#panelPractice button", { hasText: /Siguiente verbo/ }).click(); }
+  ok(marcados.every((n) => n === 1), "siempre hay un solo botón de tiempo marcado: el que se está usando");
+  ok(visto.size >= 4, "en 14 ejercicios han salido " + visto.size + " tiempos distintos");
+  ok(hist.every((t, k) => k === 0 || t !== hist[k - 1]), "ninguno se repite dos veces seguidas");
+  const ok_ = await p.evaluate(() => [S().currentTense, T(S().currentTense) && isUnlocked(T(S().currentTense))]); ok(ok_[1], "siempre uno de los disponibles");
+  await p.locator("#panelPractice button", { hasText: /Siguiente verbo/ }).click();
+  await p.evaluate(() => { document.querySelectorAll(".chip")[2].click(); });
+  ok(!(await p.evaluate(() => state.mix)) && !(await p.locator("#mixSw").isChecked()), "elegir un tiempo a mano apaga la mezcla");
+  const t0 = await p.evaluate(() => S().currentTense); await p.locator("#panelPractice button", { hasText: /Siguiente verbo/ }).click();
+  eq(await p.evaluate(() => S().currentTense), t0, "y el tiempo ya no cambia");
+  await mixClick(); await p.click('#panelPractice button[data-mode="dictation"]'); await p.click('#panelPractice button[data-mode="drill"]');
+  ok(await p.evaluate(() => state.mix), "se mantiene al cambiar de modo");
+  await p.evaluate(() => chooseLang("it")); ok(!(await p.evaluate(() => state.mix)), "al cambiar de idioma se apaga");
+  noErrors(p);
+});
+
+test("Inicio · cada idioma dice cuántos tiempos dorados lleva", async () => {
+  const p = await open();
+  const ids = await p.evaluate(() => LANGS.fr.tenses.filter(isUnlocked).slice(0, 2).map((t) => t.id)), tot = await p.evaluate(() => LANGS.fr.tenses.filter(isUnlocked).length);
+  const card = (c) => txt(p.locator('.choice[data-lang="' + c + '"] .cstar'));
+  ok(/^★ 0 de \d+$/.test(await card("fr")) && await p.locator(".cstar.on").count() === 0, "al principio, ★ 0 de " + tot + " y sin resaltar");
+  await p.evaluate(([k, i]) => localStorage.setItem(k, JSON.stringify({ v: 1, d: { fr: { [i[0]]: { best: 99, date: "2026-11-03" }, [i[1]]: { best: 96, date: "2026-11-03" } } } })), [KEY, ids]);
+  await p.reload(); await p.waitForFunction(() => window.__booted === true);
+  eq(await card("fr"), "★ 2 de " + tot, "con dos guardados: «★ 2 de " + tot + "»");
+  eq(await p.locator(".cstar.on").count(), 1, "solo se resalta el idioma que tiene dorados");
+  await p.evaluate(() => chooseLang("it")); await practice(p, "imperativo", "table"); await unlockTest(p); await p.locator("#testcta button").click(); await answerTest(p, true);
+  await p.click("#brandBtn");
+  ok(/^★ 1 de \d+$/.test(await card("it")) && /^★ 2 de/.test(await card("fr")), "al volver al inicio tras conseguir otro, se actualiza");
+  await p.click("#infoBtn"); await p.click("#progDel"); await p.click("#progDelYes");
+  ok(/^★ 0 de/.test(await card("fr")), "y al borrar el progreso vuelve a cero");
+  const help = await txt(p.locator("#infoOverlay"));
+  ok(/Mezclar tiempos/.test(help) && /formas que has fallado/.test(help), "la ayuda explica la mezcla y las formas falladas");
   noErrors(p);
 });
 
