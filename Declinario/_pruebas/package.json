@@ -1,0 +1,7 @@
+{
+  "name": "declinario-pruebas",
+  "private": true,
+  "description": "Pruebas automáticas de Declinario (navegador real con Playwright y una tabla de formas de referencia)",
+  "scripts": { "test": "node run.js" },
+  "devDependencies": { "playwright": "^1.40.0" }
+}
