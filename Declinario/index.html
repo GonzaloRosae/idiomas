@@ -1,0 +1,2395 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+/* Marca que el JavaScript funciona (sin ella se muestra el aviso «necesita JavaScript») y, si algo falla al arrancar
+   o después, enseña el motivo en #bootError en vez de dejar la pantalla vacía. */
+(function(){
+  try{ document.documentElement.className += ' js'; }catch(e){}
+  var first = null;
+  window.__booted = false;                      /* el script principal lo pone a true al terminar */
+  function device(){
+    var ua = navigator.userAgent || '', m = ua.match(/(Version|CriOS|FxiOS|EdgiOS|Chrome|Firefox)\/[\d.]+/), out = m ? m[0] : '';
+    var ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var os = ua.match(/OS (\d+[_\d]*) like Mac OS X/);
+    if(ios) out = (out ? out + ' · ' : '') + (/iPhone|iPod/.test(ua) ? 'iPhone' : 'iPad') + (os ? ' iOS ' + os[1].replace(/_/g, '.') : '');
+    return out;
+  }
+  function show(){
+    var box = document.getElementById('bootError');
+    if(!box || first === null) return;
+    var title = document.getElementById('bootErrorTitle'), det = document.getElementById('bootErrorText');
+    if(title) title.textContent = window.__booted ? 'Ha ocurrido un error inesperado.' : 'La página no ha podido arrancar bien.';
+    var v = device();
+    if(det) det.textContent = first + (v ? ' · ' + v : '');
+    box.hidden = false;
+  }
+  function note(msg){
+    msg = String(msg || '');
+    if(first !== null || !msg || msg === 'Script error.' || /ResizeObserver/.test(msg)) return;
+    first = msg.slice(0, 300);
+    show();
+  }
+  window.addEventListener('error', function(e){
+    note((e && e.message ? e.message : 'Error') + (e && e.lineno ? ' (línea ' + e.lineno + ')' : ''));
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    var r = e && e.reason;
+    note('Promesa rechazada: ' + (r && r.message ? r.message : r));
+  });
+  document.addEventListener('DOMContentLoaded', show);
+  /* vigilante: si al terminar de cargar el script principal no llegó al final (archivo incompleto, visor que lo bloquea…) */
+  window.addEventListener('load', function(){
+    if(!window.__booted) note('El script principal no llegó a ejecutarse por completo (¿archivo incompleto o visor que bloquea JavaScript?)');
+  });
+  document.addEventListener('click', function(e){
+    var t = e && e.target;
+    if(t && t.id === 'bootErrorClose'){ var b = document.getElementById('bootError'); if(b) b.hidden = true; }
+  });
+})();
+</script>
+<script>
+/* tema claro/oscuro: se decide antes de pintar para evitar el parpadeo; la elección guardada manda, y si no hay, el sistema */
+(function(){
+  var t = null;
+  try{ t = localStorage.getItem('idiomas:theme'); if(t !== 'dark' && t !== 'light') t = localStorage.getItem('declinario-theme'); }catch(e){}
+  if(t !== 'dark' && t !== 'light'){
+    t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+<title>Declinario</title>
+<link rel="icon" type="image/svg+xml" sizes="any" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232748D6'/%3E%3Cpath d='M14 20h36M14 32h36M14 44h24' stroke='%23fff' stroke-width='6' stroke-linecap='round'/%3E%3Ccircle cx='50' cy='44' r='4' fill='%23FFD54A'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
+<style>
+:root{
+  --sky:#7FD9EA; --deep:#0E8FB0; --pale:#D5F1F9; --foam:#E9F7FC;
+  --ink:#12303B; --ink-soft:#4A6B77; --amber:#FFB020; --coral:#FF6B5A; --mint:#22B573;
+  --paper:#FFFFFF;
+  --amber-50:#FFF8E8; --amber-400:#FFB020; --amber-900:#6B4300;
+  --bd:3px solid var(--line);
+  --bd-s:2.5px solid var(--line);
+  --sh:6px 6px 0 rgba(18,48,59,.16);
+  --sh-s:4px 4px 0 rgba(18,48,59,.16);
+  --sh-l:10px 10px 0 rgba(18,48,59,.16);
+  --sh-xs:2px 2px 0 rgba(18,48,59,.16);
+  --line:#12303B;                              /* color de los bordes gruesos */
+  --dots:rgba(14,143,176,.16);                 /* trama del fondo */
+  --hair:rgba(18,48,59,.18);                   /* separadores discontinuos */
+  --hair-2:rgba(18,48,59,.28);                 /* separador de puntos */
+  --track:rgba(18,48,59,.16);                  /* pistas de las barras de fase */
+  --ok-bg:#DFF6EA; --bad-bg:#FFE9E6;          /* acierto / fallo */
+  --hl:#FFF3D6;                                /* resalte de terminaciones */
+  --ph:#9db3bc;                                /* texto de ayuda en los campos */
+  --locked-bg:#EDF3F5; --locked-fg:#9db3bc; --locked-bd:#c7d6db;
+  --tip-mono:rgba(255,255,255,.55);
+  color-scheme:light;
+  --r-btn:14px; --r-card:20px; --r-main:26px;
+  --display:'Fredoka','Trebuchet MS',sans-serif;
+  --text:'Nunito','Segoe UI',sans-serif;
+  --mono:'DM Mono','SFMono-Regular',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+button{color:inherit}
+button,a,label.switch,input.ans,textarea.ans,.exhueco{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:var(--text); color:var(--ink); background-color:var(--foam);
+  background-image:radial-gradient(var(--dots) 1.6px, transparent 1.6px);
+  background-size:22px 22px;
+  -webkit-font-smoothing:antialiased;
+  padding:0 0 64px;
+}
+.wrap{max-width:1000px;margin:0 auto;padding:0 18px}
+/* ---------- barra superior ---------- */
+.topbar{display:flex;align-items:center;gap:14px;padding:22px 0 16px;flex-wrap:wrap}
+.brand h1{font-family:var(--display);font-weight:700;font-size:26px;margin:0;letter-spacing:-.2px;text-transform:uppercase}
+.brandbtn{border:none;background:none;padding:0;margin:0;cursor:pointer;font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit;text-align:left;border-radius:8px}
+.brandbtn:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--deep);text-transform:uppercase;margin:0 0 2px}
+.topbar .right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+/* ---------- bienvenida ---------- */
+.hero{text-align:center;padding:38px 26px 32px;margin-top:14px}
+.hero .big{font-family:var(--display);font-weight:600;font-size:38px;line-height:1.15;margin:6px 0 28px}
+.hero .lead{margin:0 auto 26px;text-align:center}
+/* columnas fijas (nunca auto-fit): con 8 idiomas siempre reparte 4+4, 2+2+2+2 o 1 por fila,
+   jamás una última fila coja */
+.choices{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;max-width:960px;margin:0 auto}
+.choice{
+  background:var(--paper);border:var(--bd);border-radius:var(--r-card);box-shadow:var(--sh);
+  padding:20px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+  transition:transform .16s,box-shadow .16s;font-family:var(--text);text-align:left;
+}
+@media (hover:hover){.choice:hover{transform:translate(-2px,-4px) rotate(-.6deg);box-shadow:var(--sh-l)}}
+.choice:active{transform:translate(2px,2px) rotate(0);box-shadow:var(--sh-xs)}
+.choice:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.flag{width:74px;height:50px;border:var(--bd-s);border-radius:9px;box-shadow:var(--sh-s);
+  margin-bottom:12px;display:block;overflow:hidden}
+.choice .cname{font-family:var(--display);font-weight:600;font-size:22px}
+.choice .cnative{font-size:13px;color:var(--ink-soft)}
+.choice .cgo{font-family:var(--mono);font-size:12.5px;color:var(--deep);margin-top:10px}
+/* ---------- pestañas principales ---------- */
+.tabs{display:flex;gap:12px;margin:6px 0 18px}
+.tab{
+  font-family:var(--display);font-weight:600;font-size:16px;letter-spacing:.02em;
+  border:var(--bd);border-radius:var(--r-btn);background:var(--paper);color:var(--ink);
+  padding:12px 26px;cursor:pointer;box-shadow:var(--sh-s);transition:transform .12s,box-shadow .12s;
+  text-transform:uppercase;
+}
+.tab[aria-selected="true"]{background:var(--sky)}
+@media (hover:hover){.tab:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+.tab:active{transform:translate(2px,2px);box-shadow:var(--sh-xs)}
+.tab:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+/* ---------- sub-pestañas de tiempos ---------- */
+.subtabs{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 14px;scrollbar-width:thin}
+.chip{
+  flex:none;display:inline-flex;align-items:center;gap:8px;
+  border:var(--bd-s);border-radius:999px;background:var(--paper);color:var(--ink);
+  font-family:var(--text);font-weight:700;font-size:13.5px;padding:9px 16px;cursor:pointer;
+  box-shadow:var(--sh-s);transition:transform .12s,box-shadow .12s;white-space:nowrap;
+}
+.chip[aria-selected="true"]{background:var(--sky)}
+@media (hover:hover){.chip:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+.chip:active{transform:translate(2px,2px);box-shadow:var(--sh-xs)}
+.chip:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.chip .done{
+  width:19px;height:19px;border:2px solid var(--ink);border-radius:999px;background:var(--mint);
+  color:var(--ink);font-size:11px;display:none;align-items:center;justify-content:center;font-weight:800;
+}
+.chip.mastered .done{display:flex}
+.chip.locked{background:var(--locked-bg);color:var(--locked-fg);cursor:not-allowed;box-shadow:none;border-color:var(--locked-bd)}
+.chip.locked:hover{transform:none;box-shadow:none}
+.chip.locked .lockicon{opacity:.7}
+/* ---------- tarjetas ---------- */
+.card{background:var(--paper);border:var(--bd);border-radius:var(--r-card);box-shadow:var(--sh);padding:22px;margin-bottom:18px}
+.card.main{border-radius:var(--r-main)}
+.card h2{font-family:var(--display);font-weight:600;font-size:24px;margin:0 0 4px}
+.card h3{font-family:var(--display);font-weight:600;font-size:17px;margin:0 0 8px}
+.lead{margin:0 0 18px;color:var(--ink-soft);font-size:14px;max-width:64ch}
+.subhead{margin:0 0 14px;color:var(--ink-soft);font-size:13.5px;background:var(--foam);
+  border-left:3px solid var(--deep);padding:8px 12px;border-radius:0 10px 10px 0}
+/* siempre 4 frases de ejemplo: dos columnas fijas → 2+2, nunca 3+1 */
+.grid3{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.rule{background:var(--foam);border:var(--bd-s);border-radius:var(--r-card);padding:14px 16px;box-shadow:var(--sh-s)}
+.rule .t{font-family:var(--display);font-weight:600;font-size:15px;margin-bottom:6px}
+.rule .e{font-family:var(--mono);font-size:12.5px;color:var(--deep);line-height:1.9;word-spacing:.05em}
+.rule .e b{font-weight:700;color:var(--ink)}
+.rule .x{font-size:13px;color:var(--ink-soft);margin-top:8px}
+.sample{background:var(--pale);border:var(--bd-s);border-radius:var(--r-card);padding:14px 16px;box-shadow:var(--sh-s)}
+.sample .es{font-family:var(--display);font-weight:500;font-size:16.5px;line-height:1.45}
+.sample .tgtrow{display:flex;align-items:flex-start;gap:8px;margin-top:9px;padding-top:9px;border-top:2px dotted var(--hair-2)}
+.sample .tgt{font-size:14px;color:var(--ink-soft);flex:1;min-width:0}
+.sample .tgt.hidden-tr{visibility:hidden}
+/* tips */
+.tip{background:var(--amber-50);border:2.5px solid var(--amber-400);border-radius:var(--r-card);
+  padding:14px 16px;box-shadow:var(--sh-s);color:var(--amber-900);margin-bottom:18px}
+.tip .tiphead{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;
+  font-size:13.5px;margin-bottom:6px;color:var(--amber-900);text-transform:uppercase;letter-spacing:.03em}
+.tip .tipbulb{width:22px;height:22px;flex:none}
+.tip b{font-weight:800}
+.tip ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:9px}
+.tip ol li{line-height:1.5;font-size:13.5px}
+.tip ol li::marker{font-weight:800}
+.tip .mono{background:var(--tip-mono);padding:1px 5px;border-radius:5px}
+.mono{font-family:var(--mono)}
+/* ---------- iconos / botones circulares ---------- */
+.iconbtn{width:30px;height:30px;flex:none;border:var(--bd-s);border-radius:999px;background:var(--paper);
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:var(--sh-s);
+  transition:transform .12s,box-shadow .12s,background .12s;padding:0;color:var(--ink)}
+.iconbtn[hidden]{display:none}
+@media (hover:hover){.iconbtn:hover{transform:translate(-1px,-1px);box-shadow:var(--sh)}}
+.iconbtn:active{transform:translate(1px,1px);box-shadow:none}
+.iconbtn:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.iconbtn.small{width:26px;height:26px}
+.iconbtn.on{background:var(--sky)}
+.iconbtn svg{width:15px;height:15px;display:block}
+/* pareja altavoz + botoncito de velocidad, siempre juntos */
+.ttswrap{display:inline-flex;align-items:center;gap:5px;flex:none}
+.ttswrap[hidden]{display:none}
+.spdbtn{width:auto;min-width:38px;padding:0 10px;font-family:var(--mono);font-weight:800;font-size:11px;letter-spacing:.01em;white-space:nowrap}
+.spdbtn.small{min-width:34px;font-size:10px;padding:0 8px}
+/* ---------- colapsables ---------- */
+.cgroup{border:var(--bd-s);border-radius:var(--r-card);background:var(--foam);box-shadow:var(--sh-s);
+  margin-bottom:12px;overflow:hidden}
+.cghead{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;cursor:pointer;
+  padding:14px 16px;font-family:var(--display);font-weight:600;font-size:15.5px;color:var(--ink);text-align:left}
+.cghead:focus-visible{outline:3px solid var(--amber);outline-offset:-3px}
+.cghead .chev{flex:none;width:16px;height:16px;transition:transform .18s;margin-left:auto}
+.cgroup.open .chev{transform:rotate(180deg)}
+.cgsub{font-family:var(--mono);font-weight:400;font-size:11.5px;color:var(--deep);letter-spacing:.04em}
+.cgbody{padding:0 16px 16px}
+.cgbody[hidden]{display:none}
+.endline{font-family:var(--mono);font-size:13px;color:var(--deep);line-height:2;margin-bottom:10px}
+.endline b{font-weight:700;color:var(--ink);background:var(--hl);padding:1px 4px;border-radius:5px}
+/* ---------- tabla de conjugación ---------- */
+.conj{display:flex;flex-direction:column;gap:8px}
+.conj .head{display:grid;gap:10px;align-items:center;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--deep);padding:0 4px}
+.row{display:grid;gap:10px;align-items:center}
+.row .pron{font-family:var(--text);font-weight:800;font-size:14px;color:var(--ink);text-align:right;padding-right:2px}
+.cellwrap{position:relative;display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap}
+input.ans{
+  width:min(100%,172px);flex:0 0 auto;
+  font-family:var(--text);font-weight:600;font-size:16px;color:var(--ink);
+  background:var(--paper);border:var(--bd-s);border-radius:var(--r-btn);padding:10px 13px;
+  box-shadow:var(--sh-s);transition:transform .12s,box-shadow .12s,background .12s;
+}
+input.ans::placeholder{color:var(--ph);font-weight:400}
+input.ans:focus{outline:none;transform:translate(-2px,-2px);box-shadow:var(--sh);border-color:var(--ink)}
+input.ans:focus-visible{outline:none}
+input.ans.ok{background:var(--ok-bg);border-color:var(--mint)}
+input.ans.bad{background:var(--bad-bg);border-color:var(--coral)}
+input.ans.exans{width:100%;max-width:100%;flex:1 1 auto;display:block}
+input.ans.exansv{width:min(100%,380px);max-width:100%;flex:0 0 auto;display:block}
+textarea.ans{width:100%;min-height:64px;resize:vertical;font-family:var(--text);font-weight:600;font-size:16px;
+  color:var(--ink);background:var(--paper);border:var(--bd-s);border-radius:var(--r-btn);padding:12px 13px;
+  box-shadow:var(--sh-s)}
+textarea.ans.ok{background:var(--ok-bg);border-color:var(--mint)}
+textarea.ans.bad{background:var(--bad-bg);border-color:var(--coral)}
+.fix{font-family:var(--mono);font-size:12.5px;color:var(--coral);margin:0;min-width:0;
+  word-break:break-word;overflow-wrap:anywhere;line-height:1.35}
+.fix b{color:var(--ink);font-weight:500}
+.fix.soft{color:var(--ink-soft)}
+.conj.model .row .pron{font-size:12.5px;font-weight:700;color:var(--ink-soft)}
+.conj.model .staticwrap{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.conj.model .static{font-size:13.5px;padding:7px 10px;background:var(--paper)}
+.conj.model .head{font-size:9.5px}
+.static{
+  font-family:var(--text);font-weight:600;font-size:15px;background:var(--foam);
+  border:var(--bd-s);border-radius:var(--r-btn);padding:9px 13px;box-shadow:var(--sh-s);
+}
+.rowhint{font-family:var(--mono);font-size:11px;color:var(--ink-soft);text-align:right;padding-right:2px}
+/* ---------- botones ---------- */
+.controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:20px}
+.btn{
+  font-family:var(--display);font-weight:600;font-size:15px;border:var(--bd);border-radius:var(--r-btn);
+  text-decoration:none;
+  padding:12px 20px;cursor:pointer;background:var(--paper);color:var(--ink);box-shadow:var(--sh-s);
+  transition:transform .12s,box-shadow .12s;
+}
+@media (hover:hover){.btn:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+.btn:active{transform:translate(2px,2px);box-shadow:var(--sh-xs)}
+.btn:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.btn.primary{background:var(--amber)}
+.btn.sky{background:var(--sky)}
+.btn.small{font-size:13px;padding:9px 14px;border-width:2.5px}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);margin-left:auto}
+/* ---------- interruptor (switch) ---------- */
+.switch{display:inline-flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-soft);cursor:pointer;-webkit-user-select:none;user-select:none}
+.switch input{position:absolute;opacity:0;width:1px;height:1px}
+.switch .track{width:40px;height:23px;border:2px solid var(--ink);border-radius:999px;background:var(--paper);
+  position:relative;flex:none;transition:background .15s;box-shadow:var(--sh-s)}
+.switch .track::after{content:'';position:absolute;top:1.5px;left:1.5px;width:16px;height:16px;border-radius:999px;
+  background:var(--ink);transition:transform .15s}
+.switch input:checked + .track{background:var(--mint)}
+.switch input:checked + .track::after{transform:translateX(17px)}
+.switch input:focus-visible + .track{outline:3px solid var(--amber);outline-offset:2px}
+/* ---------- etiquetas ---------- */
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.pill{
+  display:inline-flex;align-items:center;gap:7px;border:var(--bd-s);border-radius:999px;
+  padding:6px 13px;font-size:12.5px;font-weight:700;background:var(--paper);box-shadow:var(--sh-s);
+}
+.pill.sky{background:var(--sky)}
+.pill.pale{background:var(--pale)}
+.pill.mint{background:var(--mint);color:var(--ink)}
+.pill .code{font-family:var(--mono);font-weight:500;font-size:12px}
+/* ---------- modos ---------- */
+.modes{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.mode{
+  display:inline-flex;align-items:center;gap:8px;
+  border:var(--bd-s);border-radius:var(--r-btn);background:var(--paper);padding:10px 15px;cursor:pointer;
+  font-family:var(--text);font-weight:700;font-size:13.5px;box-shadow:var(--sh-s);
+  transition:transform .12s,box-shadow .12s;
+}
+.mode[aria-selected="true"]{background:var(--pale)}
+@media (hover:hover){.mode:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+.mode:active{transform:translate(2px,2px);box-shadow:var(--sh-xs)}
+.mode:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.mode.small2{padding:8px 13px;font-size:12.5px}
+/* tick de «ya respondido», igual que el de un tiempo dominado en sus pestañas */
+.mode .done{
+  width:18px;height:18px;border:2px solid var(--ink);border-radius:999px;background:var(--mint);
+  color:var(--ink);font-size:10.5px;display:none;align-items:center;justify-content:center;font-weight:800;
+}
+.mode.answered .done{display:flex}
+/* ---------- enunciados ---------- */
+.prompt{background:var(--sky);border:var(--bd);border-radius:var(--r-card);padding:16px 18px;margin-bottom:18px;box-shadow:var(--sh)}
+.prompt .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);opacity:.72}
+.prompt .v{font-family:var(--display);font-weight:600;font-size:26px;margin-top:2px}
+.prompt .sub{font-size:13.5px;margin-top:4px}
+.sentence{font-family:var(--display);font-weight:500;font-size:21px;line-height:2.1;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
+.sentence input.ans{width:min(100%,172px);font-family:var(--text);font-size:16px}
+.hintchip{font-family:var(--mono);font-size:12px;background:var(--pale);border:var(--bd-s);border-radius:999px;padding:3px 10px;box-shadow:var(--sh-s);white-space:nowrap}
+.banner{border:var(--bd);border-radius:var(--r-card);padding:13px 17px;font-weight:700;font-size:14px;box-shadow:var(--sh-s);margin-top:18px;display:none}
+.banner.show{display:block}
+.banner.good{background:var(--ok-bg)}
+.banner.bad{background:var(--bad-bg)}
+.banner .sub{font-weight:400;font-size:13px;color:var(--ink-soft);margin-top:3px}
+/* ---------- progreso ---------- */
+.bar{height:14px;background:var(--paper);border:var(--bd-s);border-radius:999px;overflow:hidden;box-shadow:var(--sh-s)}
+.bar span,.bar i{display:block;height:100%;background:var(--sky);width:0%;transition:width .35s,background-color .3s}
+.progline{display:flex;align-items:center;gap:14px;margin-top:6px}
+.progline .num{font-family:var(--mono);font-size:12.5px;color:var(--ink-soft);white-space:nowrap}
+/* ---------- verbos irregulares: grid 2x3 ---------- */
+/* align-items:start: cada tarjeta crece con su propio contenido al expandirse,
+   sin que el grid estire las demás de la fila y deje hueco en blanco */
+.irrgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+.irrcard{border:var(--bd-s);border-radius:var(--r-card);background:var(--foam);box-shadow:var(--sh-s);overflow:hidden}
+.irrhead{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;cursor:pointer;
+  padding:14px 15px;text-align:left}
+.irrhead .name{font-family:var(--display);font-weight:700;font-size:17px}
+.irrhead .comp{font-size:12px;color:var(--ink-soft);display:block}
+.irrhead .chev{flex:none;width:15px;height:15px;margin-left:auto;transition:transform .18s}
+.irrcard.open .chev{transform:rotate(180deg)}
+.irrbody{padding:0 15px 15px}
+.irrbody[hidden]{display:none}
+.irrrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px dashed var(--hair)}
+.irrrow:first-child{border-top:none}
+.irrrow .p{font-size:12px;color:var(--ink-soft);width:90px;flex:none}
+.irrrow .f{font-family:var(--text);font-weight:600;font-size:14px;flex:1;min-width:0;word-break:break-word;overflow-wrap:anywhere}
+/* ---------- transcripción / dictado ---------- */
+.dictbox{background:var(--pale);border:var(--bd-s);border-radius:var(--r-card);padding:16px 18px;box-shadow:var(--sh-s);
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.playbtn{width:56px;height:56px;flex:none;border:var(--bd);border-radius:16px;background:var(--amber);
+  box-shadow:var(--sh-s);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .12s}
+@media (hover:hover){.playbtn:hover{transform:translate(-2px,-2px)}}
+.playbtn:active{transform:translate(1px,1px)}
+.playbtn svg{width:22px;height:22px}
+.dictmeta{flex:1;min-width:180px}
+.dictmeta .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--deep)}
+.dictmeta .t{font-family:var(--display);font-weight:600;font-size:16px;margin:3px 0 4px}
+.dictmeta .d{font-size:13.5px;color:var(--ink-soft);margin-top:2px;margin-bottom:10px}
+.diffline{margin-top:10px;padding:12px 14px;background:var(--foam);border:var(--bd-s);border-radius:var(--r-card)}
+.diffline .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--deep);margin-bottom:6px}
+.diffline .w-ok{color:var(--mint);font-weight:800}
+.diffline .w-bad{color:var(--coral);font-weight:800}
+.explainbox{margin-top:14px;padding:14px 16px;background:var(--foam);border:var(--bd-s);border-radius:var(--r-card)}
+.explainbox .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--deep);margin-bottom:8px}
+.explainbox .rmini{font-size:13px;margin-bottom:6px;line-height:1.6}
+.explainbox .rmini b{font-weight:800}
+.explainbox .tipmini{display:flex;gap:8px;align-items:flex-start;margin-top:10px;padding-top:10px;
+  border-top:1px dashed var(--hair);font-size:13px;color:var(--amber-900)}
+.explainbox .tipmini svg{width:16px;height:16px;flex:none;margin-top:1px}
+/* ---------- test final ---------- */
+.testcta{margin-bottom:18px}
+.testready{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--amber-50);
+  border:2.5px solid var(--amber-400);border-radius:var(--r-card);padding:16px 18px;box-shadow:var(--sh-s)}
+.testready .cap{font-size:28px;flex:none}
+.testready .txt{flex:1;min-width:180px}
+.testready .k{font-family:var(--display);font-weight:700;font-size:15px}
+.testready .d{font-size:13px;color:var(--ink-soft);margin-top:2px}
+/* franja de bloques del test, al estilo de niveles: uno por mecánica */
+.testlevels{display:flex;gap:8px;margin:14px 0 0}
+.testlevels .seg{flex:1;min-width:0;text-align:center}
+.testlevels .seg .ln{height:4px;border-radius:2px;background:var(--track)}
+.testlevels .seg.done .ln{background:var(--mint)}
+.testlevels .seg.current .ln{background:var(--sky)}
+.testlevels .seg .lbl{margin-top:6px;font-size:10.5px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.testlevels .seg.current .lbl{color:var(--ink);font-weight:800}
+/* la pregunta en sí: mucho más grande y separada de la franja de arriba */
+.testq{font-family:var(--display);font-weight:700;font-size:22px;line-height:1.5;color:var(--ink);margin:28px 0 20px}
+.testq b{font-weight:800}
+.testq .blank{display:inline-block;min-width:2.6em;border-bottom:3px solid var(--ink);text-align:center}
+.testlisten{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:-6px 0 6px}
+.testlistenctx{font-size:13.5px;color:var(--ink-soft)}
+.testopts{display:flex;flex-direction:column;gap:9px;margin-top:16px}
+.optbtn{display:block;width:100%;text-align:left;font-family:var(--text);font-weight:700;font-size:15.5px;
+  color:var(--ink);padding:12px 15px;border:var(--bd-s);border-radius:var(--r-btn);background:var(--paper);
+  box-shadow:var(--sh-s);cursor:pointer;transition:transform .12s,box-shadow .12s}
+@media (hover:hover){.optbtn:hover:not(:disabled){transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+.optbtn:disabled{cursor:default}
+.optbtn.ok{background:var(--ok-bg);border-color:var(--mint)}
+.optbtn.bad{background:var(--bad-bg);border-color:var(--coral)}
+.testfb{margin-top:12px;font-weight:700;font-size:14px}
+.testfb.good{color:var(--mint)}
+.testfb.bad{color:var(--coral)}
+.testscore{font-family:var(--display);font-weight:700;font-size:48px;margin:6px 0}
+.testreview{margin-top:16px;padding:14px 16px;background:var(--foam);border:var(--bd-s);border-radius:var(--r-card);text-align:left}
+.testreview .testreviewrow{font-size:13.5px;margin-top:8px;line-height:1.6}
+.testreview .ok2{color:var(--mint);font-weight:800}
+.testreview .bad2{color:var(--coral)}
+/* ---------- test final · formato EXAM (por fases) ---------- */
+.exphases{display:flex;gap:6px;margin-bottom:18px}
+.exphases .seg{flex:1;min-width:0}
+.exphases .seg .track{height:4px;border-radius:2px;background:var(--track);overflow:hidden}
+.exphases .seg .track i{display:block;height:100%;background:var(--sky);transition:width .3s ease}
+.exphases .seg.done .track i{background:var(--mint);width:100%}
+.exphases .seg .lbl{margin-top:6px;font-size:10.5px;font-weight:800;color:var(--ink-soft);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.exphases .seg.current .lbl{color:var(--ink)}
+.exmarca{display:inline-flex;align-items:center;border:2px solid;border-radius:999px;
+  padding:3px 11px;font-size:12px;font-weight:800}
+.exmarca.ok{color:var(--mint);border-color:var(--mint);background:var(--ok-bg)}
+.exmarca.bad{color:var(--coral);border-color:var(--coral);background:var(--bad-bg)}
+.exmarca.pend{color:var(--ink-soft);border-color:var(--ink-soft);background:var(--pale)}
+.exsent{font-size:19px;font-weight:600;line-height:1.9;margin-bottom:14px}
+.exverdict{display:flex;gap:10px;flex-wrap:wrap}
+.exvbtn{flex:1;min-width:150px;text-align:center;font-family:var(--text);font-weight:800;font-size:15px;
+  color:var(--ink);padding:12px 14px;border:var(--bd-s);border-radius:var(--r-btn);background:var(--paper);
+  box-shadow:var(--sh-s);cursor:pointer;transition:transform .12s,box-shadow .12s}
+@media (hover:hover){.exvbtn:hover:not(:disabled){transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+.excazahint{font-size:13.5px;font-weight:700;color:var(--ink-soft);margin:0 0 10px}
+.exwhy{margin:8px 0 0;font-size:14px;line-height:1.6;font-weight:600}
+.exwhy.ok{color:var(--mint)}
+.exwhy.bad{color:var(--coral)}
+.optbtn.gris{opacity:.45;box-shadow:none}
+.optbtn .exera{float:right;font-size:12.5px;font-weight:800;color:var(--mint)}
+.btn.off{opacity:.45;cursor:default;box-shadow:none}
+.btn.off:hover{transform:none;box-shadow:none}
+.expal{font:inherit;font-size:17px;font-weight:600;color:var(--ink);background:transparent;border:none;
+  border-bottom:2.5px dotted transparent;padding:2px 1px;margin:0 1px;cursor:pointer;border-radius:4px}
+@media (hover:hover){.expal:hover:not(:disabled){border-bottom-color:var(--sky);background:var(--pale)}}
+.expal.ok{background:var(--ok-bg);border-bottom-color:var(--mint)}
+.expal.bad{background:var(--bad-bg);border-bottom-color:var(--coral)}
+.expal:disabled{cursor:default}
+.exhueco{font:inherit;font-size:16px;font-weight:800;text-align:center;color:var(--ink);
+  background:var(--pale);border:none;border-bottom:2.5px solid var(--ink);border-radius:6px 6px 0 0;
+  padding:3px 6px;margin:0 2px}
+.exhueco::placeholder{color:var(--ink-soft);font-weight:600;font-size:13px;font-style:italic}
+.exhueco.ok{background:var(--ok-bg);border-bottom-color:var(--mint)}
+.exhueco.bad{background:var(--bad-bg);border-bottom-color:var(--coral);text-decoration:line-through}
+.exline{display:flex;gap:12px;margin-bottom:12px}
+.exline .who{min-width:56px;font-size:13px;font-weight:900;color:var(--deep);padding-top:6px;flex:none}
+.exline .txt{font-size:16px;font-weight:600;line-height:2.1}
+.exbanda{display:inline-block;margin-top:14px;padding:7px 16px;border-radius:999px;border-width:2.5px;
+  border-style:solid;font-weight:800;font-size:16px;background:var(--paper)}
+.exphaseline{display:flex;justify-content:space-between;font-size:14.5px;font-weight:800;margin-bottom:5px}
+.exphaseline .num{color:var(--ink-soft);font-weight:700}
+.extagrow{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.extagcount{min-width:44px;text-align:center;font-size:12.5px;font-weight:900;padding:3px 0;
+  border-radius:8px;border-width:2px;border-style:solid}
+.extagcount.ok{border-color:var(--mint);background:var(--ok-bg)}
+.extagcount.bad{border-color:var(--coral);background:var(--bad-bg)}
+.exfail{margin-top:16px;padding-top:14px}
+.exfail.sep{border-top:2px solid var(--pale)}
+.exfail .k{font-size:12px;font-weight:800;color:var(--ink-soft);margin-bottom:4px}
+.exfail .q{font-size:16px;font-weight:800;line-height:1.45;margin-bottom:8px}
+.exfail .tuya{font-size:14px;font-weight:700;color:var(--coral);text-decoration:line-through}
+.exfail .buena{font-size:16.5px;font-weight:800;color:var(--mint);margin:2px 0 6px}
+.exfail .why{font-size:13.5px;line-height:1.6;font-weight:600;color:var(--ink-soft)}
+footer{margin-top:26px;font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+/* ---------- aviso de voz no disponible ---------- */
+.voicetoast{position:fixed;left:18px;right:18px;bottom:18px;max-width:420px;margin:0 auto;z-index:999;
+  background:var(--paper);border:var(--bd);border-radius:var(--r-card);box-shadow:var(--sh);
+  padding:14px 16px;font-size:13px;color:var(--ink);display:flex;align-items:flex-start;gap:10px;
+  transform:translateY(140%);transition:transform .25s ease}
+.voicetoast.show{transform:translateY(0)}
+.voicetoast .msg{flex:1;line-height:1.4}
+.voicetoast .close{flex:none;background:none;border:none;cursor:pointer;font-size:19px;line-height:1;
+  color:var(--ink-soft);padding:0 2px}
+.voicetoast .close:hover{color:var(--ink)}
+/* ---------- botón de tema (esquina superior derecha) ---------- */
+.themewrap{margin-left:auto;flex:none}
+.themebtn{width:44px;height:44px;flex:none;border:var(--bd);border-radius:999px;background:var(--paper);color:var(--ink);
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;box-shadow:var(--sh-s);
+  transition:transform .12s,box-shadow .12s}
+@media (hover:hover){.themebtn:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+.themebtn:active{transform:translate(2px,2px);box-shadow:var(--sh-xs)}
+.themebtn:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.themebtn svg{width:21px;height:21px;display:block}
+.themebtn .i-sun{display:none}
+:root[data-theme="dark"] .themebtn .i-moon{display:none}
+:root[data-theme="dark"] .themebtn .i-sun{display:block}
+/* ---------- enlace a Vocabulando (junto al botón de tema) ---------- */
+.themewrap{display:flex;align-items:center;gap:10px}
+.sibbtn{height:44px;padding:0 18px 0 14px;border:var(--bd);border-radius:999px;background:var(--paper);color:var(--ink);
+  display:inline-flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none;white-space:nowrap;
+  font-family:var(--display);font-weight:600;font-size:15px;box-shadow:var(--sh-s);
+  transition:transform .12s,box-shadow .12s}
+.sibbtn[hidden]{display:none}
+@media (hover:hover){.sibbtn:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+.sibbtn:active{transform:translate(2px,2px);box-shadow:var(--sh-xs)}
+.sibbtn:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.sibbtn svg{width:19px;height:19px;display:block;flex:none}
+@media (max-width:520px){.sibbtn{width:44px;padding:0;justify-content:center}.sibbtn .sibtxt{display:none}}
+/* ---------- modo oscuro ---------- */
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --deep:#5CC7E3; --pale:#1A3440; --foam:#0B171D; --paper:#13242C;
+  --ink:#E6F2F6; --ink-soft:#9DBAC5; --line:#8FB6C4;
+  --coral:#FF8070; --mint:#34D399;
+  --amber-50:#2A2110; --amber-400:#C98A12; --amber-900:#FFD58A;
+  --sh:6px 6px 0 rgba(0,0,0,.55); --sh-s:4px 4px 0 rgba(0,0,0,.55);
+  --sh-l:10px 10px 0 rgba(0,0,0,.55); --sh-xs:2px 2px 0 rgba(0,0,0,.55);
+  --dots:rgba(127,217,234,.09); --hair:rgba(230,242,246,.16); --hair-2:rgba(230,242,246,.28);
+  --track:rgba(230,242,246,.14);
+  --ok-bg:#12372B; --bad-bg:#3A1C19; --hl:#3A2E12; --ph:#7C9AA6;
+  --locked-bg:#101F26; --locked-fg:#6A8793; --locked-bd:#2A424C;
+  --tip-mono:rgba(255,255,255,.09);
+}
+/* superficies de acento (cielo, ámbar, menta): conservan su color y llevan texto oscuro */
+:root[data-theme="dark"] :is(.tab[aria-selected="true"],.chip[aria-selected="true"],.btn.primary,.btn.sky,.pill.sky,
+  .pill.mint,.prompt,.playbtn,.iconbtn.on,.chip .done,.mode .done){--ink:#12303B;--ink-soft:#244753;color:var(--ink)}
+:root[data-theme="dark"] .switch input:checked + .track::after{background:#12303B}
+/* dentro de una superficie de acento, los botones con fondo propio vuelven a la tinta clara */
+:root[data-theme="dark"] .prompt .iconbtn:not(.on){--ink:#E6F2F6;--ink-soft:#9DBAC5}
+:root[data-theme="dark"] .prompt .k{opacity:.9}
+:root[data-theme="dark"] :is(.choice,.mode,.irrhead){color:var(--ink)}
+@media (max-width:640px){
+  .card{padding:17px}
+  .card h2{font-size:20px}
+  .hero{padding:26px 16px}
+  .hero .big{font-size:28px}
+  .sentence{font-size:18px;line-height:1.9}
+  input.ans{width:min(100%,138px)}
+  .sentence input.ans{width:min(100%,138px)}
+  .row .pron{text-align:left}
+  .tab{flex:1;padding:12px 10px;text-align:center}
+  .topbar .right{margin-left:0;width:100%}
+  .irrgrid{grid-template-columns:1fr}
+  .choices{grid-template-columns:1fr}
+  .grid3{grid-template-columns:1fr}
+}
+@media (min-width:641px) and (max-width:860px){
+  .irrgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .choices{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+/* ---------- pantallas táctiles: zonas de pulsación de ~44px ---------- */
+@media (pointer:coarse){
+  .iconbtn{width:44px;height:44px}
+  .iconbtn.small{width:40px;height:40px}
+  .iconbtn.spdbtn,.iconbtn.spdbtn.small{width:auto}
+  .spdbtn{min-width:44px}
+  .spdbtn.small{min-width:40px}
+  .ttswrap{gap:8px}
+  .expal{padding:8px 4px}
+  .chip{padding:12px 16px}
+  .btn.small{padding:12px 16px}
+  .mode.small2{padding:11px 14px}
+  .voicetoast .close{padding:10px 12px;font-size:22px}
+  .switch{min-height:44px}
+}
+@media (pointer:coarse) and (min-width:861px) and (max-width:1250px){
+  .irrgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+/* casillas ya respondidas: iOS las atenúa; que se vean los colores de acierto/fallo */
+.exhueco:disabled{opacity:1;-webkit-text-fill-color:currentColor}
+/* ---------- aviso si la página no arranca bien / mensaje sin JavaScript ---------- */
+.bootError{margin:16px 0 0;padding:14px 16px;background:var(--bad-bg);color:var(--ink);border:var(--bd-s);border-color:var(--coral);border-radius:var(--r-card);font-size:14.5px;line-height:1.5}
+.bootError[hidden]{display:none}
+.bootError p{margin:0 0 6px}
+.bootError .bootErrorTitle{font-family:var(--display);font-weight:600;font-size:17px}
+.bootError .bootErrorDetail{font-family:var(--mono);font-size:12px;color:var(--ink-soft);word-break:break-word}
+.nojs{display:none;max-width:640px;margin:8px auto 0;text-align:left;font-size:16px;line-height:1.55}
+/* sin la marca «js» (el script de <head> no se ejecutó) se ve el aviso y se oculta lo que no sirve sin JavaScript */
+html:not(.js) .nojs{display:block}
+html:not(.js) .themewrap,html:not(.js) #welcome .hero .eyebrow,html:not(.js) #welcome .hero .big,html:not(.js) footer{display:none!important}
+.nojs .nojsTitle{font-family:var(--display);font-weight:600;font-size:24px;line-height:1.2;margin:0 0 10px}
+.nojs p{margin:0 0 10px}
+/* ======================================================================================================
+   Aspecto «Vocabulando» en las pantallas de práctica (todo cuelga de body.vcb, que se pone al elegir idioma).
+   La pantalla de bienvenida no cambia: en Vocabulando también es así. Paleta, tipos y formas de Vocabulando:
+   tarjetas planas con borde fino, acento azul, Bricolage Grotesque + Inter + IBM Plex Mono.
+   ====================================================================================================== */
+.langchip[hidden]{display:none}
+body.vcb{
+  --r-btn:11px; --r-card:14px; --r-main:14px;
+  --bd:1px solid var(--line); --bd-s:1px solid var(--line);
+  --sh:0 1px 2px rgba(20,32,46,.10); --sh-s:none; --sh-xs:none; --sh-l:0 10px 30px -18px rgba(20,32,46,.4);
+  --display:'Bricolage Grotesque','Trebuchet MS',sans-serif;
+  --text:'Inter','Segoe UI',system-ui,sans-serif;
+  --mono:'IBM Plex Mono','SFMono-Regular',ui-monospace,monospace;
+  --vbg-top:#EEF1F6; --vbg:#E7EAF0;
+  --paper:#FFFFFF; --foam:#F7F9FC; --pale:#EEF1F7; --sky:#E7ECFC; --chipbg:#FFFFFF;
+  --ink:#14202E; --ink-soft:#64707F; --line:#D4DAE3;
+  --accent:#2748D6; --accent-soft:#E7ECFC; --deep:#2748D6; --amber:#2748D6; --mint:#17936F; --coral:#CC4436;
+  --ok-bg:#E4F5EE; --bad-bg:#FBE9E6; --hl:#E7ECFC; --ph:#9AA6B4; --hair:#D4DAE3; --hair-2:#C3CBD7; --track:#D4DAE3;
+  --locked-bg:#F1F4F9; --locked-fg:#9AA6B4; --locked-bd:#D4DAE3; --tip-mono:rgba(176,116,26,.12);
+  --amber-50:#FFF7EE; --amber-400:#E08A1E; --amber-900:#7A4B0A;
+  --tabs-bg:#DEE3EC; --tab-on:#FFFFFF; --switch-off:#CBD3DE;
+  font-family:var(--text); line-height:1.45;
+  background:radial-gradient(120% 90% at 50% -10%, var(--vbg-top) 0%, var(--vbg) 55%) fixed;
+}
+:root[data-theme="dark"] body.vcb{
+  --vbg-top:#18222F; --vbg:#0E141D;
+  --paper:#161E2A; --foam:#0F1721; --pale:#1C2531; --sky:#1E2A47; --chipbg:#1C2531;
+  --ink:#E7ECF3; --ink-soft:#8C99AB; --line:#28323F;
+  --accent:#5B79F0; --accent-soft:#1E2A47; --deep:#5B79F0; --amber:#5B79F0; --mint:#3FBF8E; --coral:#E56B5E;
+  --ok-bg:#14342A; --bad-bg:#3A2320; --hl:#1E2A47; --ph:#6B7788; --hair:#28323F; --hair-2:#33404F; --track:#28323F;
+  --locked-bg:#1C2531; --locked-fg:#6B7788; --locked-bd:#28323F; --tip-mono:rgba(232,169,62,.14);
+  --amber-50:#2A2213; --amber-400:#E8A93E; --amber-900:#F1D49B;
+  --tabs-bg:#1C2531; --tab-on:#2E3A49; --switch-off:#33404F;
+  --sh:0 1px 2px rgba(0,0,0,.4); --sh-l:0 10px 30px -18px rgba(0,0,0,.7);
+}
+/* el modo oscuro de antes pintaba de «tinta oscura» las superficies de acento: aquí no */
+:root[data-theme] body.vcb :is(.tab[aria-selected="true"],.chip[aria-selected="true"],.btn.primary,.btn.sky,.pill.sky,.pill.mint,.prompt,.playbtn,.iconbtn.on,.chip .done,.mode .done),
+:root[data-theme] body.vcb .prompt .iconbtn:not(.on){--ink:inherit;--ink-soft:inherit}
+:root[data-theme] body.vcb .switch input:checked + .track::after{background:#fff}
+body.vcb .wrap{padding:0 20px}
+body.vcb :is(.brandbtn,.tab,.chip,.btn,.mode,.iconbtn,.sibbtn,.themebtn,.langchip,.optbtn,.exvbtn,.cghead,.irrhead,.expal):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+body.vcb :is(.tab,.chip,.btn,.mode,.iconbtn,.sibbtn,.themebtn,.langchip,.optbtn,.exvbtn,.playbtn):is(:hover,:active){transform:none}
+
+/* ---------- cabecera: marca, pestañas, idioma, enlace y tema, como en Vocabulando ---------- */
+body.vcb .topbar{align-items:flex-end;justify-content:space-between;gap:16px;padding:28px 0 0;margin-bottom:22px}
+body.vcb .brand{display:flex;flex-direction:column-reverse}
+body.vcb .brand h1{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:-.02em;line-height:1;text-transform:none}
+body.vcb .brandbtn::after{content:".";color:var(--accent)}
+body.vcb .brand .eyebrow{margin:6px 0 0;font-size:11px;letter-spacing:.14em}
+body.vcb .themewrap{margin-left:auto;display:flex;align-items:center;gap:10px}
+body.vcb .tabs{display:flex;gap:4px;margin:0;padding:4px;background:var(--tabs-bg);border-radius:999px}
+body.vcb .tab{border:0;background:transparent;box-shadow:none;border-radius:999px;padding:8px 16px;font-family:var(--text);font-size:14px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink-soft)}
+body.vcb .tab[aria-selected="true"]{background:var(--tab-on);color:var(--ink);box-shadow:0 1px 2px rgba(20,32,46,.12)}
+body.vcb .langchip{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 13px 0 11px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-family:var(--mono);font-size:12px;letter-spacing:.08em;cursor:pointer}
+body.vcb .langchip:hover{border-color:var(--accent)}
+body.vcb .langchip .flag{width:19px;height:13px;border:0;border-radius:2px;box-shadow:0 0 0 1px rgba(20,32,46,.14);margin:0}
+body.vcb .themebtn,body.vcb .sibbtn{width:38px;height:38px;padding:0;gap:0;justify-content:center;border:1px solid var(--line);border-radius:999px;background:var(--paper);box-shadow:none}
+body.vcb .themebtn:hover,body.vcb .sibbtn:hover{border-color:var(--accent)}
+body.vcb .themebtn svg,body.vcb .sibbtn svg{width:18px;height:18px}
+body.vcb .sibbtn .sibtxt{display:none}
+
+/* ---------- etiquetas, tarjetas y textos ---------- */
+body.vcb .eyebrow{font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.14em;color:var(--ink-soft);margin:0 0 6px}
+body.vcb .card,body.vcb .card.main{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-card);box-shadow:none;padding:22px}
+body.vcb .card h2{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:-.01em;margin:0 0 4px}
+body.vcb .card h3{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:-.01em}
+body.vcb .lead,body.vcb .subhead{color:var(--ink-soft)}
+body.vcb .subhead{background:var(--foam);border-left:3px solid var(--accent)}
+body.vcb .rule,body.vcb .cgroup,body.vcb .irrcard,body.vcb .diffline,body.vcb .explainbox,body.vcb .testreview{background:var(--foam);border:1px solid var(--line);border-radius:12px;box-shadow:none}
+body.vcb .rule .t,body.vcb .cghead,body.vcb .irrhead .name,body.vcb .sample .es,body.vcb .dictmeta .t{font-family:var(--display);font-weight:700}
+body.vcb .rule .e,body.vcb .endline{color:var(--accent)}
+body.vcb .endline b{color:var(--ink);background:var(--hl)}
+body.vcb .conj .head,body.vcb .dictmeta .k,body.vcb .diffline .k,body.vcb .explainbox .k,body.vcb .cgsub,body.vcb .exline .who{color:var(--ink-soft)}
+body.vcb .sample,body.vcb .dictbox{background:var(--pale);border:1px solid var(--line);border-radius:12px;box-shadow:none}
+body.vcb .sample .tgtrow{border-top:1px dashed var(--hair-2)}
+body.vcb .tip,body.vcb .testready{background:var(--amber-50);border:1px solid var(--amber-400);border-radius:12px;box-shadow:none}
+body.vcb .tip .tiphead{font-family:var(--mono);font-weight:500;font-size:11px;letter-spacing:.12em}
+body.vcb .flag{border:0;box-shadow:0 0 0 1px rgba(20,32,46,.14)}
+
+/* ---------- botones, chips, modos y controles ---------- */
+body.vcb .btn{font-family:var(--text);font-weight:600;font-size:15px;border:1px solid var(--line);border-radius:11px;background:transparent;color:var(--ink);box-shadow:none;padding:12px 18px;transition:background .15s,filter .15s,transform .08s}
+body.vcb .btn:hover{background:var(--pale)}
+body.vcb .btn:active{transform:translateY(1px);filter:brightness(.95)}
+body.vcb .btn.primary{background:var(--accent);border-color:transparent;color:#fff}
+body.vcb .btn.primary:hover{background:var(--accent);filter:brightness(1.06)}
+body.vcb .btn.sky{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
+body.vcb .btn.small{font-size:13px;padding:9px 14px}
+body.vcb .btn.off,body.vcb .btn.off:hover{opacity:.5;box-shadow:none;background:transparent}
+body.vcb .chip{border:1px solid var(--line);background:var(--chipbg);box-shadow:none;font-family:var(--text);font-weight:600;font-size:13.5px;padding:8px 14px;color:var(--ink)}
+body.vcb .chip:hover{border-color:var(--accent)}
+body.vcb .chip[aria-selected="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+body.vcb .chip.locked{background:var(--locked-bg);color:var(--locked-fg);border-color:var(--locked-bd)}
+body.vcb .subtabs{scrollbar-color:var(--line) transparent;scrollbar-width:thin}
+body.vcb .subtabs::-webkit-scrollbar{height:6px}
+body.vcb .subtabs::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+body.vcb .subtabs::-webkit-scrollbar-track{background:transparent}
+body.vcb .chip .done,body.vcb .mode .done{border:0;background:var(--mint);color:#fff}
+
+/* ---------- idioma: lista desplegable sobre el propio botón ---------- */
+.langwrap{position:relative;display:inline-flex}
+.langwrap[hidden]{display:none}
+.langchip::after{content:"";width:5px;height:5px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(45deg);margin:-3px 0 0 2px;opacity:.7}
+.langchip[aria-expanded="true"]{border-color:var(--accent, var(--amber))}
+.langchip[aria-expanded="true"]::after{transform:rotate(-135deg);margin-top:3px}
+.langmenu{position:absolute;top:calc(100% + 8px);right:0;z-index:40;min-width:230px;max-width:calc(100vw - 32px);max-height:min(70vh,480px);overflow:auto;
+  padding:6px;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 50px -20px rgba(0,0,0,.55)}
+.langmenu[hidden]{display:none}
+.langopt{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:0;border-radius:9px;background:transparent;color:var(--ink);
+  font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.langopt:hover,.langopt:focus-visible{background:var(--accent-soft, var(--foam));outline:none}
+.langopt[aria-selected="true"]{color:var(--accent, var(--deep));font-weight:700}
+.langopt .lnat{margin-left:auto;color:var(--ink-soft);font-size:12px;font-weight:400}
+.langopt .flag{width:24px;height:16px;flex:none;margin:0;border:0;border-radius:3px;box-shadow:0 0 0 1px rgba(20,32,46,.14)}
+
+/* ---------- ayuda: cómo funciona (ventana) ---------- */
+.modal-overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(10,16,25,.55)}
+.modal-lg{background:var(--paper);color:var(--ink);border:var(--bd);border-radius:var(--r-card);box-shadow:var(--sh-l);width:100%;max-width:640px;
+  max-height:min(86vh,820px);overflow:auto;overscroll-behavior:contain;padding:22px 26px 26px;font-family:var(--text)}
+.modal-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.modal-title{margin:0;font-family:var(--display);font-weight:700;font-size:20px}
+.modal-x{padding:0 6px;border:0;border-radius:7px;background:transparent;color:var(--ink-soft);font-size:28px;line-height:1;cursor:pointer}
+.modal-x:hover{color:var(--ink)}
+.modal-x:focus-visible{outline:2px solid var(--accent, var(--amber));outline-offset:2px}
+.info-body h3{margin:22px 0 6px;font-family:var(--display);font-size:15px;font-weight:700}
+.info-body p,.info-body li{font-size:14px;line-height:1.55;color:var(--ink)}
+.info-body p{margin:8px 0 0}
+.info-body ul{margin:4px 0 0;padding-left:20px}
+.info-body li{margin:5px 0}
+.info-body .muted-note{color:var(--ink-soft)}
+.info-status{display:flex;gap:10px;align-items:flex-start;margin:4px 0 0;padding:10px 12px;border:1px solid var(--hair-2);border-radius:10px;font-size:14px;line-height:1.5}
+.sdot{flex:none;width:9px;height:9px;margin-top:6px;border-radius:50%;background:var(--coral)}
+.sdot.ok{background:var(--mint)}
+.info-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+body.modal-open{overflow:hidden}
+
+/* ---------- tiempo dominado: test final terminado y guardado → botón dorado ---------- */
+:root{--gold-a:#FCE9A6;--gold-b:#EDBA32;--gold-bd:#A8740A;--gold-fg:#3A2700}
+:root[data-theme="dark"]{--gold-a:#F6D777;--gold-b:#D9A21E;--gold-bd:#FFE08A;--gold-fg:#2A1C00}
+.chip .star{display:none;width:16px;height:16px;flex:none}
+.chip .star svg{width:100%;height:100%;display:block}
+.chip.gold .star{display:inline-flex}
+.chip.gold .done{display:none}
+body .chip.gold,body.vcb .chip.gold,body.vcb .chip.gold[aria-selected="true"]{background:linear-gradient(135deg,var(--gold-a),var(--gold-b));border-color:var(--gold-bd);color:var(--gold-fg)}
+body .chip.gold[aria-selected="true"]{box-shadow:inset 0 0 0 2px var(--gold-fg)}
+body.vcb .chip.gold:hover{border-color:var(--gold-fg)}
+.goldnote{display:flex;gap:10px;align-items:flex-start;max-width:480px;margin:14px auto 0;padding:10px 14px;border:1px solid var(--gold-bd);border-radius:12px;
+  background:linear-gradient(135deg,var(--gold-a),var(--gold-b));color:var(--gold-fg);font-size:14px;line-height:1.45;text-align:left;font-weight:600}
+.goldnote.soft{background:var(--foam);border:1px dashed var(--hair-2);color:var(--ink-soft)}
+.goldnote .gstar{flex:none;width:20px;height:20px;margin-top:1px}
+.goldnote .gstar svg{width:100%;height:100%;display:block}
+:root{--gold-text:#7A5200}
+:root[data-theme="dark"]{--gold-text:#F6D777}
+.choice .cstar{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-family:var(--mono);font-size:12.5px;color:var(--ink-soft)}
+.choice .cstar.on{color:var(--gold-text);font-weight:600}
+.retrynote{font-size:13px;color:var(--ink-soft);margin:0 0 12px}
+body.vcb .mode{border:1px solid var(--line);background:var(--chipbg);box-shadow:none;border-radius:10px;font-family:var(--text);font-weight:600;color:var(--ink)}
+body.vcb .mode:hover{border-color:var(--accent)}
+body.vcb .mode[aria-selected="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+body.vcb .pill{border:1px solid var(--line);background:var(--paper);box-shadow:none;font-weight:600}
+body.vcb .pill.sky{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+body.vcb .pill.pale{background:var(--pale)}
+body.vcb .pill.mint{background:var(--ok-bg);color:var(--mint);border-color:var(--mint)}
+body.vcb .iconbtn{border:1px solid var(--line);background:var(--paper);box-shadow:none}
+body.vcb .iconbtn:hover{border-color:var(--accent)}
+body.vcb .iconbtn.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+body.vcb .hintchip{border:1px solid var(--line);background:var(--pale);box-shadow:none}
+body.vcb .switch .track{width:34px;height:20px;border:0;background:var(--switch-off);box-shadow:none}
+body.vcb .switch .track::after{top:2px;left:2px;width:16px;height:16px;background:#fff;box-shadow:0 1px 2px rgba(20,32,46,.3)}
+body.vcb .switch input:checked + .track{background:var(--accent)}
+body.vcb .switch input:checked + .track::after{transform:translateX(14px)}
+body.vcb .switch input:focus-visible + .track{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- campos de respuesta ---------- */
+body.vcb input.ans,body.vcb textarea.ans{background:var(--foam);border:1px solid var(--line);border-radius:10px;box-shadow:none;font-family:var(--text);font-weight:500;padding:10px 13px;transition:border-color .15s,box-shadow .15s}
+body.vcb input.ans:focus,body.vcb textarea.ans:focus{transform:none;box-shadow:0 0 0 3px var(--accent-soft);border-color:var(--accent)}
+body.vcb input.ans.ok,body.vcb textarea.ans.ok{background:var(--ok-bg);border-color:var(--mint)}
+body.vcb input.ans.bad,body.vcb textarea.ans.bad{background:var(--bad-bg);border-color:var(--coral)}
+body.vcb .static{background:var(--foam);border:1px solid var(--line);border-radius:10px;box-shadow:none;font-weight:500}
+body.vcb .conj.model .static{background:var(--paper)}
+body.vcb .row .pron{font-weight:600}
+
+/* ---------- enunciado (como la «karte» de Vocabulando), avisos y progreso ---------- */
+body.vcb .prompt{position:relative;overflow:hidden;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px 20px 16px;box-shadow:0 10px 30px -18px rgba(20,32,46,.4)}
+body.vcb .prompt::after{content:"";position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--accent),#5B79F0)}
+body.vcb .prompt .k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--ink-soft);opacity:1}
+body.vcb .prompt .v{font-family:var(--display);font-weight:700;font-size:28px;letter-spacing:-.015em}
+body.vcb .sentence,body.vcb .testq{font-family:var(--display)}
+body.vcb .banner{border:1px solid var(--line);box-shadow:none}
+body.vcb .banner.good{border-color:var(--mint)}
+body.vcb .banner.bad{border-color:var(--coral)}
+body.vcb .bar{height:10px;background:var(--foam);border:1px solid var(--line);box-shadow:none}
+body.vcb .bar span,body.vcb .bar i,body.vcb .testlevels .seg.current .ln,body.vcb .exphases .seg .track i{background:var(--accent)}
+body.vcb .testlevels .seg.done .ln{background:var(--mint)}
+body.vcb .exphases .seg.done .track i{background:var(--mint)}
+
+/* ---------- dictado, test y examen ---------- */
+body.vcb .playbtn{background:var(--accent);border:0;border-radius:14px;box-shadow:none}
+body.vcb .playbtn svg{fill:#fff}
+body.vcb .optbtn,body.vcb .exvbtn{border:1px solid var(--line);background:var(--paper);box-shadow:none;border-radius:11px;font-family:var(--text);font-weight:600;color:var(--ink)}
+body.vcb .optbtn:hover:not(:disabled),body.vcb .exvbtn:hover:not(:disabled){border-color:var(--accent);box-shadow:none}
+body.vcb .optbtn.ok{background:var(--ok-bg);border-color:var(--mint)}
+body.vcb .optbtn.bad{background:var(--bad-bg);border-color:var(--coral)}
+body.vcb .optbtn.gris{box-shadow:none}
+body.vcb .exbanda{background:var(--paper);border-width:1px}
+body.vcb .extagcount{border-width:1px}
+body.vcb .exmarca{border-width:1px}
+body.vcb .expal:hover:not(:disabled){border-bottom-color:var(--accent);background:var(--accent-soft)}
+body.vcb .exhueco{background:var(--foam)}
+body.vcb .exfail.sep{border-top:1px solid var(--line)}
+body.vcb .voicetoast{border:1px solid var(--line);box-shadow:0 10px 30px -18px rgba(0,0,0,.5)}
+body.vcb footer{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--ink-soft)}
+@media (max-width:640px){
+  body.vcb .themewrap{width:100%;margin-left:0}
+  body.vcb .tabs{flex:1}
+  body.vcb .tab{flex:1;padding:8px 10px;text-align:center}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+
+/* ---------- Declinario: tablas de teoría y cuadrícula de práctica ---------- */
+.dtablewrap{overflow-x:auto;margin:6px 0 4px}
+.dtable{border-collapse:separate;border-spacing:0;font-size:14.5px;min-width:100%}
+.dtable th,.dtable td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--hair);white-space:nowrap}
+.dtable th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);font-weight:500}
+.dtable th.rowh{text-transform:none;letter-spacing:0;font-family:var(--text);font-size:13.5px;font-weight:700;color:var(--ink);background:var(--foam)}
+.dtable td{font-weight:600}
+.dtable td.none{color:var(--ink-soft);font-weight:400}
+.dgwrap{overflow-x:auto;margin:6px 0 14px;padding-bottom:4px}
+.dgrid{display:grid;grid-template-columns:minmax(120px,max-content) repeat(var(--cols),minmax(120px,1fr));gap:8px 10px;align-items:start;min-width:min-content}
+.dg.head{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);padding:0 2px}
+.dg.rowh{font-weight:700;font-size:13.5px;padding-top:11px}
+.dg.cell{position:relative;min-width:0}
+.dg.cell .static{display:block;padding-top:11px;color:var(--ink-soft)}
+.dg.cell input.ans{width:100%;min-width:0}
+.dg.cell .fix{display:block;margin-top:3px}
+.sentence .cellwrap{width:min(100%,172px);flex:0 0 auto}   /* sin esto la casilla de la frase reserva el ancho natural de un campo de texto */
+@media (max-width:640px){.sentence .cellwrap{width:min(100%,138px)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bootError" id="bootError" role="alert" hidden>
+    <p class="bootErrorTitle" id="bootErrorTitle">La página no ha podido arrancar bien.</p>
+    <p>Prueba a recargarla. Si sigue igual, haz una captura de este aviso y envíasela a quien te pasó el archivo.</p>
+    <p class="bootErrorDetail" id="bootErrorText"></p>
+    <button type="button" class="btn small" id="bootErrorClose">Cerrar</button>
+  </div>
+  <div class="topbar">
+    <div class="brand">
+      <p class="eyebrow" id="eyebrow">Sala de declinación</p>
+      <h1><button class="brandbtn" id="brandBtn" type="button" aria-label="Ir al inicio de Declinario">Declinario</button></h1>
+    </div>
+    <div class="themewrap">
+      <div class="langwrap" id="langWrap" hidden>
+        <button class="langchip" id="langChip" type="button" hidden aria-haspopup="listbox" aria-expanded="false" title="Cambiar de idioma" aria-label="Cambiar de idioma"></button>
+        <div class="langmenu" id="langMenu" role="listbox" aria-label="Idioma" hidden></div>
+      </div>
+      <a class="sibbtn" id="sibBtn" href="../Conjugario/index.html" hidden title="Cambiar a Conjugario (conjugaciones)" aria-label="Ir a Conjugario"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg><span class="sibtxt">Conjugario</span></a>
+      <button class="themebtn" id="themeBtn" type="button" aria-pressed="false" aria-label="Modo oscuro" title="Activar el modo oscuro">
+        <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
+      </button>
+      <button class="themebtn" id="infoBtn" type="button" aria-haspopup="dialog" aria-label="Cómo funciona" title="Cómo funciona"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r=".7" fill="currentColor" stroke-width="1"/></svg></button>
+    </div>
+  </div>
+  <script>
+  /* tema claro / oscuro: data-theme ya viene puesto por el script de <head>; esto conecta el botón.
+     Va en su propio script para que el botón funcione aunque el script principal fallara. */
+  (function(){
+    var KEY = 'declinario-theme', SHARED = 'idiomas:theme';   /* SHARED: la comparte con Vocabulando y Conjugario */
+    var root = document.documentElement;
+    var btn = document.getElementById('themeBtn');
+    var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    var chosen = false;                       /* elección hecha en esta sesión (aunque no se pueda guardar) */
+    function saved(){ try{ var v = localStorage.getItem(SHARED); if(v !== 'dark' && v !== 'light') v = localStorage.getItem(KEY); return (v === 'dark' || v === 'light') ? v : null; }catch(e){ return null; } }
+    function apply(theme){
+      var dark = theme === 'dark';
+      root.setAttribute('data-theme', dark ? 'dark' : 'light');
+      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+      btn.title = dark ? 'Volver al modo claro' : 'Activar el modo oscuro';
+    }
+    apply(root.getAttribute('data-theme'));
+    btn.addEventListener('click', function(){
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      chosen = true;
+      apply(next);
+      try{ localStorage.setItem(KEY, next); localStorage.setItem(SHARED, next); }catch(e){ /* sin almacenamiento: vale para esta sesión */ }
+    });
+    /* sin elección propia ni guardada, sigue al sistema */
+    function onSystem(e){ if(!chosen && !saved()) apply(e.matches ? 'dark' : 'light'); }
+    if(mq){ if(mq.addEventListener) mq.addEventListener('change', onSystem); else if(mq.addListener) mq.addListener(onSystem); }
+    /* otra pestaña ha cambiado el tema */
+    window.addEventListener('storage', function(e){ if((e.key === KEY || e.key === SHARED) && (e.newValue === 'dark' || e.newValue === 'light')) apply(e.newValue); });
+  })();
+  </script>
+  <script>
+  /* enlace con Conjugario (la otra web, en la carpeta vecina). Solo se muestra al abrir como archivo local, donde la ruta relativa
+     funciona; si algún día se publican, pon aquí su dirección completa. El idioma abierto viaja en la dirección (#pt). */
+  (function(){
+    var URL_SIB = '../Conjugario/index.html';
+    var a = document.getElementById('sibBtn');
+    if(!a) return;
+    try{
+      if(!/^https?:\/\//i.test(URL_SIB) && location.protocol !== 'file:') return;
+      var upd = function(){ a.href = URL_SIB + (/^#[a-z]{2}$/.test(location.hash) ? location.hash : ''); };
+      window.__sibUpdate = upd; window.addEventListener('hashchange', upd);
+      var sendTheme = function(){ try{ localStorage.setItem('idiomas:theme', document.documentElement.getAttribute('data-theme')); }catch(e){} };
+      a.addEventListener('click', sendTheme); a.addEventListener('auxclick', sendTheme);
+      upd(); a.hidden = false;
+    }catch(e){ /* sin enlace: el resto de la página no depende de él */ }
+  })();
+  </script>
+  <!-- pantalla de bienvenida -->
+  <div id="welcome">
+    <div class="card main hero">
+      <p class="eyebrow">Elección de idioma</p>
+      <div class="big">¿Qué idioma vas a practicar?</div>
+      <div class="choices" id="choices"></div>
+      <div class="nojs" role="alert">
+        <p class="nojsTitle">Declinario necesita JavaScript y ahora no se está ejecutando.</p>
+        <p>Suele pasar al abrir el archivo desde la vista previa de Archivos (iPad o iPhone), de un mensaje o de un correo: esas vistas previas no ejecutan JavaScript.</p>
+        <p>Ábrelo en un navegador (Safari, Chrome, Edge…) desde la dirección web donde esté publicado, o con una aplicación capaz de ejecutar páginas HTML.</p>
+      </div>
+    </div>
+  </div>
+  <!-- aplicación -->
+  <div id="app" hidden>
+    <div class="tabs" role="tablist" aria-label="Secciones">
+      <button class="tab" id="tabTheory" role="tab" aria-selected="true">Teoría</button>
+      <button class="tab" id="tabPractice" role="tab" aria-selected="false">Prácticas</button>
+    </div>
+    <div class="subtabs" id="subtabs" role="tablist" aria-label="Temas"></div>
+    <div id="panelTheory"></div>
+    <div id="panelPractice" hidden></div>
+  </div>
+  <footer>
+    <span>Declinario · sala de declinación</span>
+  </footer>
+</div>
+<script>
+"use strict";
+/* =========================================================
+   DATOS · cada idioma tiene temas (artículos, pronombres, sustantivos, adjetivos…);
+   cada tema, una o varias tablas («items»): filas (casos o funciones) × columnas (género, número o persona)
+   Una celda es la forma correcta; «a|b» son alternativas, «(e)» una letra opcional y «—» que no existe.
+   ========================================================= */
+const LANGS = {};
+const LANG_ORDER = ['fr','it','pt','ca','pl','en','de','el'];
+const keys = a => a.map(s => { const i = s.indexOf(' '); return { k:s.slice(0, i), label:s.slice(i + 1) }; });
+/* G(título, filas, columnas, líneas): cada línea es una fila, con las celdas separadas por « ; » */
+function G(title, rows, cols, lines, o){
+  const R = keys(rows), C = keys(cols), cells = {};
+  if(lines.length !== R.length) throw new Error('filas de «' + title + '»: ' + lines.length + ' en vez de ' + R.length);
+  lines.forEach((ln, ri) => {
+    const parts = ln.split(';').map(x => x.trim());
+    if(parts.length !== C.length) throw new Error('columnas de «' + title + '» / ' + R[ri].k + ': ' + parts.length + ' en vez de ' + C.length);
+    cells[R[ri].k] = {};
+    C.forEach((c, ci) => { cells[R[ri].k][c.k] = parts[ci]; });
+  });
+  return Object.assign({ title, rows:R, cols:C, cells }, o || {});
+}
+function addLang(code, name, native, frames){ LANGS[code] = { code, name, native, topics:[], frames:frames || {} }; }
+/* kind: 'np' (la celda es un sintagma o un sustantivo: la frase lleva su hueco), 'art' (la celda es un determinante y el sustantivo va en la frase),
+         'pro' (pronombre: la frase lleva el hueco y se indica a qué persona se refiere), 'none' (sin frases) */
+function topic(code, id, name, group, kind, use, items, tips, o){
+  LANGS[code].topics.push(Object.assign({ id, name, group, kind, use, items, tips:tips || [] }, o || {}));
+}
+
+/* ------------------------------------------------------------------ ALEMÁN */
+addLang('de', 'Alemán', 'Deutsch', {
+  np:{
+    nom:['Wer ist da? — {}.'],
+    akk:['Ich sehe {}.', 'Er geht ohne {}.', 'Wir kaufen es für {}.'],
+    dat:['Ich spreche mit {}.', 'Er kommt von {}.', 'Sie wohnt bei {}.'],
+    gen:['Das ist das Haus {}.', 'Wegen {} bleiben wir hier.']
+  },
+  art:{
+    nom:['Wer ist da? — {} {n}.'],
+    akk:['Ich sehe {} {n}.', 'Er geht ohne {} {n}.'],
+    dat:['Ich spreche mit {} {n}.', 'Sie wohnt bei {} {n}.'],
+    gen:['Das ist das Haus {} {n}.']
+  },
+  pro:{
+    nom:['Wer kommt? — {}.'],
+    akk:['Er sieht {}.'],
+    dat:['Er hilft {}.']
+  }
+});
+const DE_CASES = ['nom Nominativo', 'akk Acusativo', 'dat Dativo', 'gen Genitivo'];
+const DE_GEN = ['m Masculino', 'f Femenino', 'n Neutro', 'pl Plural'];
+const DE_NOUNS = {   // sustantivo de cada columna, tal como va en cada caso (para las frases con un artículo)
+  m:{ nom:'Mann', akk:'Mann', dat:'Mann', gen:'Mannes' }, f:{ nom:'Frau', akk:'Frau', dat:'Frau', gen:'Frau' },
+  n:{ nom:'Kind', akk:'Kind', dat:'Kind', gen:'Kindes' }, pl:{ nom:'Kinder', akk:'Kinder', dat:'Kindern', gen:'Kinder' } };
+
+topic('de', 'artdef', 'Artículo determinado', 'Artículos', 'art',
+  'El artículo cambia según el género y el número del sustantivo y según el caso, que indica su función en la frase.',
+  [G('der · die · das', DE_CASES, DE_GEN, [
+    'der ; die ; das ; die',
+    'den ; die ; das ; die',
+    'dem ; der ; dem ; den',
+    'des ; der ; des ; der'])],
+  ['Nominativo: el sujeto. Acusativo: el complemento directo y tras durch, für, gegen, ohne, um.',
+   'Dativo: el complemento indirecto y tras aus, bei, mit, nach, seit, von, zu.',
+   'Genitivo: la posesión (das Haus des Mannes) y tras wegen, trotz, während.',
+   'Solo el masculino cambia entre nominativo y acusativo (der → den). En femenino, neutro y plural son iguales.',
+   'En dativo plural el sustantivo añade -n: mit den Kindern.'],
+  { nouns:DE_NOUNS });
+
+topic('de', 'artindef', 'ein, kein y posesivos', 'Artículos', 'art',
+  'ein («un») se declina como el artículo determinado pero sin plural. kein («ningún») y los posesivos (mein, dein, sein, ihr, unser, euer, Ihr) siguen el mismo modelo y sí tienen plural.',
+  [G('ein', DE_CASES, DE_GEN, [
+    'ein ; eine ; ein ; —',
+    'einen ; eine ; ein ; —',
+    'einem ; einer ; einem ; —',
+    'eines ; einer ; eines ; —']),
+   G('kein', DE_CASES, DE_GEN, [
+    'kein ; keine ; kein ; keine',
+    'keinen ; keine ; kein ; keine',
+    'keinem ; keiner ; keinem ; keinen',
+    'keines ; keiner ; keines ; keiner']),
+   G('mein', DE_CASES, DE_GEN, [
+    'mein ; meine ; mein ; meine',
+    'meinen ; meine ; mein ; meine',
+    'meinem ; meiner ; meinem ; meinen',
+    'meines ; meiner ; meines ; meiner'])],
+  ['En masculino nominativo y en neutro nominativo y acusativo no hay terminación: ein Mann, ein Kind, mein Kind.',
+   'euer pierde una e al llevar terminación: eure, euren, eurem (no «euere»); unser la mantiene: unsere, unseren, unserem.',
+   'Ihr (con mayúscula) es el posesivo de «usted» y se declina igual.'],
+  { nouns:DE_NOUNS });
+
+topic('de', 'dieser', 'dieser, welcher, jeder', 'Artículos', 'art',
+  'Estas palabras («este», «cuál», «cada») llevan las terminaciones del artículo determinado: es la declinación «fuerte».',
+  [G('dieser', DE_CASES, DE_GEN, [
+    'dieser ; diese ; dieses ; diese',
+    'diesen ; diese ; dieses ; diese',
+    'diesem ; dieser ; diesem ; diesen',
+    'dieses ; dieser ; dieses ; dieser']),
+   G('welcher', DE_CASES, DE_GEN, [
+    'welcher ; welche ; welches ; welche',
+    'welchen ; welche ; welches ; welche',
+    'welchem ; welcher ; welchem ; welchen',
+    'welches ; welcher ; welches ; welcher']),
+   G('jeder', DE_CASES, DE_GEN, [
+    'jeder ; jede ; jedes ; —',
+    'jeden ; jede ; jedes ; —',
+    'jedem ; jeder ; jedem ; —',
+    'jedes ; jeder ; jedes ; —'])],
+  ['Terminaciones: -er, -e, -es, -e / -en, -e, -es, -e / -em, -er, -em, -en / -es, -er, -es, -er.',
+   'Se declinan igual: alle, manche, solche, jener. jeder no tiene plural.'],
+  { nouns:DE_NOUNS });
+
+topic('de', 'pers', 'Pronombres personales', 'Pronombres', 'pro',
+  'El pronombre cambia según la función: sujeto (nominativo), complemento directo (acusativo) o indirecto (dativo). El genitivo casi no se usa.',
+  [G('1.ª y 2.ª persona', DE_CASES, ['ich ich', 'du du', 'wir wir', 'ihr ihr'], [
+    'ich ; du ; wir ; ihr',
+    'mich ; dich ; uns ; euch',
+    'mir ; dir ; uns ; euch',
+    'meiner ; deiner ; unser ; euer']),
+   G('3.ª persona y cortesía', DE_CASES, ['er er', 'sie_f sie (ella)', 'es es', 'sie_p sie (ellos)', 'Sie Sie (usted)'], [
+    'er ; sie ; es ; sie ; Sie',
+    'ihn ; sie ; es ; sie ; Sie',
+    'ihm ; ihr ; ihm ; ihnen ; Ihnen',
+    'seiner ; ihrer ; seiner ; ihrer ; Ihrer'])],
+  ['Con verbos como helfen, danken, gefallen, folgen, antworten el complemento va en dativo: Ich helfe dir.',
+   'El genitivo (meiner, deiner…) solo aparece con unos pocos verbos y en lengua formal: Wir gedenken seiner.',
+   'sie (ellos) y Sie (usted) comparten forma salvo la mayúscula: ihnen / Ihnen.'],
+  { });
+
+topic('de', 'rel', 'Relativos, interrogativos y reflexivos', 'Pronombres', 'none',
+  'El relativo concuerda en género y número con su antecedente, pero su caso lo decide la función dentro de la oración de relativo.',
+  [G('der · die · das (relativo)', DE_CASES, DE_GEN, [
+    'der ; die ; das ; die',
+    'den ; die ; das ; die',
+    'dem ; der ; dem ; denen',
+    'dessen ; deren ; dessen ; deren']),
+   G('wer · was', DE_CASES, ['wer wer (personas)', 'was was (cosas)'], [
+    'wer ; was',
+    'wen ; was',
+    'wem ; —',
+    'wessen ; wessen']),
+   G('reflexivo', ['akk Acusativo', 'dat Dativo'], ['ich ich', 'du du', 'er_sie er/sie/es', 'wir wir', 'ihr ihr', 'sie sie/Sie'], [
+    'mich ; dich ; sich ; uns ; euch ; sich',
+    'mir ; dir ; sich ; uns ; euch ; sich'])],
+  ['Der Mann, den ich sehe… (acusativo: es el objeto de «ich sehe»). Die Frau, der ich helfe… (dativo: helfen pide dativo).',
+   'El relativo es igual que el artículo salvo el genitivo (dessen, deren) y el dativo plural (denen).',
+   'En ich wasche mich el reflexivo es acusativo; en ich wasche mir die Hände (con otro complemento directo) es dativo.'],
+  { });
+
+/* sustantivos: cada celda ya lleva su artículo */
+const DE_NR = ['nom Nominativo', 'akk Acusativo', 'dat Dativo', 'gen Genitivo'], DE_SP = ['sg Singular', 'pl Plural'];
+topic('de', 'nom', 'Sustantivos', 'Sustantivos', 'np',
+  'Los sustantivos alemanes cambian poco: el artículo marca casi todo el caso. Cambian el genitivo del masculino y el neutro (-(e)s), el dativo plural (-n) y los masculinos «débiles».',
+  [G('der Tisch', DE_NR, DE_SP, ['der Tisch ; die Tische', 'den Tisch ; die Tische', 'dem Tisch(e) ; den Tischen', 'des Tisch(e)s ; der Tische']),
+   G('der Mann', DE_NR, DE_SP, ['der Mann ; die Männer', 'den Mann ; die Männer', 'dem Mann ; den Männern', 'des Mann(e)s ; der Männer']),
+   G('der Junge (débil)', DE_NR, DE_SP, ['der Junge ; die Jungen', 'den Jungen ; die Jungen', 'dem Jungen ; den Jungen', 'des Jungen ; der Jungen']),
+   G('der Student (débil)', DE_NR, DE_SP, ['der Student ; die Studenten', 'den Studenten ; die Studenten', 'dem Studenten ; den Studenten', 'des Studenten ; der Studenten']),
+   G('der Name (mixto)', DE_NR, DE_SP, ['der Name ; die Namen', 'den Namen ; die Namen', 'dem Namen ; den Namen', 'des Namens ; der Namen']),
+   G('die Frau', DE_NR, DE_SP, ['die Frau ; die Frauen', 'die Frau ; die Frauen', 'der Frau ; den Frauen', 'der Frau ; der Frauen']),
+   G('die Stadt', DE_NR, DE_SP, ['die Stadt ; die Städte', 'die Stadt ; die Städte', 'der Stadt ; den Städten', 'der Stadt ; der Städte']),
+   G('das Kind', DE_NR, DE_SP, ['das Kind ; die Kinder', 'das Kind ; die Kinder', 'dem Kind(e) ; den Kindern', 'des Kind(e)s ; der Kinder']),
+   G('das Haus', DE_NR, DE_SP, ['das Haus ; die Häuser', 'das Haus ; die Häuser', 'dem Haus(e) ; den Häusern', 'des Hauses ; der Häuser']),
+   G('das Herz (mixto)', DE_NR, DE_SP, ['das Herz ; die Herzen', 'das Herz ; die Herzen', 'dem Herzen ; den Herzen', 'des Herzens ; der Herzen'])],
+  ['Masculinos débiles (der Junge, der Student, der Mensch, der Herr, der Kollege…): añaden -(e)n en todos los casos menos en el nominativo singular.',
+   'Al genitivo masculino y neutro se le añade -(e)s: -es tras sibilante o grupo difícil (des Hauses), -s o -es en el resto (des Tischs / des Tisches).',
+   'Dativo plural: siempre -n, salvo que el plural ya acabe en -n o -s (den Frauen, den Autos).'],
+  { });
+
+/* adjetivos: se generan con sus terminaciones, para no equivocarse al teclear */
+const DE_END = {
+  weak:{ nom:['e','e','e','en'], akk:['en','e','e','en'], dat:['en','en','en','en'], gen:['en','en','en','en'] },
+  mixed:{ nom:['er','e','es','en'], akk:['en','e','es','en'], dat:['en','en','en','en'], gen:['en','en','en','en'] },
+  strong:{ nom:['er','e','es','e'], akk:['en','e','es','e'], dat:['em','er','em','en'], gen:['en','er','en','er'] } };
+const DE_DET = {
+  weak:{ nom:['der','die','das','die'], akk:['den','die','das','die'], dat:['dem','der','dem','den'], gen:['des','der','des','der'] },
+  mixed:{ nom:['ein','eine','ein','meine'], akk:['einen','eine','ein','meine'], dat:['einem','einer','einem','meinen'], gen:['eines','einer','eines','meiner'] },
+  strong:{ nom:['','','',''], akk:['','','',''], dat:['','','',''], gen:['','','',''] } };
+function deAdjItem(type, adj, nouns, title){
+  const cs = ['nom','akk','dat','gen'];
+  const lines = cs.map(c => [0,1,2,3].map(i => [DE_DET[type][c][i], adj + DE_END[type][c][i], nouns[i][c] || nouns[i].x].filter(Boolean).join(' ')).join(' ; '));
+  const hints = {}; ['m','f','n','pl'].forEach((k, i) => { hints[k] = [DE_DET[type].nom[i], adj, nouns[i].x].filter(Boolean).join(' + '); });
+  return G(title, DE_CASES, DE_GEN, lines, { hints });
+}
+const DE_N1 = [{ x:'Mann', gen:'Mann(e)s' }, { x:'Frau' }, { x:'Kind', gen:'Kind(e)s' }, { x:'Freunde', dat:'Freunden' }];
+const DE_N2 = [{ x:'Tisch', gen:'Tisch(e)s' }, { x:'Stadt' }, { x:'Haus', gen:'Hauses' }, { x:'Bücher', dat:'Büchern' }];
+const DE_N3 = [{ x:'Wein', gen:'Wein(e)s' }, { x:'Milch' }, { x:'Bier', gen:'Bier(e)s' }, { x:'Freunde', dat:'Freunden' }];
+const DE_N4 = [{ x:'Kaffee', gen:'Kaffees' }, { x:'Luft' }, { x:'Brot', gen:'Brot(e)s' }, { x:'Äpfel', dat:'Äpfeln' }];
+topic('de', 'adjw', 'Adjetivos tras der / dieser', 'Adjetivos', 'np',
+  'Tras el artículo determinado (der, dieser, jeder…) el adjetivo lleva -e en el nominativo singular y en el acusativo femenino y neutro, y -en en todo lo demás: es la declinación «débil».',
+  [deAdjItem('weak', 'gut', DE_N1, 'der gute Mann'), deAdjItem('weak', 'neu', DE_N2, 'der neue Tisch')],
+  ['Regla corta: -e solo en el nominativo singular (m, f, n) y en el acusativo singular femenino y neutro; todo lo demás, incluido todo el plural, es -en.',
+   'El artículo ya marca el caso, por eso el adjetivo «descansa» y casi siempre es -en.'],
+  { });
+topic('de', 'adjm', 'Adjetivos tras ein / kein / mein', 'Adjetivos', 'np',
+  'Tras ein, kein o un posesivo el adjetivo marca el género donde el artículo no lleva terminación (masculino nominativo, neutro nominativo y acusativo): es la declinación «mixta».',
+  [deAdjItem('mixed', 'gut', DE_N1, 'ein guter Mann'), deAdjItem('mixed', 'neu', DE_N2, 'ein neuer Tisch')],
+  ['ein guter Mann, ein gutes Kind: como ein no lleva terminación, el adjetivo aporta -er / -es.',
+   'En plural (con kein, mein…) funciona como la débil: meine guten Freunde.'],
+  { });
+topic('de', 'adjs', 'Adjetivos sin artículo', 'Adjetivos', 'np',
+  'Sin artículo el adjetivo toma las terminaciones del artículo determinado, salvo el genitivo masculino y neutro (-en): es la declinación «fuerte».',
+  [deAdjItem('strong', 'gut', DE_N3, 'guter Wein'), deAdjItem('strong', 'frisch', DE_N4, 'frischer Kaffee')],
+  ['Se usa con plurales y con sustantivos incontables: gute Freunde, guter Wein, frische Milch.',
+   'Terminaciones: -er, -e, -es, -e / -en, -e, -es, -e / -em, -er, -em, -en / -en, -er, -en, -er.'],
+  { });
+
+/* ------------------------------------------------------------------ POLACO */
+addLang('pl', 'Polaco', 'Polski', {
+  np:{
+    nom:['Na zdjęciu: {}.'],
+    gen:['Nie ma {}.', 'Idę do {}.', 'Jestem bez {}.'],
+    dat:['Dzięki {} jest lepiej.', 'Idę ku {}.'],
+    acc:['Widzę {}.', 'Czekam na {}.', 'Idę przez {}.'],
+    ins:['Idę z {}.', 'Jestem za {}.'],
+    loc:['Mówię o {}.', 'Myślę o {}.'],
+    voc:['{}, uwaga!']
+  },
+  art:{
+    nom:['Na zdjęciu: {} {n}.'],
+    gen:['Nie ma {} {n}.', 'Idę do {} {n}.'],
+    dat:['Dzięki {} {n} jest lepiej.'],
+    acc:['Widzę {} {n}.', 'Czekam na {} {n}.'],
+    ins:['Idę z {} {n}.'],
+    loc:['Mówię o {} {n}.']
+  },
+  pro:{
+    nom:['Kto to? — {}.'],
+    gen:['Nie ma {}.'],
+    dat:['Kasia pomaga {}.'],
+    acc:['Kasia widzi {}.'],
+    ins:['Kasia idzie z {}.'],
+    loc:['Kasia mówi o {}.']
+  }
+});
+const PL_CASES6 = ['nom Mianownik (kto? co?)', 'gen Dopełniacz (kogo? czego?)', 'dat Celownik (komu? czemu?)', 'acc Biernik (kogo? co?)', 'ins Narzędnik (z kim? z czym?)', 'loc Miejscownik (o kim? o czym?)'];
+const PL_CASES7 = PL_CASES6.concat(['voc Wołacz (o!)']);
+const PL_GEN = ['m Masculino', 'f Femenino', 'n Neutro', 'pv Plural (personas, masc.)', 'pn Plural (resto)'];
+const PL_SP = ['sg Singular', 'pl Plural'];
+const PL_NOUNS = {   // sustantivo de cada columna, en cada caso (para las frases con un determinante)
+  m:{ nom:'dom', gen:'domu', dat:'domowi', acc:'dom', ins:'domem', loc:'domu' },
+  f:{ nom:'książka', gen:'książki', dat:'książce', acc:'książkę', ins:'książką', loc:'książce' },
+  n:{ nom:'okno', gen:'okna', dat:'oknu', acc:'okno', ins:'oknem', loc:'oknie' },
+  pv:{ nom:'studenci', gen:'studentów', dat:'studentom', acc:'studentów', ins:'studentami', loc:'studentach' },
+  pn:{ nom:'domy', gen:'domów', dat:'domom', acc:'domy', ins:'domami', loc:'domach' } };
+
+topic('pl', 'pers', 'Pronombres personales', 'Pronombres', 'pro',
+  'En polaco el pronombre cambia en los siete casos. Los verbos y las preposiciones piden un caso concreto, y por eso hay que saber las formas.',
+  [G('ja · ty', PL_CASES6, ['ja ja', 'ty ty'], [
+    'ja ; ty',
+    'mnie ; ciebie|cię',
+    'mnie|mi ; tobie|ci',
+    'mnie ; ciebie|cię',
+    'mną ; tobą',
+    'mnie ; tobie']),
+   G('on · ona · ono', PL_CASES6, ['on on', 'ona ona', 'ono ono'], [
+    'on ; ona ; ono',
+    'jego|go ; jej ; jego|go',
+    'jemu|mu ; jej ; jemu|mu',
+    'jego|go ; ją ; je',
+    'nim ; nią ; nim',
+    'nim ; niej ; nim']),
+   G('my · wy', PL_CASES6, ['my my', 'wy wy'], [
+    'my ; wy',
+    'nas ; was',
+    'nam ; wam',
+    'nas ; was',
+    'nami ; wami',
+    'nas ; was']),
+   G('oni · one', PL_CASES6, ['oni oni (personas, masc.)', 'one one (resto)'], [
+    'oni ; one',
+    'ich ; ich',
+    'im ; im',
+    'ich ; je',
+    'nimi ; nimi',
+    'nich ; nich'])],
+  ['Tras una preposición, las formas de 3.ª persona empiezan por n-: do niego, dla niej, o nim. Ejemplo: Widzę go, pero Idę do niego.',
+   'Las formas cortas (mi, ci, mu, cię, go) son átonas: no se ponen al principio de la frase ni tras una preposición.',
+   'Con mnie, ciebie… la forma de acusativo y la de genitivo coinciden en varios pronombres: Nie ma mnie / Widzę mnie.'],
+  { });
+
+topic('pl', 'ten', 'ten y mój (determinantes)', 'Pronombres', 'art',
+  'Los demostrativos y los posesivos concuerdan con el sustantivo en género, número y caso. En el plural se distinguen los nombres de personas masculinas («virile») del resto.',
+  [G('ten · ta · to', PL_CASES6, PL_GEN, [
+    'ten ; ta ; to ; ci ; te',
+    'tego ; tej ; tego ; tych ; tych',
+    'temu ; tej ; temu ; tym ; tym',
+    'ten ; tę ; to ; tych ; te',
+    'tym ; tą ; tym ; tymi ; tymi',
+    'tym ; tej ; tym ; tych ; tych']),
+   G('mój · moja · moje', PL_CASES6, PL_GEN, [
+    'mój ; moja ; moje ; moi ; moje',
+    'mojego ; mojej ; mojego ; moich ; moich',
+    'mojemu ; mojej ; mojemu ; moim ; moim',
+    'mój ; moją ; moje ; moich ; moje',
+    'moim ; moją ; moim ; moimi ; moimi',
+    'moim ; mojej ; moim ; moich ; moich'])],
+  ['Con masculinos animados el acusativo singular coincide con el genitivo: Widzę tego psa / mojego brata (pero Widzę ten dom). En la tabla se muestra el caso de un inanimado.',
+   'En plural, el acusativo de las personas masculinas es igual al genitivo (tych studentów), y el del resto, igual al nominativo (te domy).',
+   'Se declinan igual: twój, nasz, wasz, swój (mój, twój, swój) y jaki, taki, który.'],
+  { nouns:PL_NOUNS });
+
+topic('pl', 'nom', 'Sustantivos', 'Sustantivos', 'np',
+  'El caso de los sustantivos polacos se marca con la terminación. El género y la última letra de la raíz deciden qué terminaciones toma.',
+  [G('kot (masc. animado)', PL_CASES7, PL_SP, ['kot ; koty', 'kota ; kotów', 'kotu ; kotom', 'kota ; koty', 'kotem ; kotami', 'kocie ; kotach', 'kocie ; koty']),
+   G('pies (masc. animado)', PL_CASES7, PL_SP, ['pies ; psy', 'psa ; psów', 'psu ; psom', 'psa ; psy', 'psem ; psami', 'psie ; psach', 'psie ; psy']),
+   G('student (masc. persona)', PL_CASES7, PL_SP, ['student ; studenci', 'studenta ; studentów', 'studentowi ; studentom', 'studenta ; studentów', 'studentem ; studentami', 'studencie ; studentach', 'studencie ; studenci']),
+   G('stół (masc. inanimado)', PL_CASES7, PL_SP, ['stół ; stoły', 'stołu ; stołów', 'stołowi|stołu ; stołom', 'stół ; stoły', 'stołem ; stołami', 'stole ; stołach', 'stole ; stoły']),
+   G('dom (masc. inanimado)', PL_CASES7, PL_SP, ['dom ; domy', 'domu ; domów', 'domowi|domu ; domom', 'dom ; domy', 'domem ; domami', 'domu ; domach', 'domu ; domy']),
+   G('kobieta (femenino en -a)', PL_CASES7, PL_SP, ['kobieta ; kobiety', 'kobiety ; kobiet', 'kobiecie ; kobietom', 'kobietę ; kobiety', 'kobietą ; kobietami', 'kobiecie ; kobietach', 'kobieto ; kobiety']),
+   G('ulica (femenino en -a)', PL_CASES7, PL_SP, ['ulica ; ulice', 'ulicy ; ulic', 'ulicy ; ulicom', 'ulicę ; ulice', 'ulicą ; ulicami', 'ulicy ; ulicach', 'ulico ; ulice']),
+   G('noc (femenino en consonante)', PL_CASES7, PL_SP, ['noc ; noce', 'nocy ; nocy', 'nocy ; nocom', 'noc ; noce', 'nocą ; nocami', 'nocy ; nocach', 'nocy ; noce']),
+   G('okno (neutro en -o)', PL_CASES7, PL_SP, ['okno ; okna', 'okna ; okien', 'oknu ; oknom', 'okno ; okna', 'oknem ; oknami', 'oknie ; oknach', 'okno ; okna']),
+   G('dziecko (neutro en -o)', PL_CASES7, PL_SP, ['dziecko ; dzieci', 'dziecka ; dzieci', 'dziecku ; dzieciom', 'dziecko ; dzieci', 'dzieckiem ; dziećmi', 'dziecku ; dzieciach', 'dziecko ; dzieci']),
+   G('imię (neutro en -ę)', PL_CASES7, PL_SP, ['imię ; imiona', 'imienia ; imion', 'imieniu ; imionom', 'imię ; imiona', 'imieniem ; imionami', 'imieniu ; imionach', 'imię ; imiona'])],
+  ['Ante la -e del locativo y el vocativo la consonante final de la raíz se ablanda: kot → kocie, książka → książce, kobieta → kobiecie.',
+   'Los masculinos animados tienen el acusativo singular igual que el genitivo (widzę kota); los inanimados, igual que el nominativo (widzę dom).',
+   'El genitivo plural de femeninos y neutros suele ser la raíz sin terminación (kobiet, okien, ulic); en los acabados en consonante es -y (nocy).',
+   'Los masculinos inanimados tienen el genitivo singular en -a o en -u (stołu, domu): hay que aprenderlo con cada palabra.'],
+  { });
+
+topic('pl', 'adj', 'Adjetivos', 'Adjetivos', 'none',
+  'El adjetivo concuerda con el sustantivo en género, número y caso: terminaciones -y/-a/-e en nominativo y -ego/-ej/-ego, -emu/-ej/-emu… en el resto.',
+  [G('nowy (raíz dura)', PL_CASES6, PL_GEN, [
+    'nowy ; nowa ; nowe ; nowi ; nowe',
+    'nowego ; nowej ; nowego ; nowych ; nowych',
+    'nowemu ; nowej ; nowemu ; nowym ; nowym',
+    'nowy ; nową ; nowe ; nowych ; nowe',
+    'nowym ; nową ; nowym ; nowymi ; nowymi',
+    'nowym ; nowej ; nowym ; nowych ; nowych']),
+   G('dobry (con cambio en plural)', PL_CASES6, PL_GEN, [
+    'dobry ; dobra ; dobre ; dobrzy ; dobre',
+    'dobrego ; dobrej ; dobrego ; dobrych ; dobrych',
+    'dobremu ; dobrej ; dobremu ; dobrym ; dobrym',
+    'dobry ; dobrą ; dobre ; dobrych ; dobre',
+    'dobrym ; dobrą ; dobrym ; dobrymi ; dobrymi',
+    'dobrym ; dobrej ; dobrym ; dobrych ; dobrych']),
+   G('tani (raíz blanda, en -i)', PL_CASES6, PL_GEN, [
+    'tani ; tania ; tanie ; tani ; tanie',
+    'taniego ; taniej ; taniego ; tanich ; tanich',
+    'taniemu ; taniej ; taniemu ; tanim ; tanim',
+    'tani ; tanią ; tanie ; tanich ; tanie',
+    'tanim ; tanią ; tanim ; tanimi ; tanimi',
+    'tanim ; taniej ; tanim ; tanich ; tanich'])],
+  ['En el plural «virile» (personas masculinas) el nominativo cambia: nowi, dobrzy, tani; el resto: nowe, dobre, tanie.',
+   'Con masculinos animados el acusativo singular es igual al genitivo: widzę nowego psa.'],
+  { });
+
+topic('pl', 'kto', 'kto, co y siebie', 'Pronombres', 'none',
+  'Los interrogativos kto («quién», personas) y co («qué», cosas) se declinan, igual que el reflexivo siebie («se, a sí mismo»).',
+  [G('kto · co', PL_CASES6, ['kto kto (personas)', 'co co (cosas)'], [
+    'kto ; co',
+    'kogo ; czego',
+    'komu ; czemu',
+    'kogo ; co',
+    'kim ; czym',
+    'kim ; czym']),
+   G('siebie', PL_CASES6.slice(1), ['siebie siebie'], [
+    'siebie',
+    'sobie',
+    'siebie|się',
+    'sobą',
+    'sobie'])],
+  ['Kogo widzisz? Widzę ją. Komu pomagasz? Pomagam mu. Z kim idziesz? Idę z nią.',
+   'siebie no tiene nominativo; la forma corta del acusativo es się (myję się).'],
+  { });
+
+/* ------------------------------------------------------------------ GRIEGO */
+addLang('el', 'Griego', 'Ελληνικά', {
+  np:{
+    nom:['Στη φωτογραφία: {}.'],
+    acc:['Βλέπω {}.', 'Μιλάω για {}.'],
+    gen:['Αυτό είναι το σπίτι {}.'],
+    voc:['{}, προσοχή!']
+  },
+  art:{
+    nom:['Στη φωτογραφία: {} {n}.'],
+    acc:['Βλέπω {} {n}.', 'Μιλάω για {} {n}.'],
+    gen:['Αυτό είναι το σπίτι {} {n}.']
+  },
+  pro:{
+    nom:['Ποιος είναι εκεί; — {}.'],
+    gen:['Η Μαρία {} δίνει το βιβλίο.'],
+    accw:['Η Μαρία {} βλέπει.'],
+    accs:['Η Μαρία περιμένει {}.']
+  }
+});
+const EL_CASES = ['nom Nominativo', 'gen Genitivo', 'acc Acusativo', 'voc Vocativo'];
+const EL_CASES3 = ['nom Nominativo', 'gen Genitivo', 'acc Acusativo'];
+const EL_GEN6 = ['m Masculino sg.', 'f Femenino sg.', 'n Neutro sg.', 'pm Masculino pl.', 'pf Femenino pl.', 'pn Neutro pl.'];
+const EL_SP = ['sg Singular', 'pl Plural'];
+const EL_NOUNS = {
+  m:{ nom:'φίλος', gen:'φίλου', acc:'φίλο' }, f:{ nom:'γυναίκα', gen:'γυναίκας', acc:'γυναίκα' }, n:{ nom:'παιδί', gen:'παιδιού', acc:'παιδί' },
+  pm:{ nom:'φίλοι', gen:'φίλων', acc:'φίλους' }, pf:{ nom:'γυναίκες', gen:'γυναικών', acc:'γυναίκες' }, pn:{ nom:'παιδιά', gen:'παιδιών', acc:'παιδιά' } };
+
+topic('el', 'art', 'Artículos', 'Artículos', 'art',
+  'El artículo griego lleva el caso, el género y el número del sustantivo. En griego moderno hay cuatro casos; el vocativo no lleva artículo.',
+  [G('ο · η · το (determinado)', EL_CASES3, EL_GEN6, [
+    'ο ; η ; το ; οι ; οι ; τα',
+    'του ; της ; του ; των ; των ; των',
+    'τον ; την ; το ; τους ; τις ; τα']),
+   G('ένας · μία · ένα (indefinido)', EL_CASES3, ['m Masculino', 'f Femenino', 'n Neutro'], [
+    'ένας ; μία|μια ; ένα',
+    'ενός ; μιας ; ενός',
+    'έναν|ένα ; μία|μια ; ένα'])],
+  ['Nominativo: sujeto. Acusativo: complemento directo y tras las preposiciones (σε, για, με, από…). Genitivo: posesión y complemento indirecto.',
+   'La -ν final de την (femenino) se pierde ante muchas consonantes (τη μητέρα, τη γυναίκα) y se conserva ante vocal y ante κ, π, τ, ξ, ψ, γκ, μπ, ντ, τσ, τζ (την πόλη, την καρέκλα). En τον (masculino) se suele conservar siempre: τον φίλο.'],
+  { nouns:EL_NOUNS });
+
+topic('el', 'nom', 'Sustantivos', 'Sustantivos', 'np',
+  'Los sustantivos griegos cambian de terminación según el caso y el número. En la tabla cada forma lleva su artículo (el vocativo no).',
+  [G('ο φίλος', EL_CASES, EL_SP, ['ο φίλος ; οι φίλοι', 'του φίλου ; των φίλων', 'τον φίλο ; τους φίλους', 'φίλε ; φίλοι']),
+   G('ο πατέρας', EL_CASES, EL_SP, ['ο πατέρας ; οι πατέρες', 'του πατέρα ; των πατέρων', 'τον πατέρα ; τους πατέρες', 'πατέρα ; πατέρες']),
+   G('ο μαθητής', EL_CASES, EL_SP, ['ο μαθητής ; οι μαθητές', 'του μαθητή ; των μαθητών', 'τον μαθητή ; τους μαθητές', 'μαθητή ; μαθητές']),
+   G('η γυναίκα', EL_CASES, EL_SP, ['η γυναίκα ; οι γυναίκες', 'της γυναίκας ; των γυναικών', 'τη γυναίκα|την γυναίκα ; τις γυναίκες', 'γυναίκα ; γυναίκες']),
+   G('η μητέρα', EL_CASES, EL_SP, ['η μητέρα ; οι μητέρες', 'της μητέρας ; των μητέρων', 'τη μητέρα|την μητέρα ; τις μητέρες', 'μητέρα ; μητέρες']),
+   G('η πόλη', EL_CASES, EL_SP, ['η πόλη ; οι πόλεις', 'της πόλης ; των πόλεων', 'την πόλη ; τις πόλεις', 'πόλη ; πόλεις']),
+   G('το βιβλίο', EL_CASES, EL_SP, ['το βιβλίο ; τα βιβλία', 'του βιβλίου ; των βιβλίων', 'το βιβλίο ; τα βιβλία', 'βιβλίο ; βιβλία']),
+   G('το παιδί', EL_CASES, EL_SP, ['το παιδί ; τα παιδιά', 'του παιδιού ; των παιδιών', 'το παιδί ; τα παιδιά', 'παιδί ; παιδιά']),
+   G('το όνομα', EL_CASES, EL_SP, ['το όνομα ; τα ονόματα', 'του ονόματος ; των ονομάτων', 'το όνομα ; τα ονόματα', 'όνομα ; ονόματα'])],
+  ['El nominativo y el vocativo masculinos en -ος hacen el vocativo en -ε (φίλος → φίλε); los demás suelen repetir la forma sin -ς.',
+   'Los neutros tienen nominativo, acusativo y vocativo iguales, y el genitivo plural de cada grupo acaba en -ων.',
+   'Hay palabras con el plural y el genitivo con cambio de acento (γυναίκα → γυναικών, παιδί → παιδιών).'],
+  { });
+
+topic('el', 'adj', 'Adjetivos', 'Adjetivos', 'none',
+  'El adjetivo concuerda con el sustantivo en género, número y caso; la mayoría tiene tres terminaciones (-ος, -η/-α, -ο).',
+  [G('καλός · καλή · καλό', EL_CASES, EL_GEN6, [
+    'καλός ; καλή ; καλό ; καλοί ; καλές ; καλά',
+    'καλού ; καλής ; καλού ; καλών ; καλών ; καλών',
+    'καλό ; καλή ; καλό ; καλούς ; καλές ; καλά',
+    'καλέ ; καλή ; καλό ; καλοί ; καλές ; καλά']),
+   G('μεγάλος · μεγάλη · μεγάλο', EL_CASES, EL_GEN6, [
+    'μεγάλος ; μεγάλη ; μεγάλο ; μεγάλοι ; μεγάλες ; μεγάλα',
+    'μεγάλου ; μεγάλης ; μεγάλου ; μεγάλων ; μεγάλων ; μεγάλων',
+    'μεγάλο ; μεγάλη ; μεγάλο ; μεγάλους ; μεγάλες ; μεγάλα',
+    'μεγάλε ; μεγάλη ; μεγάλο ; μεγάλοι ; μεγάλες ; μεγάλα']),
+   G('ωραίος · ωραία · ωραίο', EL_CASES, EL_GEN6, [
+    'ωραίος ; ωραία ; ωραίο ; ωραίοι ; ωραίες ; ωραία',
+    'ωραίου ; ωραίας ; ωραίου ; ωραίων ; ωραίων ; ωραίων',
+    'ωραίο ; ωραία ; ωραίο ; ωραίους ; ωραίες ; ωραία',
+    'ωραίε ; ωραία ; ωραίο ; ωραίοι ; ωραίες ; ωραία'])],
+  ['El adjetivo toma el caso del sustantivo al que acompaña: ο καλός φίλος, του καλού φίλου, τον καλό φίλο.',
+   'El femenino es -η (καλή) o -α tras vocal o ρ (ωραία).'],
+  { });
+
+topic('el', 'pers', 'Pronombres personales', 'Pronombres', 'pro',
+  'El griego tiene formas fuertes (acentuadas, para destacar o tras preposición) y formas débiles (átonas, que van pegadas al verbo). El genitivo débil hace de complemento indirecto.',
+  [G('1.ª y 2.ª persona (singular)', ['nom Nominativo', 'gen Genitivo (débil)', 'accs Acusativo (fuerte)', 'accw Acusativo (débil)'], ['ego εγώ', 'esi εσύ'], [
+    'εγώ ; εσύ',
+    'μου ; σου',
+    'εμένα ; εσένα',
+    'με ; σε']),
+   G('1.ª y 2.ª persona (plural)', ['nom Nominativo', 'gen Genitivo (débil)', 'accs Acusativo (fuerte)', 'accw Acusativo (débil)'], ['emis εμείς', 'esis εσείς'], [
+    'εμείς ; εσείς',
+    'μας ; σας',
+    'εμάς ; εσάς',
+    'μας ; σας']),
+   G('3.ª persona (singular)', ['nom Nominativo', 'gen Genitivo (débil)', 'accs Acusativo (fuerte)', 'accw Acusativo (débil)'], ['aftos αυτός (él)', 'afti αυτή (ella)', 'afto αυτό (ello)'], [
+    'αυτός ; αυτή ; αυτό',
+    'του ; της ; του',
+    'αυτόν ; αυτήν|αυτή ; αυτό',
+    'τον ; την ; το']),
+   G('3.ª persona (plural)', ['nom Nominativo', 'gen Genitivo (débil)', 'accs Acusativo (fuerte)', 'accw Acusativo (débil)'], ['afti αυτοί (ellos)', 'aftes αυτές (ellas)', 'afta αυτά (ellos, neutro)'], [
+    'αυτοί ; αυτές ; αυτά',
+    'τους ; τους ; τους',
+    'αυτούς ; αυτές ; αυτά',
+    'τους ; τις ; τα'])],
+  ['Las formas débiles van delante del verbo: Η Μαρία με βλέπει, Μου δίνει το βιβλίο. Las fuertes se usan para destacar: Περιμένει εμένα, όχι εσένα.',
+   'Con preposición se usan las formas fuertes en acusativo: για μένα, με σένα (también εμένα, εσένα).',
+   'El genitivo débil se pega al verbo como complemento indirecto: Του έδωσα το βιβλίο.'],
+  { });
+
+/* ------------------------------------------------------------------ FRANCÉS */
+addLang('fr', 'Francés', 'Français', {
+  pro:{
+    cod:[{ t:'Pierre {} voit.', v:0 }, { t:'Pierre {} aime.', v:1 }],
+    coi:[{ t:'Pierre {} parle.', v:0 }, { t:'Pierre {} écrit.', v:1 }],
+    ton:['Pierre travaille avec {}.']
+  }
+});
+const FR_FUN = ['suj Sujeto', 'cod Complemento directo (átono)', 'coi Complemento indirecto (átono)', 'ton Tónico (tras preposición)', 'ref Reflexivo'];
+const FR_OWN = ['p1 je (yo)', 'p2 tu (tú)', 'p3 il, elle (él, ella)', 'p4 nous (nosotros)', 'p5 vous (vosotros, usted)', 'p6 ils, elles (ellos, ellas)'];
+topic('fr', 'pers', 'Pronombres personales', 'Pronombres', 'pro',
+  'El pronombre francés cambia según su función: sujeto, complemento directo, complemento indirecto, tónico (tras preposición o para destacar) o reflexivo.',
+  [G('1.ª y 2.ª persona', FR_FUN, ['je je', 'tu tu', 'nous nous', 'vous vous'], [
+    `je|j' ; tu ; nous ; vous`,
+    `me|m' ; te|t' ; nous ; vous`,
+    `me|m' ; te|t' ; nous ; vous`,
+    `moi ; toi ; nous ; vous`,
+    `me|m' ; te|t' ; nous ; vous`]),
+   G('3.ª persona', FR_FUN, ['il il', 'elle elle', 'ils ils', 'elles elles'], [
+    `il ; elle ; ils ; elles`,
+    `le|l' ; la|l' ; les ; les`,
+    `lui ; lui ; leur ; leur`,
+    `lui ; elle ; eux ; elles`,
+    `se|s' ; se|s' ; se|s' ; se|s'`])],
+  [`Los átonos van delante del verbo: Je le vois, Il leur parle. Los tónicos van tras preposición o solos para destacar: avec moi, c'est lui.`,
+   `le, la y les son complemento directo (¿a quién? ¿qué?): Je les vois. lui y leur son indirecto (¿a quién?): Je lui parle.`,
+   `me, te, se, le y la se apostrofan ante vocal o h muda: je t'aime, il l'écoute.`],
+  { });
+topic('fr', 'poss', 'Posesivos', 'Pronombres', 'none',
+  'Los posesivos concuerdan con la cosa poseída (género y número), no con el poseedor.',
+  [G('Adjetivos posesivos', FR_OWN, ['ms Masculino sg.', 'fs Femenino sg.', 'pl Plural'], [
+    `mon ; ma ; mes`,
+    `ton ; ta ; tes`,
+    `son ; sa ; ses`,
+    `notre ; notre ; nos`,
+    `votre ; votre ; vos`,
+    `leur ; leur ; leurs`]),
+   G('Pronombres posesivos', FR_OWN, ['ms Masculino sg.', 'fs Femenino sg.', 'mp Masculino pl.', 'fp Femenino pl.'], [
+    `le mien ; la mienne ; les miens ; les miennes`,
+    `le tien ; la tienne ; les tiens ; les tiennes`,
+    `le sien ; la sienne ; les siens ; les siennes`,
+    `le nôtre ; la nôtre ; les nôtres ; les nôtres`,
+    `le vôtre ; la vôtre ; les vôtres ; les vôtres`,
+    `le leur ; la leur ; les leurs ; les leurs`])],
+  [`Ante un femenino que empieza por vocal se usa mon, ton, son: mon amie, ton école.`,
+   `son livre puede ser «su libro» de él o de ella: el género es el del libro, no el del poseedor.`],
+  { });
+topic('fr', 'dem', 'Demostrativos', 'Pronombres', 'none',
+  'Los demostrativos señalan algo cercano o lejano. Como adjetivo acompañan al sustantivo; como pronombre lo sustituyen.',
+  [G('ce · cet · cette · ces', ['ms Masculino singular', 'mv Masculino ante vocal o h muda', 'fs Femenino singular', 'pl Plural'], ['f Forma'], [`ce`, `cet`, `cette`, `ces`]),
+   G('celui · celle · ceux · celles', ['s Simple', 'ci Con -ci (cerca)', 'la Con -là (lejos)'], ['ms Masculino sg.', 'fs Femenino sg.', 'mp Masculino pl.', 'fp Femenino pl.'], [
+    `celui ; celle ; ceux ; celles`,
+    `celui-ci ; celle-ci ; ceux-ci ; celles-ci`,
+    `celui-là ; celle-là ; ceux-là ; celles-là`]),
+   G('ceci · cela · ça', ['a Cerca', 'b Lejos', 'c Habla coloquial'], ['f Forma'], [`ceci`, `cela`, `ça`])],
+  [`cet se usa ante vocal o h muda: cet homme, cet arbre.`,
+   `celui, celle, ceux y celles necesitan un complemento detrás (de, qui, que) o -ci / -là: celui de Paul, celle qui parle.`,
+   `ça es la forma hablada de cela.`],
+  { });
+topic('fr', 'art', 'Artículos y contracciones', 'Artículos', 'none',
+  'El artículo francés concuerda con el sustantivo; con las preposiciones à y de se funde con le y les.',
+  [G('Artículos', ['def Determinado', 'indef Indeterminado', 'part Partitivo'], ['ms Masculino sg.', 'fs Femenino sg.', 'pl Plural'], [
+    `le|l' ; la|l' ; les`,
+    `un ; une ; des`,
+    `du|de l' ; de la|de l' ; des`]),
+   G('Contracciones con à y de', ['a à + artículo', 'de de + artículo'], ['le le', 'la la', 'lp l\'', 'les les'], [
+    `au ; à la ; à l' ; aux`,
+    `du ; de la ; de l' ; des`])],
+  [`à + le = au, à + les = aux; de + le = du, de + les = des. Con la y l' no hay contracción: à la, de l'.`,
+   `El partitivo (du, de la) expresa una parte o cantidad no contable: Je mange du pain.`],
+  { });
+topic('fr', 'rel', 'Relativos', 'Pronombres', 'none',
+  'El relativo depende de la función que cumple dentro de la oración subordinada, no del género del antecedente (salvo lequel).',
+  [G('qui · que · dont · où', ['suj Sujeto', 'cod Complemento directo', 'de Complemento con «de»', 'lieu Lugar o tiempo'], ['f Relativo'], [`qui`, `que|qu'`, `dont`, `où`]),
+   G('lequel', ['lequel lequel', 'auquel à + lequel', 'duquel de + lequel'], ['ms Masculino sg.', 'fs Femenino sg.', 'mp Masculino pl.', 'fp Femenino pl.'], [
+    `lequel ; laquelle ; lesquels ; lesquelles`,
+    `auquel ; à laquelle ; auxquels ; auxquelles`,
+    `duquel ; de laquelle ; desquels ; desquelles`])],
+  [`qui es sujeto (L'homme qui parle); que es complemento directo (L'homme que je vois).`,
+   `dont sustituye a «de + …»: Le livre dont je parle (je parle du livre).`,
+   `lequel se usa tras preposición, sobre todo para cosas: la table sur laquelle je travaille.`],
+  { });
+
+/* ------------------------------------------------------------------ ITALIANO */
+addLang('it', 'Italiano', 'Italiano', {
+  pro:{
+    cd:[{ t:'Marco {} vede.', v:0 }, { t:'Marco {} ama.', v:1 }],
+    ci:[{ t:'Marco {} parla.', v:0 }, { t:'Marco {} offre un caffè.', v:1 }],
+    ton:['Marco esce con {}.']
+  }
+});
+const IT_FUN = ['suj Sujeto', 'cd Complemento directo (átono)', 'ci Complemento indirecto (átono)', 'ton Tónico (tras preposición)', 'ref Reflexivo'];
+topic('it', 'pers', 'Pronombres personales', 'Pronombres', 'pro',
+  'Los pronombres italianos cambian según su función: sujeto, complemento directo, complemento indirecto, tónico (tras preposición) o reflexivo.',
+  [G('1.ª y 2.ª persona', IT_FUN, ['io io', 'tu tu', 'noi noi', 'voi voi'], [
+    `io ; tu ; noi ; voi`,
+    `mi|m' ; ti|t' ; ci ; vi`,
+    `mi|m' ; ti|t' ; ci ; vi`,
+    `me ; te ; noi ; voi`,
+    `mi|m' ; ti|t' ; ci ; vi`]),
+   G('3.ª persona', IT_FUN, ['lui lui', 'lei lei', 'lm loro (ellos)', 'lf loro (ellas)'], [
+    `lui|egli ; lei|ella ; loro|essi ; loro|esse`,
+    `lo|l' ; la|l' ; li ; le`,
+    `gli ; le ; gli ; gli`,
+    `lui ; lei ; loro ; loro`,
+    `si ; si ; si ; si`])],
+  [`Los átonos van delante del verbo: Lo vedo, Mi parla. Los tónicos van tras preposición o para destacar: con me, per lui.`,
+   `gli es «a él» (y, en lo hablado, «a ellos»); le es «a ella». «A ellos» formal es loro, detrás del verbo: Parlo loro.`,
+   `mi, ti, lo, la se apostrofan ante vocal: m'ama, l'ascolto.`],
+  { });
+topic('it', 'comb', 'Pronombres combinados', 'Pronombres', 'none',
+  'Cuando hay a la vez un complemento indirecto y uno directo, se juntan en una sola palabra: me lo, te la, glielo…',
+  [G('me lo · te la · glielo…', ['mi mi + …', 'ti ti + …', 'gli gli / le + …', 'ci ci + …', 'vi vi + …'], ['lo lo', 'la la', 'li li', 'le le', 'ne ne'], [
+    `me lo ; me la ; me li ; me le ; me ne`,
+    `te lo ; te la ; te li ; te le ; te ne`,
+    `glielo ; gliela ; glieli ; gliele ; gliene`,
+    `ce lo ; ce la ; ce li ; ce le ; ce ne`,
+    `ve lo ; ve la ; ve li ; ve le ; ve ne`])],
+  [`mi, ti, ci y vi pasan a me, te, ce y ve ante lo, la, li, le y ne: me lo dai, ce ne sono.`,
+   `gli (a él) y le (a ella) pasan a glie- y se escriben pegados: glielo, gliela, glieli, gliele, gliene.`,
+   `Con infinitivo, gerundio e imperativo van detrás y pegados al verbo: dammelo, mandaglielo.`],
+  { });
+topic('it', 'poss', 'Posesivos', 'Pronombres', 'none',
+  'Los posesivos concuerdan con la cosa poseída y suelen llevar artículo: il mio libro, la tua casa.',
+  [G('mio · tuo · suo…', ['mio mio (yo)', 'tuo tuo (tú)', 'suo suo (él, ella, usted)', 'nostro nostro (nosotros)', 'vostro vostro (vosotros)', 'loro loro (ellos)'], ['ms Masculino sg.', 'fs Femenino sg.', 'mp Masculino pl.', 'fp Femenino pl.'], [
+    `mio ; mia ; miei ; mie`,
+    `tuo ; tua ; tuoi ; tue`,
+    `suo ; sua ; suoi ; sue`,
+    `nostro ; nostra ; nostri ; nostre`,
+    `vostro ; vostra ; vostri ; vostre`,
+    `loro ; loro ; loro ; loro`])],
+  [`Con nombres de parentesco en singular no se usa artículo: mia madre, tuo fratello (pero la mia mamma, i miei fratelli).`,
+   `loro es invariable: la loro casa, i loro amici.`],
+  { });
+topic('it', 'dem', 'Demostrativos', 'Pronombres', 'none',
+  'questo señala lo cercano y quello lo lejano. quello cambia de forma como el artículo determinado.',
+  [G('questo', ['sg Singular', 'pl Plural'], ['m Masculino', 'f Femenino'], [`questo ; questa`, `questi ; queste`]),
+   G('quello (delante de un sustantivo)', ['cm masc. sg. + consonante (quel cane)', 'vm masc. sg. + vocal (quell\'amico)', 'sm masc. sg. + s+cons., z, gn, ps (quello studente)', 'cf fem. sg. + consonante (quella casa)', 'vf fem. sg. + vocal (quell\'amica)', 'pm masc. pl. + consonante (quei cani)', 'pv masc. pl. + vocal, s+cons., z (quegli amici)', 'pf fem. pl. (quelle case)'], ['f Forma'], [
+    `quel`, `quell'`, `quello`, `quella`, `quell'`, `quei`, `quegli`, `quelle`])],
+  [`quello sigue el modelo del artículo: il → quel, lo → quello, l' → quell', i → quei, gli → quegli, la → quella, le → quelle.`,
+   `Como pronombre (sin sustantivo) quello hace quello, quella, quelli, quelle.`],
+  { });
+topic('it', 'art', 'Artículos y preposiciones articuladas', 'Artículos', 'none',
+  'El artículo cambia según el género, el número y el sonido inicial de la palabra siguiente. Con di, a, da, in y su se funde con él.',
+  [G('Artículo determinado', ['cm masc. sg. + consonante (il cane)', 'vm masc. sg. + vocal (l\'amico)', 'sm masc. sg. + s+cons., z, gn, ps (lo studente)', 'cf fem. sg. + consonante (la casa)', 'vf fem. sg. + vocal (l\'amica)', 'pm masc. pl. + consonante (i cani)', 'pv masc. pl. + vocal, s+cons., z (gli amici)', 'pf fem. pl. (le case)'], ['f Forma'], [
+    `il`, `l'`, `lo`, `la`, `l'`, `i`, `gli`, `le`]),
+   G('Artículo indeterminado', ['m masc. + consonante o vocal (un cane)', 'ms masc. + s+cons., z, gn, ps (uno studente)', 'f fem. + consonante (una casa)', 'fv fem. + vocal (un\'amica)'], ['f Forma'], [`un`, `uno`, `una`, `un'`]),
+   G('Preposiciones articuladas', ['di di', 'a a', 'da da', 'in in', 'su su'], ['il il', 'lo lo', 'lp l\'', 'i i', 'gli gli', 'la la', 'le le'], [
+    `del ; dello ; dell' ; dei ; degli ; della ; delle`,
+    `al ; allo ; all' ; ai ; agli ; alla ; alle`,
+    `dal ; dallo ; dall' ; dai ; dagli ; dalla ; dalle`,
+    `nel ; nello ; nell' ; nei ; negli ; nella ; nelle`,
+    `sul ; sullo ; sull' ; sui ; sugli ; sulla ; sulle`])],
+  [`Con con, per, tra y fra la fusión es opcional y hoy poco usada (con il, no col).`,
+   `Las preposiciones articuladas se usan siempre con di, a, da, in y su: il libro del bambino, vado alla stazione.`],
+  { });
+
+/* ------------------------------------------------------------------ PORTUGUÉS */
+addLang('pt', 'Portugués', 'Português', {
+  pro:{
+    cd:['O Pedro não {} vê.'],
+    ci:['O Pedro não {} fala.'],
+    ton:['O Pedro fala de {}.'],
+    com:['O Pedro sai {}.']
+  }
+});
+const PT_FUN = ['suj Sujeito', 'cd Complemento direto (átono)', 'ci Complemento indireto (átono)', 'ton Tónico (tras preposição)', 'com Com + pronome', 'ref Reflexivo'];
+topic('pt', 'pers', 'Pronombres personales', 'Pronombres', 'pro',
+  'Los pronombres portugueses cambian según la función: sujeto, complemento directo, indirecto, tónico (tras preposición), la fusión con «com» y el reflexivo.',
+  [G('eu · tu · nós', PT_FUN, ['eu eu', 'tu tu', 'nos nós'], [
+    `eu ; tu ; nós`,
+    `me ; te ; nos`,
+    `me ; te ; nos`,
+    `mim ; ti ; nós`,
+    `comigo ; contigo ; connosco|conosco`,
+    `me ; te ; nos`]),
+   G('ele · ela · você', PT_FUN, ['ele ele', 'ela ela', 'voce você'], [
+    `ele ; ela ; você`,
+    `o ; a ; o|a`,
+    `lhe ; lhe ; lhe`,
+    `ele ; ela ; você`,
+    `com ele ; com ela ; com você`,
+    `se ; se ; se`]),
+   G('eles · elas · vocês', PT_FUN, ['eles eles', 'elas elas', 'voces vocês'], [
+    `eles ; elas ; vocês`,
+    `os ; as ; os|as`,
+    `lhes ; lhes ; lhes`,
+    `eles ; elas ; vocês`,
+    `com eles ; com elas ; com vocês`,
+    `se ; se ; se`])],
+  [`Los átonos van junto al verbo: en Portugal, detrás con guion en frases afirmativas (Vejo-te) y delante si hay una negación u otra palabra que los atrae (Não te vejo).`,
+   `Tras preposición se usan los tónicos: para mim, de ti, com ele. Con «com» hay formas fusionadas: comigo, contigo, connosco (conosco en Brasil), convosco.`,
+   `o, a, os, as pasan a lo, la, los, las tras un verbo en -r, -s, -z: fazê-lo, fi-lo.`],
+  { });
+topic('pt', 'poss', 'Posesivos', 'Pronombres', 'none',
+  'Los posesivos concuerdan con la cosa poseída y en Portugal suelen llevar artículo: o meu livro, a tua casa.',
+  [G('meu · teu · seu…', ['meu meu (yo)', 'teu teu (tú)', 'seu seu (él, ella, usted)', 'nosso nosso (nosotros)', 'vosso vosso (vosotros)'], ['ms Masculino sg.', 'fs Femenino sg.', 'mp Masculino pl.', 'fp Femenino pl.'], [
+    `meu ; minha ; meus ; minhas`,
+    `teu ; tua ; teus ; tuas`,
+    `seu ; sua ; seus ; suas`,
+    `nosso ; nossa ; nossos ; nossas`,
+    `vosso ; vossa ; vossos ; vossas`])],
+  [`Para evitar confusiones con seu / sua se usa dele, dela, deles, delas, que no cambian: o livro dele.`,
+   `El posesivo de «ellos» es deles / delas; seu / sua sirve para «usted» y, a menudo, para «él» en Brasil.`],
+  { });
+topic('pt', 'dem', 'Demostrativos', 'Pronombres', 'none',
+  'Tres grados de distancia: este (cerca de quien habla), esse (cerca de quien escucha) y aquele (lejos de los dos).',
+  [G('este · esse · aquele', ['este este (cerca de mí)', 'esse esse (cerca de ti)', 'aquele aquele (lejos de los dos)'], ['ms Masculino sg.', 'fs Femenino sg.', 'mp Masculino pl.', 'fp Femenino pl.'], [
+    `este ; esta ; estes ; estas`,
+    `esse ; essa ; esses ; essas`,
+    `aquele ; aquela ; aqueles ; aquelas`]),
+   G('isto · isso · aquilo', ['a Cerca de mí', 'b Cerca de ti', 'c Lejos de los dos'], ['f Neutro'], [`isto`, `isso`, `aquilo`])],
+  [`Con de y em se funden: deste, desse, daquele, neste, nesse, naquilo.`,
+   `Los neutros isto, isso y aquilo no acompañan a un sustantivo: Isto é bom.`],
+  { });
+topic('pt', 'art', 'Artículos y contracciones', 'Artículos', 'none',
+  'El artículo concuerda con el sustantivo. Con las preposiciones de, em, a y por se funde con el artículo determinado.',
+  [G('Artículos', ['def Determinado', 'indef Indeterminado'], ['ms Masculino sg.', 'fs Femenino sg.', 'mp Masculino pl.', 'fp Femenino pl.'], [`o ; a ; os ; as`, `um ; uma ; uns ; umas`]),
+   G('Contracciones', ['de de + artículo', 'em em + artículo', 'a a + artículo', 'por por + artículo'], ['o o', 'a a', 'os os', 'as as'], [
+    `do ; da ; dos ; das`,
+    `no ; na ; nos ; nas`,
+    `ao ; à ; aos ; às`,
+    `pelo ; pela ; pelos ; pelas`])],
+  [`a + a = à (con acento grave): vou à escola; a + as = às.`,
+   `Las contracciones son obligatorias: no se dice «em o», sino no.`],
+  { });
+
+/* ------------------------------------------------------------------ CATALÁN */
+addLang('ca', 'Catalán', 'Català', {
+  pro:{
+    cd:[{ t:'En Pere {} veu.', v:0 }, { t:'En Pere {} estima.', v:1 }],
+    ci:[{ t:'En Pere {} parla.', v:0 }, { t:'En Pere {} ensenya el llibre.', v:1 }],
+    ton:['En Pere surt amb {}.']
+  }
+});
+const CA_FUN = ['suj Subjecte', 'cd Complement directe (feble)', 'ci Complement indirecte (feble)', 'ton Fort (darrere preposició)'];
+topic('ca', 'pers', 'Pronombres personales', 'Pronombres', 'pro',
+  'Los pronombres catalanes tienen formas fuertes (sujeto y tras preposición) y formas débiles (pegadas al verbo, de complemento directo o indirecto).',
+  [G('1.ª y 2.ª persona', CA_FUN, ['jo jo', 'tu tu', 'nosaltres nosaltres', 'vosaltres vosaltres'], [
+    `jo ; tu ; nosaltres ; vosaltres`,
+    `em|m' ; et|t' ; ens ; us`,
+    `em|m' ; et|t' ; ens ; us`,
+    `mi ; tu ; nosaltres ; vosaltres`]),
+   G('3.ª persona', CA_FUN, ['ell ell', 'ella ella', 'ells ells', 'elles elles'], [
+    `ell ; ella ; ells ; elles`,
+    `el|l' ; la|l' ; els ; les`,
+    `li ; li ; els ; els`,
+    `ell ; ella ; ells ; elles`])],
+  [`Los débiles van junto al verbo: em veu, no et coneix. Se apostrofan ante vocal o h: m'estima, l'escolta.`,
+   `li es el complemento indirecto singular (a él, a ella) y els el plural: li dic, els dic.`,
+   `Tras preposición se usan los fuertes: amb mi, per a tu, de nosaltres.`],
+  { });
+topic('ca', 'poss', 'Posesivos', 'Pronombres', 'none',
+  'Los posesivos concuerdan con la cosa poseída y llevan artículo: el meu llibre, la teva casa.',
+  [G('meu · teu · seu…', ['meu meu (yo)', 'teu teu (tú)', 'seu seu (él, ella, ellos, usted)', 'nostre nostre (nosotros)', 'vostre vostre (vosotros)'], ['ms Masculino sg.', 'fs Femenino sg.', 'mp Masculino pl.', 'fp Femenino pl.'], [
+    `meu ; meva ; meus ; meves`,
+    `teu ; teva ; teus ; teves`,
+    `seu ; seva ; seus ; seves`,
+    `nostre ; nostra ; nostres ; nostres`,
+    `vostre ; vostra ; vostres ; vostres`])],
+  [`seu / seva sirve para «de él», «de ella», «de ellos» y «de usted»: a veces se aclara con d'ell, d'ella, d'ells.`,
+   `En vocativo y en expresiones hechas el posesivo va detrás del sustantivo y sin artículo: amic meu, mare meva.`],
+  { });
+topic('ca', 'dem', 'Demostrativos', 'Pronombres', 'none',
+  'En catalán hay dos grados de distancia: aquest (cerca) y aquell (lejos).',
+  [G('aquest · aquell', ['aquest aquest (cerca)', 'aquell aquell (lejos)'], ['ms Masculino sg.', 'fs Femenino sg.', 'mp Masculino pl.', 'fp Femenino pl.'], [
+    `aquest ; aquesta ; aquests ; aquestes`,
+    `aquell ; aquella ; aquells ; aquelles`]),
+   G('això · allò', ['a Cerca', 'b Lejos'], ['f Neutro'], [`això`, `allò`])],
+  [`Los neutros això y allò no acompañan a un sustantivo: Això és bo.`,
+   `En el habla de algunas zonas existe además aqueix (a media distancia), pero es raro.`],
+  { });
+topic('ca', 'art', 'Artículos y contracciones', 'Artículos', 'none',
+  'El artículo concuerda con el sustantivo. Con las preposiciones a, de y per se funde con el artículo determinado.',
+  [G('Artículos', ['def Determinat', 'indef Indeterminat'], ['ms Masculino sg.', 'fs Femenino sg.', 'mp Masculino pl.', 'fp Femenino pl.'], [`el|l' ; la|l' ; els ; les`, `un ; una ; uns ; unes`]),
+   G('Contraccions', ['a a + article', 'de de + article', 'per per + article'], ['el el', 'la la', 'lp l\'', 'els els', 'les les'], [
+    `al ; a la ; a l' ; als ; a les`,
+    `del ; de la ; de l' ; dels ; de les`,
+    `pel ; per la ; per l' ; pels ; per les`])],
+  [`a + el = al; de + el = del; per + el = pel. Con la, l' y les no hay contracción: a la, de l', per les.`,
+   `Ante vocal o h muda el y la se convierten en l': l'home, l'hora.`],
+  { });
+
+/* ------------------------------------------------------------------ INGLÉS */
+addLang('en', 'Inglés', 'English', {
+  pro:{
+    suj:['Who did it? — {}.'],
+    obj:['Peter sees {}.'],
+    pa:['That is {} book.'],
+    pp:['That book is {}.']
+  }
+});
+const EN_FUN = ['suj Subject', 'obj Object', 'pa Possessive adjective', 'pp Possessive pronoun', 'ref Reflexive'];
+topic('en', 'pers', 'Pronombres personales', 'Pronombres', 'pro',
+  'El inglés ya no declina los sustantivos, pero los pronombres conservan formas distintas según su función: sujeto, objeto, posesivo y reflexivo.',
+  [G('Singular', EN_FUN, ['i I', 'you you', 'he he', 'she she', 'it it'], [
+    `I ; you ; he ; she ; it`,
+    `me ; you ; him ; her ; it`,
+    `my ; your ; his ; her ; its`,
+    `mine ; yours ; his ; hers ; —`,
+    `myself ; yourself ; himself ; herself ; itself`]),
+   G('Plural', EN_FUN, ['we we', 'you you', 'they they'], [
+    `we ; you ; they`,
+    `us ; you ; them`,
+    `our ; your ; their`,
+    `ours ; yours ; theirs`,
+    `ourselves ; yourselves ; themselves`])],
+  [`Los pronombres de objeto (me, him, her, us, them) van tras un verbo o una preposición: She sees him, with us.`,
+   `my, your… acompañan a un sustantivo (my book); mine, yours… lo sustituyen (This book is mine).`,
+   `its (de ello) no lleva apóstrofo: it's significa it is o it has.`],
+  { });
+topic('en', 'who', 'who, whom y whose', 'Pronombres', 'none',
+  'Los interrogativos y relativos de persona conservan una forma de sujeto (who), una de objeto (whom) y una de posesión (whose).',
+  [G('who · whom · whose', ['suj Sujeto', 'obj Objeto', 'pos Posesión'], ['p Personas', 'c Cosas'], [
+    `who ; which|what`,
+    `whom|who ; which|what`,
+    `whose ; whose|of which`])],
+  [`who es el sujeto (Who called?); whom es el objeto en lengua formal (Whom did you see?), pero en el habla se dice Who did you see?`,
+   `Tras una preposición, en lengua formal se usa whom: To whom did you speak?`,
+   `whose indica posesión: Whose book is this?`],
+  { });
+topic('en', 'dem', 'this, that, these, those', 'Determinantes', 'none',
+  'Son los únicos determinantes ingleses que cambian en plural. Indican cercanía (this, these) o lejanía (that, those).',
+  [G('this · that', ['near Cerca', 'far Lejos'], ['sg Singular', 'pl Plural'], [`this ; these`, `that ; those`])],
+  [`Se usan como adjetivos (this book) y como pronombres (Do you like this?).`,
+   `El plural concuerda con el sustantivo: these books, those people.`],
+  { });
+
+/* =========================================================
+   VALIDACIÓN DE LOS DATOS (la usan también las pruebas automáticas)
+   ========================================================= */
+function validateData(){
+  const out = [];
+  LANG_ORDER.forEach(code => {
+    const lg = LANGS[code];
+    if(!lg){ out.push('falta el idioma ' + code); return; }
+    const ids = new Set();
+    lg.topics.forEach(t => {
+      if(ids.has(t.id)) out.push(code + ': tema repetido ' + t.id); ids.add(t.id);
+      if(!t.items.length) out.push(code + '/' + t.id + ': sin tablas');
+      if(!t.use) out.push(code + '/' + t.id + ': sin explicación');
+      t.items.forEach(it => {
+        const rk = new Set(it.rows.map(r => r.k)), ck = new Set(it.cols.map(c => c.k));
+        if(rk.size !== it.rows.length) out.push(code + '/' + t.id + '/' + it.title + ': filas repetidas');
+        if(ck.size !== it.cols.length) out.push(code + '/' + t.id + '/' + it.title + ': columnas repetidas');
+        it.rows.forEach(r => it.cols.forEach(c => {
+          const v = it.cells[r.k] && it.cells[r.k][c.k];
+          if(typeof v !== 'string' || !v) out.push(code + '/' + t.id + '/' + it.title + ': celda vacía ' + r.k + '/' + c.k);
+          else if(v !== '—' && variants(v).some(x => !x)) out.push(code + '/' + t.id + '/' + it.title + ': alternativa vacía en ' + v);
+        }));
+      });
+      if(t.kind !== 'none'){
+        if(!gapChoices(t, code).length) out.push(code + '/' + t.id + ': el tipo «' + t.kind + '» no tiene ninguna frase aplicable');
+      }
+      if(t.kind === 'art'){
+        t.items.forEach(it => it.rows.forEach(r => it.cols.forEach(c => {
+          if(isNone(it.cells[r.k][c.k])) return;
+          if(!(t.nouns && t.nouns[c.k] && t.nouns[c.k][r.k]) && (lg.frames.art[r.k] || []).length) out.push(code + '/' + t.id + ': falta el sustantivo de ' + r.k + '/' + c.k);
+        })));
+      }
+      Object.keys(lg.frames[t.kind] || {}).forEach(rk => (lg.frames[t.kind][rk] || []).forEach(f => {
+        const tx = typeof f === 'string' ? f : f.t;
+        if(tx.split('{}').length !== 2) out.push(code + ': la frase «' + tx + '» debe llevar un único {}');
+        if(t.kind === 'art' && tx.indexOf('{n}') < 0) out.push(code + ': la frase «' + tx + '» necesita {n}');
+      }));
+    });
+  });
+  return out;
+}
+
+/* =========================================================
+   RESPUESTAS: alternativas con «|», letras opcionales entre paréntesis y acentos
+   ========================================================= */
+function display(ans){ return String(ans).split('|')[0]; }
+function variants(ans){
+  let out = String(ans).split('|');
+  while(out.some(x => x.includes('('))){
+    const next = [];
+    for(const x of out){
+      const m = x.match(/\(([^)]*)\)/);
+      if(!m){ next.push(x); continue; }
+      next.push(x.replace(m[0],''), x.replace(m[0],m[1]));
+    }
+    out = next;
+  }
+  return [...new Set(out.map(x => x.replace(/\s+/g,' ').trim()))];
+}
+const isNone = v => !v || v === '—';
+const fillOf = ans => variants(ans)[0];   /* lo que se escribe al «ver la solución»: la primera forma, sin letras opcionales */
+/* Los acentos no cuentan… salvo donde distinguen dos formas reales del idioma (polaco ta / tą, te / tę…). Se calcula con las propias tablas:
+   si dos formas distintas coinciden al quitar los acentos, en esas el acento es obligatorio; en las demás se acepta sin él y se avisa. */
+function stripAcc(t){ return t.normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/ł/g,'l'); }
+function normBase(s){ // minúsculas, apóstrofos y espacios; sin puntuación final; con los acentos
+  return String(s).toLowerCase().trim().replace(/ς/g,'σ').replace(/ß/g,'ss').replace(/[’´`]/g,"'").replace(/\s+/g,' ').replace(/[.!?,;:]+$/,'').normalize('NFC');
+}
+function allCells(code){
+  const out = [];
+  LANGS[code].topics.forEach(t => t.items.forEach(it => it.rows.forEach(r => it.cols.forEach(c => { const v = it.cells[r.k][c.k]; if(!isNone(v)) out.push(v); }))));
+  return out;
+}
+const _amb = {};
+function ambKeys(code){ // formas (sin acentos) que corresponden a dos o más formas con acento distintas
+  if(_amb[code]) return _amb[code];
+  const seen = new Map();
+  allCells(code).forEach(cell => variants(cell).forEach(f => {
+    const b = normBase(f), lax = stripAcc(b);
+    if(!seen.has(lax)) seen.set(lax, new Set());
+    seen.get(lax).add(b);
+  }));
+  const out = new Set();
+  seen.forEach((forms, lax) => { if(forms.size > 1) out.add(lax); });
+  return (_amb[code] = out);
+}
+const isAmb = lax => !!state.lang && ambKeys(state.lang).has(lax);
+function norm(s){ const b = normBase(s), lax = stripAcc(b); return isAmb(lax) ? b : lax; }
+function matches(input, answer){
+  if(!String(input).trim()) return false;
+  const a = norm(input);
+  return variants(answer).some(x => norm(x) === a);
+}
+/* si se aceptó sin los acentos que lleva la forma correcta, devuelve esa forma (para recordarla); si no, null */
+function accentFix(input, answer){
+  const a = norm(input), v = variants(answer).find(x => norm(x) === a);
+  return v && normBase(input) !== normBase(v) ? v : null;
+}
+const lemmaOf = title => String(title).replace(/\s*\([^)]*\)\s*$/, '');
+
+/* =========================================================
+   DOM
+   ========================================================= */
+const ICO = {
+  chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
+  bulb:'<svg class="tipbulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.4.3.5.8.5 1.3V16h6v-.8c0-.5.1-1 .5-1.3A6 6 0 0 0 12 3z"/></svg>'
+};
+function el(tag, cls, html){
+  const n = document.createElement(tag);
+  if(cls) n.className = cls;
+  if(html !== undefined) n.innerHTML = html;
+  return n;
+}
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const $ = id => document.getElementById(id);
+function shuffle(a){
+  const c = a.slice();
+  for(let i=c.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [c[i],c[j]]=[c[j],c[i]]; }
+  return c;
+}
+function collapsible(headHTML, subHTML, bodyNode, startOpen){
+  const box = el('div','cgroup' + (startOpen ? ' open' : ''));
+  const head = el('button','cghead');
+  head.type = 'button';
+  head.innerHTML = '<span>'+headHTML+(subHTML ? ' <span class="cgsub">'+subHTML+'</span>' : '')+'</span><span class="chev">'+ICO.chev+'</span>';
+  const body = el('div','cgbody');
+  body.appendChild(bodyNode);
+  if(!startOpen) body.hidden = true;
+  head.onclick = () => { const open = box.classList.toggle('open'); body.hidden = !open; };
+  box.appendChild(head); box.appendChild(body);
+  return box;
+}
+
+/* =========================================================
+   ESTADO
+   ========================================================= */
+const state = { lang:null, tab:'theory', mode:'table', current:null, topic:{}, bags:{} };
+const L = () => LANGS[state.lang];
+function curTopic(){
+  const lg = L();
+  let t = lg.topics.find(x => x.id === state.topic[state.lang]);
+  if(!t){ t = lg.topics[0]; state.topic[state.lang] = t.id; }
+  return t;
+}
+/* un montón que se baraja y se recorre entero antes de repetir nada */
+function bagPick(key, list){
+  let b = state.bags[key];
+  if(!b || b.n !== list.length || !b.left.length){
+    const last = b && b.last;
+    let left = shuffle(list.map((_, i) => i));
+    if(left.length > 1 && left[left.length - 1] === last) left.reverse();
+    b = state.bags[key] = { n:list.length, left, last:null };
+  }
+  b.last = b.left.pop();
+  return list[b.last];
+}
+const gapFramesFor = (code, kind, rowKey) => ((LANGS[code].frames[kind] || {})[rowKey] || []);
+const frameText = f => typeof f === 'string' ? f : f.t;
+function hintFor(t, it, col){
+  if(it.hints && it.hints[col.k]) return it.hints[col.k];
+  return t.kind === 'np' ? lemmaOf(it.title) + ' · ' + col.label : col.label;
+}
+/* todas las casillas de un tema que se pueden practicar con una frase */
+function gapChoices(t, code){
+  code = code || state.lang;
+  const out = [];
+  if(t.kind === 'none') return out;
+  t.items.forEach(it => it.rows.forEach(row => {
+    const frames = gapFramesFor(code, t.kind, row.k);
+    if(!frames.length) return;
+    it.cols.forEach(col => {
+      const cell = it.cells[row.k][col.k];
+      if(isNone(cell)) return;
+      if(t.kind === 'np' && !(it.hints && it.hints[col.k]) && variants(cell).some(v => norm(v) === norm(lemmaOf(it.title)))) return;   // la forma de partida ya es la respuesta
+      out.push({ item:it, row, col, cell, frames });
+    });
+  }));
+  return out;
+}
+const hasFrames = t => gapChoices(t).length > 0;
+/* respuesta que pide una frase concreta (algunas piden la forma elidida o la que no lo está) */
+function frameAnswer(cell, frame){
+  if(typeof frame === 'string' || typeof frame.v !== 'number') return cell;
+  const vs = variants(cell);
+  return vs[Math.min(frame.v, vs.length - 1)];
+}
+
+/* =========================================================
+   TEORÍA
+   ========================================================= */
+function cellLabel(v){ return isNone(v) ? '—' : String(v).split('|').join(' / '); }
+function tableNode(it){
+  const wrap = el('div','dtablewrap');
+  const tb = el('table','dtable');
+  const head = el('tr');
+  head.appendChild(el('th','corner',''));
+  it.cols.forEach(c => head.appendChild(el('th','', esc(c.label))));
+  tb.appendChild(head);
+  it.rows.forEach(r => {
+    const tr = el('tr');
+    tr.appendChild(el('th','rowh', esc(r.label)));
+    it.cols.forEach(c => { const v = it.cells[r.k][c.k]; tr.appendChild(el('td', isNone(v) ? 'none' : '', esc(cellLabel(v)))); });
+    tb.appendChild(tr);
+  });
+  wrap.appendChild(tb);
+  return wrap;
+}
+function renderTheory(){
+  const t = curTopic();
+  const p = $('panelTheory');
+  p.innerHTML = '';
+  const card = el('div','card main');
+  card.appendChild(el('p','eyebrow', esc(t.group) + ' · cómo se declina'));
+  card.appendChild(el('h2','', esc(t.name)));
+  card.appendChild(el('p','lead', esc(t.use)));
+  t.items.forEach((it, k) => card.appendChild(collapsible(esc(it.title), '', tableNode(it), t.items.length === 1 || k === 0)));
+  p.appendChild(card);
+  if(t.tips.length){
+    const tip = el('div','tip');
+    const head = el('div','tiphead'); head.innerHTML = ICO.bulb + ' Tips';
+    tip.appendChild(head);
+    const list = el('ol','');
+    t.tips.forEach(tx => list.appendChild(el('li','', esc(tx))));
+    tip.appendChild(list);
+    p.appendChild(tip);
+  }
+}
+
+/* =========================================================
+   PRÁCTICA
+   ========================================================= */
+const MODES = [['table','Tabla completa'], ['gap','Rellena el hueco'], ['recog','Reconoce la función']];
+function makeInput(answer){
+  const i = el('input','ans');
+  i.type = 'text'; i.autocomplete = 'off'; i.autocapitalize = 'off'; i.setAttribute('autocorrect','off'); i.spellcheck = false;
+  i.dataset.answer = answer;
+  i.addEventListener('input', () => { i.classList.remove('ok','bad'); const f = i.parentNode.querySelector('.fix'); if(f) f.remove(); });
+  return i;
+}
+const inputs = () => Array.from(document.querySelectorAll('#panelPractice input.ans'));
+function newExercise(){
+  if(!state.lang) return;
+  const t = curTopic();
+  if(state.mode === 'gap' && !hasFrames(t)) state.mode = 'table';
+  if(state.mode === 'table'){
+    state.current = { kind:'table', topic:t, item:bagPick('t:' + state.lang + t.id, t.items) };
+  } else if(state.mode === 'gap'){
+    const ch = bagPick('g:' + state.lang + t.id, gapChoices(t));
+    state.current = Object.assign({ kind:'gap', topic:t, frame:ch.frames[Math.floor(Math.random() * ch.frames.length)] }, ch);
+  } else {
+    const cells = [];
+    t.items.forEach(it => it.cols.forEach(col => it.rows.forEach(row => { if(!isNone(it.cells[row.k][col.k])) cells.push({ item:it, col, row }); })));
+    const ch = bagPick('r:' + state.lang + t.id, cells);
+    const cell = ch.item.cells[ch.row.k][ch.col.k], shown = display(cell), mine = variants(cell).map(norm);
+    const valid = ch.item.rows.filter(r => variants(ch.item.cells[r.k][ch.col.k]).some(v => mine.includes(norm(v))));
+    state.current = { kind:'recog', topic:t, item:ch.item, col:ch.col, row:ch.row, shown, valid:valid.map(r => r.k), answered:false };
+  }
+  renderPractice();
+}
+function renderPractice(){
+  const t = curTopic();
+  const p = $('panelPractice');
+  p.innerHTML = '';
+  const modes = el('div','modes');
+  MODES.forEach(([k, label]) => {
+    const b = el('button','mode');
+    b.dataset.mode = k; b.type = 'button';
+    const off = k === 'gap' && !hasFrames(t);
+    b.setAttribute('aria-selected', state.mode === k);
+    b.appendChild(el('span','', esc(label)));
+    if(off){ b.disabled = true; b.title = 'Este tema no tiene frases de práctica'; }
+    b.onclick = () => { state.mode = k; newExercise(); };
+    modes.appendChild(b);
+  });
+  p.appendChild(modes);
+  const cur = state.current;
+  const card = el('div','card main');
+  const pills = el('div','pills');
+  pills.appendChild(el('span','pill sky','<span class="code">' + esc(L().code) + '</span> ' + esc(L().name)));
+  pills.appendChild(el('span','pill pale', esc(t.name)));
+  card.appendChild(pills);
+  if(!cur){ p.appendChild(card); return; }
+  if(cur.kind === 'table') renderTableMode(card, cur);
+  else if(cur.kind === 'gap') renderGapMode(card, cur);
+  else renderRecogMode(card, cur);
+  p.appendChild(card);
+  const first = p.querySelector('input.ans');
+  const touchOnly = window.matchMedia && window.matchMedia('(pointer:coarse)').matches && !window.matchMedia('(any-pointer:fine)').matches;
+  if(first && !touchOnly) first.focus({preventScroll:true});
+}
+function controls(card, check, reveal){
+  const ctr = el('div','controls');
+  if(check){ const b = el('button','btn primary','Comprobar'); b.type = 'button'; b.onclick = check; ctr.appendChild(b); }
+  const next = el('button','btn sky','Siguiente →'); next.type = 'button'; next.onclick = newExercise; ctr.appendChild(next);
+  if(reveal){ const s = el('button','btn','Ver solución'); s.type = 'button'; s.onclick = reveal; ctr.appendChild(s); }
+  card.appendChild(ctr);
+  card.appendChild(Object.assign(el('div','banner'), {id:'banner'}));
+  card.appendChild(Object.assign(el('div','explainbox'), {id:'explainbox', hidden:true}));
+}
+/* ---- tabla completa ---- */
+function renderTableMode(card, cur){
+  const it = cur.item;
+  card.appendChild(el('p','eyebrow','Tabla completa · ' + esc(it.title)));
+  card.appendChild(el('p','lead','Completa todas las casillas. Las que valen «—» no existen: déjalas como están.'));
+  const wrap = el('div','dgwrap');
+  const grid = el('div','dgrid');
+  grid.style.setProperty('--cols', it.cols.length);
+  grid.appendChild(el('div','dg corner',''));
+  it.cols.forEach(c => grid.appendChild(el('div','dg head', esc(c.label))));
+  const ins = [];
+  it.rows.forEach(r => {
+    grid.appendChild(el('div','dg rowh', esc(r.label)));
+    it.cols.forEach(c => {
+      const v = it.cells[r.k][c.k], w = el('div','dg cell');
+      if(isNone(v)) w.appendChild(el('span','static','—'));
+      else { const i = makeInput(v); i.setAttribute('aria-label', r.label + ', ' + c.label); w.appendChild(i); ins.push(i); }
+      grid.appendChild(w);
+    });
+  });
+  ins.forEach((i, k) => i.addEventListener('keydown', e => {
+    if(e.key !== 'Enter') return;
+    e.preventDefault();
+    if(k < ins.length - 1) ins[k + 1].focus(); else checkTable();
+  }));
+  wrap.appendChild(grid);
+  card.appendChild(wrap);
+  controls(card, checkTable, revealAnswers);
+}
+function showResult(list){
+  let allOk = true, accent = false;
+  list.forEach(inp => {
+    const old = inp.parentNode.querySelector('.fix'); if(old) old.remove();
+    inp.classList.remove('ok','bad');
+    const ans = inp.dataset.answer, ok = matches(inp.value, ans);
+    if(ok){
+      inp.classList.add('ok');
+      const fx = accentFix(inp.value, ans);
+      if(fx){ accent = true; inp.parentNode.appendChild(el('span','fix soft','con acento: <b>' + esc(display(fx)) + '</b>')); }
+    } else {
+      inp.classList.add('bad'); allOk = false;
+      inp.parentNode.appendChild(el('span','fix','→ <b>' + esc(cellLabel(ans)) + '</b>'));
+    }
+  });
+  return { allOk, accent };
+}
+function setBanner(good, html){
+  const b = $('banner');
+  b.className = 'banner show ' + (good ? 'good' : 'bad');
+  b.innerHTML = html;
+}
+function explain(t, show){
+  const box = $('explainbox');
+  if(!box) return;
+  if(!show || !t.tips.length){ box.hidden = true; box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="k">¿Por qué?</div>' + t.tips.slice(0, 2).map(x => '<div class="tipmini">' + ICO.bulb + '<span>' + esc(x) + '</span></div>').join('');
+  box.hidden = false;
+}
+function checkTable(){
+  const list = inputs(); if(!list.length) return;
+  const r = showResult(list), t = state.current.topic;
+  setBanner(r.allOk, r.allOk ? '¡Tabla completa!<div class="sub">' + esc(state.current.item.title) + ' sin ningún fallo.</div>'
+    : 'Casi. Revisa las casillas en coral.<div class="sub">La forma correcta aparece debajo de cada casilla fallada.</div>');
+  if(r.accent && r.allOk) $('banner').innerHTML += '<div class="sub">Ojo con los acentos: se aceptan sin ellos, pero la forma correcta los lleva.</div>';
+  explain(t, !r.allOk);
+}
+function revealAnswers(){
+  inputs().forEach(inp => {
+    const old = inp.parentNode.querySelector('.fix'); if(old) old.remove();
+    inp.value = fillOf(inp.dataset.answer); inp.classList.remove('bad'); inp.classList.add('ok');
+  });
+  setBanner(true, 'Aquí tienes la solución.<div class="sub">Pulsa «Siguiente» para practicar otra tabla.</div>');
+}
+/* ---- hueco ---- */
+function renderGapMode(card, cur){
+  const { topic:t, item:it, row, col } = cur;
+  card.appendChild(el('p','eyebrow','Rellena el hueco · ' + esc(row.label)));
+  card.appendChild(el('p','lead','Escribe la forma que pide la frase. Entre paréntesis, de qué palabra o persona se trata.'));
+  const tx = frameText(cur.frame);
+  const noun = t.kind === 'art' && t.nouns && t.nouns[col.k] ? t.nouns[col.k][row.k] : '';
+  const [before, after] = tx.split('{}');
+  const line = el('div','sentence');
+  const wrap = el('span','cellwrap');
+  const ans = frameAnswer(cur.cell, cur.frame);
+  const inp = makeInput(ans);
+  inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); checkGap(); } });
+  wrap.appendChild(inp);
+  const put = s => s.replace('{n}', noun);
+  if(before.trim()) line.appendChild(el('span','', esc(put(before))));
+  line.appendChild(wrap);
+  if(after.trim()) line.appendChild(el('span','', esc(put(after))));
+  card.appendChild(line);
+  card.appendChild(el('div','rowhint','<span class="hintchip">' + esc(hintFor(t, it, col)) + '</span>'));
+  controls(card, checkGap, () => {
+    const old = inp.parentNode.querySelector('.fix'); if(old) old.remove();
+    inp.value = fillOf(ans); inp.classList.add('ok');
+    setBanner(true, esc(row.label) + ' · ' + esc(col.label) + '<div class="sub">«' + esc(cellLabel(ans)) + '»</div>');
+  });
+}
+function checkGap(){
+  const list = inputs(); if(!list.length) return;
+  const cur = state.current, inp = list[0], ans = inp.dataset.answer, r = showResult(list);
+  list.forEach(i => { const f = i.parentNode.querySelector('.fix'); if(f) f.remove(); });   // la solución y el aviso de acentos van en el cuadro de abajo
+  const where = esc(cur.row.label) + ' · ' + esc(cur.col.label);
+  if(r.allOk){
+    setBanner(true, 'Correcto.<div class="sub">' + where + '</div>');
+    const fx = accentFix(inp.value, ans);
+    if(fx) $('banner').innerHTML += '<div class="sub">Ojo con los acentos: se aceptan sin ellos, pero la forma correcta es «' + esc(display(fx)) + '».</div>';
+  } else {
+    setBanner(false, 'Casi.<div class="sub">' + where + ': <b>' + esc(cellLabel(ans)) + '</b></div>');
+  }
+  explain(cur.topic, !r.allOk);
+}
+/* ---- reconocer la función ---- */
+function renderRecogMode(card, cur){
+  card.appendChild(el('p','eyebrow','Reconoce la función'));
+  card.appendChild(el('p','lead','¿Qué caso o función cumple esta forma? Si encaja en más de uno, vale cualquiera.'));
+  const box = el('div','prompt');
+  box.appendChild(el('div','k', esc(lemmaOf(cur.item.title)) + ' · ' + esc(cur.col.label)));
+  box.appendChild(el('div','v', esc(cur.shown)));
+  card.appendChild(box);
+  const opts = el('div','testopts');
+  cur.item.rows.forEach(r => {
+    const b = el('button','optbtn', esc(r.label));
+    b.type = 'button'; b.dataset.row = r.k;
+    b.onclick = () => answerRecog(r.k);
+    opts.appendChild(b);
+  });
+  card.appendChild(opts);
+  card.appendChild(Object.assign(el('div','testfb'), {id:'recogfb', hidden:true}));
+  controls(card, null, null);
+}
+function answerRecog(rowKey){
+  const cur = state.current; if(cur.answered) return;
+  cur.answered = true;
+  const good = cur.valid.includes(rowKey);
+  document.querySelectorAll('#panelPractice .optbtn').forEach(b => {
+    b.disabled = true;
+    if(cur.valid.includes(b.dataset.row)) b.classList.add('ok');
+    else if(b.dataset.row === rowKey) b.classList.add('bad');
+  });
+  const names = cur.item.rows.filter(r => cur.valid.includes(r.k)).map(r => r.label);
+  const fb = $('recogfb');
+  fb.hidden = false; fb.className = 'testfb ' + (good ? 'good' : 'bad');
+  fb.innerHTML = (good ? 'Correcto. ' : 'No: ') + '«' + esc(cur.shown) + '» es ' + names.map(esc).join(' o ') + '.';
+}
+
+/* =========================================================
+   NAVEGACIÓN
+   ========================================================= */
+
+const FLAGS = {
+  en:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#012169"/><path d="M0 0 60 40M60 0 0 40" stroke="#fff" stroke-width="9"/><path d="M0 0 60 40M60 0 0 40" stroke="#C8102E" stroke-width="4"/><path d="M30 0V40M0 20H60" stroke="#fff" stroke-width="14"/><path d="M30 0V40M0 20H60" stroke="#C8102E" stroke-width="8"/></svg>',
+  fr:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#fff"/><rect width="20" height="40" fill="#0055A4"/><rect x="40" width="20" height="40" fill="#EF4135"/></svg>',
+  it:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#fff"/><rect width="20" height="40" fill="#008C45"/><rect x="40" width="20" height="40" fill="#CD212A"/></svg>',
+  de:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#DD0000"/><rect width="60" height="13.34" fill="#000"/><rect y="26.67" width="60" height="13.34" fill="#FFCE00"/></svg>',
+  pt:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#DA291C"/><rect width="24" height="40" fill="#046A38"/><g fill="none" stroke="#FFE800" stroke-width="1.6"><circle cx="24" cy="20" r="8.5"/><ellipse cx="24" cy="20" rx="3.6" ry="8.5"/><path d="M15.5 20h17M24 11.5v17"/></g><path d="M24 13.6l-4.6 3v6.8l4.6 3 4.6-3v-6.8z" fill="#fff" stroke="#DA291C" stroke-width="1.6"/></svg>',
+  pl:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#fff"/><rect y="20" width="60" height="20" fill="#DC143C"/></svg>',
+  ca:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#FCDD09"/><g fill="#DA121A"><rect y="4.44" width="60" height="4.44"/><rect y="13.33" width="60" height="4.44"/><rect y="22.22" width="60" height="4.44"/><rect y="31.11" width="60" height="4.44"/></g></svg>',
+  el:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#0D5EAF"/><g fill="#fff"><rect y="4.44" width="60" height="4.44"/><rect y="13.33" width="60" height="4.44"/><rect y="22.22" width="60" height="4.44"/><rect y="31.11" width="60" height="4.44"/></g><rect width="22.22" height="22.22" fill="#0D5EAF"/><path d="M11.11 0V22.22M0 11.11H22.22" stroke="#fff" stroke-width="4.44"/></svg>'
+};
+function buildWelcome(){
+  const box = $('choices');
+  box.innerHTML = '';
+  LANG_ORDER.forEach(code => {
+    const lg = LANGS[code];
+    const b = el('button','choice');
+    b.dataset.lang = code;
+    b.innerHTML = FLAGS[code] +
+      '<span class="cname">'+esc(lg.name)+'</span>' +
+      '<span class="cnative">'+esc(lg.native)+'</span>' +
+      '<span class="cstar">' + lg.topics.length + ' temas</span>' +
+      '<span class="cgo">Practicar '+esc(lg.code)+' →</span>';
+    b.onclick = () => chooseLang(code);
+    box.appendChild(b);
+  });
+}
+function renderSubtabs(){
+  const bar = $('subtabs');
+  bar.innerHTML = '';
+  const cur = curTopic();
+  L().topics.forEach(t => {
+    const c = el('button','chip');
+    c.type = 'button';
+    c.setAttribute('role','tab');
+    c.setAttribute('aria-selected', t.id === cur.id);
+    c.title = t.group;
+    c.appendChild(el('span','', esc(t.name)));
+    c.onclick = () => {
+      state.topic[state.lang] = t.id;
+      if(state.tab === 'theory') renderTheory(); else newExercise();
+      renderSubtabs();
+    };
+    bar.appendChild(c);
+  });
+}
+function setTab(which){
+  state.tab = which;
+  $('tabTheory').setAttribute('aria-selected', which === 'theory');
+  $('tabPractice').setAttribute('aria-selected', which === 'practice');
+  $('panelTheory').hidden = which !== 'theory';
+  $('panelPractice').hidden = which !== 'practice';
+  if(which === 'theory') renderTheory();
+  else if(!state.current || state.current.topic.id !== curTopic().id) newExercise();
+  else renderPractice();
+  renderSubtabs();
+}
+/* aspecto de Vocabulando en las pantallas de práctica: clase en <body>, pestañas y chip de idioma en la cabecera */
+function vcbSkin(code){
+  try{
+    const on = !!code, bar = document.querySelector('.themewrap'), tabs = document.querySelector('.tabs'), chip = $('langChip'), wrap = $('langWrap');
+    closeLangMenu();
+    document.body.classList.toggle('vcb', on);
+    if(on){
+      if(tabs && bar && tabs.parentNode !== bar) bar.insertBefore(tabs, bar.firstChild);
+      if(chip){ chip.innerHTML = FLAGS[code] + '<span>' + code.toUpperCase() + '</span>'; chip.hidden = false; }
+      if(wrap) wrap.hidden = false;
+    } else {
+      if(tabs && tabs.parentNode !== $('app')) $('app').insertBefore(tabs, $('app').firstChild);
+      if(chip) chip.hidden = true;
+      if(wrap) wrap.hidden = true;
+    }
+  }catch(e){ /* sin el aspecto nuevo: la práctica sigue funcionando */ }
+}
+/* el idioma abierto va en la dirección (#fr, #pt…): así las otras webs pueden abrir Declinario en el mismo idioma */
+function syncLangHash(code){
+  try{ history.replaceState(null, '', code ? '#' + code : location.pathname + location.search); }catch(e){}
+  try{ if(window.__sibUpdate) window.__sibUpdate(); }catch(e){}
+}
+function chooseLang(code){
+  state.lang = code;
+  state.current = null;
+  state.mode = 'table';
+  $('welcome').hidden = true;
+  $('app').hidden = false;
+  $('eyebrow').textContent = 'Declinación · ' + LANGS[code].name;
+  document.title = 'Declinario · ' + LANGS[code].name;
+  vcbSkin(code);
+  setTab('theory');
+  syncLangHash(code);
+  window.scrollTo({top:0});
+}
+function backToWelcome(){
+  state.lang = null; state.current = null;
+  $('welcome').hidden = false;
+  $('app').hidden = true;
+  $('eyebrow').textContent = 'Sala de declinación';
+  document.title = 'Declinario';
+  vcbSkin('');
+  syncLangHash('');
+  window.scrollTo({top:0});
+}
+buildWelcome();
+$('brandBtn').onclick = backToWelcome;
+/* ---- idioma: lista desplegable sobre el propio botón; se elige ahí mismo, sin pasar por la pantalla de inicio ---- */
+function buildLangMenu(){
+  const m = $('langMenu'); if(!m) return;
+  m.innerHTML = '';
+  LANG_ORDER.forEach(code => {
+    const lg = LANGS[code];
+    const b = el('button', 'langopt', FLAGS[code] + '<span>' + esc(lg.name) + '</span><span class="lnat">' + esc(lg.native) + '</span>');
+    b.type = 'button'; b.dataset.lang = code;
+    b.setAttribute('role', 'option'); b.setAttribute('aria-selected', code === state.lang ? 'true' : 'false');
+    m.appendChild(b);
+  });
+}
+function closeLangMenu(refocus){
+  const m = $('langMenu'), b = $('langChip');
+  if(!m || m.hidden) return;
+  m.hidden = true; m.style.transform = '';
+  if(b){ b.setAttribute('aria-expanded', 'false'); if(refocus) b.focus(); }
+}
+function openLangMenu(){
+  const m = $('langMenu'), b = $('langChip'); if(!m || !b) return;
+  buildLangMenu(); m.style.transform = ''; m.hidden = false; b.setAttribute('aria-expanded', 'true');
+  const r = m.getBoundingClientRect(), W = document.documentElement.clientWidth;
+  const dx = r.left < 8 ? 8 - r.left : (r.right > W - 8 ? W - 8 - r.right : 0);
+  if(dx) m.style.transform = 'translateX(' + Math.round(dx) + 'px)';
+  const cur = m.querySelector('[aria-selected="true"]') || m.querySelector('.langopt'); if(cur) cur.focus();
+}
+
+/* ---- ayuda: cómo funciona la web ---- */
+function infoHtml(){
+  const sib = $('sibBtn') && !$('sibBtn').hidden;
+  const nTemas = LANG_ORDER.reduce((n, c) => n + LANGS[c].topics.length, 0);
+  return '<div class="modal-top"><h2 class="modal-title" id="infoTitle">Cómo funciona Declinario</h2><button type="button" class="modal-x" id="infoClose" aria-label="Cerrar">×</button></div>' +
+    '<div class="info-body">' +
+    '<p>Declinario es una sala de práctica de las declinaciones en 8 idiomas: francés, italiano, portugués, catalán, polaco, inglés, alemán y griego. Eliges un idioma y trabajas tema a tema (' + nTemas + ' en total), con dos pestañas: Teoría y Prácticas. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Declinario» vuelves a ella.' + (sib ? ' El botón «Conjugario» te lleva a la web de conjugaciones, en el mismo idioma.' : '') + '</p>' +
+    '<h3>Qué se declina en cada idioma</h3><ul>' +
+    '<li><b>Alemán, polaco y griego</b> tienen casos: aquí encontrarás los artículos, los pronombres, los sustantivos y los adjetivos, con sus tablas completas.</li>' +
+    '<li><b>Francés, italiano, portugués, catalán e inglés</b> no declinan los sustantivos, pero sí los pronombres: personales (sujeto, complemento directo, indirecto, tónico y reflexivo), posesivos, demostrativos y relativos. En las lenguas románicas, además, los artículos y sus contracciones (du, au, del, nel, pelo…).</li></ul>' +
+    '<h3>Teoría</h3>' +
+    '<p>Cada tema explica para qué sirve y muestra sus tablas (filas: caso o función; columnas: género, número o persona), con unos consejos al final. Las formas con alternativas se muestran con «/» y las letras opcionales entre paréntesis.</p>' +
+    '<h3>Prácticas</h3><ul>' +
+    '<li><b>Tabla completa:</b> rellenas todas las casillas de una tabla. Intro pasa a la casilla siguiente y, en la última, comprueba.</li>' +
+    '<li><b>Rellena el hueco:</b> una frase con un hueco que exige un caso o una función concreta, y entre paréntesis la palabra o la persona de la que se trata. No todos los temas tienen frases (por ejemplo, los posesivos).</li>' +
+    '<li><b>Reconoce la función:</b> te enseño una forma y eliges qué caso o función cumple. Si encaja en varios (como «die» en alemán, nominativo o acusativo), vale cualquiera.</li></ul>' +
+    '<h3>Acentos</h3>' +
+    '<p>Los acentos no cuentan, salvo donde distinguen dos formas distintas del idioma (en polaco ta y tą, te y tę). Si aciertas sin un acento que no era obligatorio, se acepta y se te enseña cómo se escribe. La ł polaca vale como l, y la ß alemana, como ss.</p>' +
+    '<h3>Dónde se guarda tu progreso</h3>' +
+    '<p>En esta primera versión Declinario no guarda nada: ni aciertos ni progreso. Lo único que se recuerda en este navegador es el tema (claro u oscuro).</p>' +
+    '<h3>Qué sale de tu navegador</h3>' +
+    '<p>Declinario no usa ningún servidor ni consulta datos de internet: las tablas están dentro de la propia página. Solo se descargan las tipografías de Google Fonts al abrirla.</p>' +
+    '<h3>Una advertencia</h3>' +
+    '<p>Las tablas están escritas a mano y revisadas con pruebas automáticas, pero esas pruebas solo detectan incoherencias, no errores de gramática. Si una forma te parece dudosa, compruébala en una gramática.</p>' +
+    '<h3>Créditos</h3><p class="muted-note">Tipografías: Fredoka, Nunito, DM Mono, Bricolage Grotesque, Inter e IBM Plex Mono (Google Fonts, licencia OFL). Banderas dibujadas en SVG.</p>' +
+    '</div>';
+}
+function openInfo(){
+  closeInfo();
+  const d = document.createElement('div');
+  d.className = 'modal-overlay'; d.id = 'infoOverlay';
+  d.innerHTML = '<div class="modal-lg" role="dialog" aria-modal="true" aria-labelledby="infoTitle">' + infoHtml() + '</div>';
+  document.body.appendChild(d); document.body.classList.add('modal-open');
+  const b = $('infoBtn'); if(b) b.setAttribute('aria-expanded', 'true');
+  $('infoClose').focus();
+}
+function closeInfo(refocus){
+  const d = $('infoOverlay');
+  if(!d) return;
+  d.remove(); document.body.classList.remove('modal-open');
+  const b = $('infoBtn'); if(b){ b.removeAttribute('aria-expanded'); if(refocus) b.focus(); }
+}
+document.addEventListener('click', ev => {
+  const t = ev.target; if(!t || !t.closest) return;
+  if(t.closest('#infoBtn')){ closeLangMenu(); openInfo(); return; }
+  if(t.closest('#infoClose') || t.id === 'infoOverlay'){ closeInfo(true); return; }
+  if(t.closest('#langChip')){ const m = $('langMenu'); if(m && m.hidden) openLangMenu(); else closeLangMenu(); return; }
+  const opt = t.closest('.langopt');
+  if(opt){ const code = opt.dataset.lang; closeLangMenu(true); if(code && code !== state.lang) chooseLang(code); return; }
+  closeLangMenu();
+});
+document.addEventListener('keydown', ev => {
+  const m = $('langMenu');
+  if(m && !m.hidden){
+    if(ev.key === 'Escape'){ ev.preventDefault(); closeLangMenu(true); return; }
+    const opts = Array.from(m.querySelectorAll('.langopt')), i = opts.indexOf(document.activeElement);
+    if(ev.key === 'ArrowDown'){ ev.preventDefault(); opts[(i + 1) % opts.length].focus(); }
+    else if(ev.key === 'ArrowUp'){ ev.preventDefault(); opts[(i - 1 + opts.length) % opts.length].focus(); }
+    else if(ev.key === 'Home'){ ev.preventDefault(); opts[0].focus(); }
+    else if(ev.key === 'End'){ ev.preventDefault(); opts[opts.length - 1].focus(); }
+    else if(ev.key === 'Tab') closeLangMenu();
+    return;
+  }
+  const d = $('infoOverlay');
+  if(!d) return;
+  if(ev.key === 'Escape'){ ev.preventDefault(); closeInfo(true); return; }
+  if(ev.key === 'Tab'){   /* el foco se queda dentro de la ventana */
+    const f = Array.from(d.querySelectorAll('button, a[href]')).filter(x => !x.disabled && x.offsetParent !== null);
+    if(!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if(!d.contains(document.activeElement)){ ev.preventDefault(); first.focus(); }
+    else if(ev.shiftKey && document.activeElement === first){ ev.preventDefault(); last.focus(); }
+    else if(!ev.shiftKey && document.activeElement === last){ ev.preventDefault(); first.focus(); }
+  }
+});
+$('tabTheory').onclick = () => setTab('theory');
+$('tabPractice').onclick = () => setTab('practice');
+window.__booted = true;   /* arranque completo: ver el aviso de errores del <head> */
+/* abierto desde otra web con #xx (p. ej. #pt): entra directamente en ese idioma */
+(function(){
+  function fromHash(){
+    var c = location.hash.replace(/^#/, '');
+    if(c && Object.prototype.hasOwnProperty.call(LANGS, c) && state.lang !== c) chooseLang(c);
+  }
+  try{ fromHash(); window.addEventListener('hashchange', function(){ try{ fromHash(); }catch(e){} }); }catch(e){}
+})();
+</script>
+</body>
+</html>
