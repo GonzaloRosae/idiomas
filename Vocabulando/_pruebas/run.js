@@ -523,6 +523,16 @@ test("En tus otros idiomas · la misma palabra en los demás idiomas, al mostrar
   noErrors(p);
 });
 
+test("Mazo · lo que no siempre aparece va a la izquierda de los botones fijos de cada fila", async () => {
+  const p = await open({ seed: otros() }); await mazo(p);
+  const orden = await p.locator("li.row").evaluateAll((rs) => rs.map((x) => [...x.querySelectorAll(".row-meta > *")].map((e) => e.dataset.xl !== undefined ? "idiomas" : e.dataset.frase !== undefined ? "frase" : e.dataset.say !== undefined ? "escuchar" : e.dataset.pause !== undefined ? "pausar" : e.dataset.edit !== undefined ? "editar" : e.dataset.del !== undefined ? "eliminar" : "chip")));
+  const fijos = ["escuchar", "pausar", "editar", "eliminar"];
+  ok(orden.length >= 4 && orden.every((o) => JSON.stringify(o.filter((k) => fijos.includes(k))) === JSON.stringify(fijos)), "los cuatro botones fijos van siempre en el mismo orden: " + JSON.stringify(orden[0]));
+  ok(orden.every((o) => { const iFijo = o.findIndex((k) => fijos.includes(k)); return o.every((k, i) => fijos.includes(k) || i < iFijo); }), "y todo lo condicional (chips, «idiomas», «frase») queda a su izquierda, sin cambiar de sitio los fijos");
+  ok(orden.some((o) => o.includes("idiomas")) && orden.some((o) => o.includes("frase")), "(la prueba ve filas con «idiomas» y con «frase»)");
+  noErrors(p);
+});
+
 test("Hoy · en Actividad: qué toca en cada idioma, con enlace, y el resumen de Conjugario", async () => {
   const cj = { v: 1, d: { fr: { present: { best: 99, date: "2026-03-01" }, passe: { best: 96, date: "2026-03-01" } }, de: { praesens: { best: 97, date: "2026-03-01" } } } };
   const fl = { v: 1, d: { fr: { present: [["manger", 0, 1, "2026-03-04"], ["aller", 2, 2, "2026-03-04"]] }, de: { praesens: [["gehen", 1, 1, "2026-03-04"]] } } };

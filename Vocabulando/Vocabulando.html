@@ -6859,9 +6859,10 @@
         '<div class="row-meta">' +
         (e.paused ? '<span class="chip">pausada</span>' : "") +
         (entryState(e, Date.now()).lapses >= LEECH ? '<span class="chip chip-hard" title="Te ha fallado muchas veces">difícil</span>' : "") +
-        '<button class="say" data-say="' + esc(e.id) + '" aria-label="Escuchar" title="Escuchar">' + ICON_SPEAK + "</button>" +
+        // primero lo que no siempre aparece (idiomas, frase) y a la derecha lo que sí (escuchar, pausar, editar, eliminar): así los botones fijos no se mueven
         (xs.length ? '<button class="chip-btn' + (xo ? " on" : "") + '" data-xl="' + esc(e.id) + '" title="La misma palabra en tus otros idiomas">idiomas</button>' : "") +
         (hasS ? '<button class="chip-btn' + (open ? " on" : "") + '" data-frase="' + esc(e.id) + '">frase</button>' : "") +
+        '<button class="say" data-say="' + esc(e.id) + '" aria-label="Escuchar" title="Escuchar">' + ICON_SPEAK + "</button>" +
         '<button class="pause" data-pause="' + esc(e.id) + '" aria-label="' + (e.paused ? "Reanudar" : "Pausar") + '" title="' + (e.paused ? "Reanudar: vuelve a salir al estudiar" : "Pausar: no saldrá al estudiar hasta que la reanudes") + '">' + (e.paused ? ICON_PLAY : ICON_PAUSE) + "</button>" +
         '<button class="edit" data-edit="' + esc(e.id) + '" aria-label="Editar">✎</button>' +
         '<button class="del" data-del="' + esc(e.id) + '" aria-label="Eliminar">×</button></div></div>' +
@@ -7372,7 +7373,7 @@
         ? '<button class="switch' + (S.autoSentence ? " on" : "") + '" id="autoSent" role="switch" aria-checked="' + (S.autoSentence ? "true" : "false") + '"><span class="switch-label">Frase</span><span class="switch-track"><span class="switch-thumb"></span></span></button>'
         : "";
       var tag = (isDict ? "dictado" : isCloze ? "hueco" : isSent ? "frase" : "palabra") + " · " + (isRev ? S.lang + " → es" : isDict ? S.lang : "es → " + S.lang);
-      var inner = '<div class="k-head"><div class="k-tag">' + tag + '</div><div class="k-tools">' + say + pause + sw + "</div></div>";
+      var inner = '<div class="k-head"><div class="k-tag">' + tag + '</div><div class="k-tools">' + say + sw + pause + "</div></div>";
       if (isDict) {
         inner += '<div class="k-front k-dict-front">Escucha la frase y escríbela</div>' +
           '<div class="k-dict"><button class="btn btn-ghost" data-say="card">▶ Escuchar</button><button class="btn btn-ghost" data-say-slow="card">Más despacio</button></div>';
