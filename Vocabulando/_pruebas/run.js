@@ -242,19 +242,52 @@ test("Nuevas · tope diario, «estudiar más» y reinicio al día siguiente", as
   noErrors(p);
 });
 
-test("Nuevas · se puede cambiar el tope y se recuerda", async () => {
+test("Nuevas · límites separados de palabras y de frases, a la vista en Estudiar", async () => {
   const p = await open({ seed: { de: await freshReviewDeck(50) } });
-  await p.waitForSelector(".deck-list"); await p.click('.tab[data-tab="actividad"]');
-  await p.selectOption("#newPerDay", "0");
-  eq(await txt(p.locator("#toast")), "Sin límite de palabras nuevas", "aviso al cambiar");
-  eq((await study(p)).stats, "0 por repasar 50 nuevas", "sin límite: se ofrecen las 50 y no hay «en espera»");
-  await p.reload(); await p.waitForSelector("#view"); await p.click('.tab[data-tab="actividad"]');
-  eq(await p.inputValue("#newPerDay"), "0", "la preferencia se recuerda al recargar");
+  await p.waitForSelector(".deck-list");
+  eq((await study(p)).stats, "0 por repasar 20 nuevas hoy 30 en espera", "palabras: por defecto 20 al día");
+  eq([await p.inputValue("#newWords"), await p.inputValue("#newSents")], ["20", "10"], "los dos selectores están en Estudiar (20 palabras, 10 frases)");
+  await p.click('.seg-btn[data-mode="sentence"]');
+  eq(await txt(p.locator(".stats")), "0 por repasar 10 nuevas hoy 40 en espera", "frases: por defecto 10 al día");
+  await p.selectOption("#newSents", "5");
+  eq(await txt(p.locator("#toast")), "Hasta 5 frases nuevas al día", "aviso al cambiar el de frases");
+  eq(await txt(p.locator(".stats")), "0 por repasar 5 nuevas hoy 45 en espera", "el contador de frases se actualiza al momento");
+  await p.click('.seg-btn[data-mode="word"]');
+  eq(await txt(p.locator(".stats")), "0 por repasar 20 nuevas hoy 30 en espera", "el límite de palabras no ha cambiado");
+  await p.selectOption("#newWords", "0");
+  eq(await txt(p.locator("#toast")), "Sin límite de palabras nuevas", "aviso al quitar el de palabras");
+  eq(await txt(p.locator(".stats")), "0 por repasar 50 nuevas", "sin límite: se ofrecen las 50 y no hay «en espera»");
+  await p.reload(); await p.waitForSelector("#view"); await study(p);
+  eq([await p.inputValue("#newWords"), await p.inputValue("#newSents")], ["0", "5"], "los dos se recuerdan al recargar");
+  await p.click('.tab[data-tab="actividad"]');
+  eq(await p.locator("#newPerDay").count(), 0, "en Actividad ya no hay un selector duplicado");
   noErrors(p);
 });
 
+test("Nuevas · el tope de frases se aplica a las frases y no a las palabras", async () => {
+  const p = await open({ prefs: { "vocabulando:newSents": "2" }, seed: { de: await freshReviewDeck(30) } });
+  await p.waitForSelector(".deck-list"); await study(p); await p.click('.seg-btn[data-mode="sentence"]');
+  await rateOnce(p, "Good"); await rateOnce(p, "Good");
+  const s = await study(p);
+  ok(s.done && (await txt(p.locator(".done"))).includes("Hoy ya has visto 2 frases nuevas (tope diario)"), "con 2 frases al día, al ver 2 sale «todo al día» y lo explica");
+  const d = await stored(p); eq(Object.keys(d.stats.newByDay).map((k) => k.split(":")[1]), ["sentence"], "se cuentan como frases nuevas");
+  await p.click('.seg-btn[data-mode="word"]');
+  eq(await txt(p.locator(".stats")), "0 por repasar 20 nuevas hoy 10 en espera ↶ Deshacer", "las palabras siguen con su propio tope (20)");
+  noErrors(p);
+});
+
+test("Nuevas · el ajuste único de la versión anterior se conserva en los dos límites", async () => {
+  const p = await open({ prefs: { "vocabulando:newPerDay": "15" }, seed: { de: await freshReviewDeck(40) } });
+  await p.waitForSelector(".deck-list"); await study(p);
+  eq([await p.inputValue("#newWords"), await p.inputValue("#newSents")], ["15", "15"], "palabras y frases parten de los 15 que había elegido");
+  const q = await open({ prefs: { "vocabulando:newWords": "25" }, seed: { de: await freshReviewDeck(40) } });
+  await q.waitForSelector(".deck-list"); await study(q);
+  eq(await q.inputValue("#newWords"), "25", "un valor que no está en la lista (25) también se muestra");
+  noErrors(p); noErrors(q);
+});
+
 test("Nuevas · el contador de nuevas es estable (sin límite)", async () => {
-  const p = await open({ prefs: { "vocabulando:newPerDay": "0" }, seed: { de: await freshReviewDeck(300) } });
+  const p = await open({ prefs: { "vocabulando:newWords": "0" }, seed: { de: await freshReviewDeck(300) } });
   await p.waitForSelector(".deck-list"); const seen = new Set();
   for (let i = 0; i < 8; i++) { seen.add((await study(p)).stats); await p.click('.tab[data-tab="crear"]'); }
   eq([...seen], ["0 por repasar 300 nuevas"], "8 aperturas de «Estudiar» dan siempre el mismo contador");
@@ -600,7 +633,42 @@ test("Ayuda · explica las novedades y el aviso de iPad", async () => {
   ok((await txt(p.locator(".databar:visible").first())).includes("Añadir a pantalla de inicio"), "sin carpeta (iPad/Safari) el aviso recomienda añadir la web a la pantalla de inicio");
   await p.locator(".js-info:visible").first().click(); await p.waitForSelector(".info-body");
   const t = await txt(p.locator(".info-body"));
-  for (const k of ["Palabras nuevas por día", "Z para deshacer", "Pronunciación", "las 4:00", "En el iPad o el móvil", "importar listas"]) ok(t.includes(k), "la ayuda menciona «" + k + "»");
+  for (const k of ["Palabras y frases nuevas por día", "Z para deshacer", "Pronunciación", "las 4:00", "En el iPad o el móvil", "importar listas"]) ok(t.includes(k), "la ayuda menciona «" + k + "»");
+  noErrors(p);
+});
+
+
+// =====================================================================================================================
+// CAMBIAR DE IDIOMA: desplegable sobre el propio botón
+// =====================================================================================================================
+test("Idioma · el botón despliega los 8 idiomas y se elige ahí mismo, sin pasar por la pantalla inicial", async () => {
+  const p = await open({ lang: "pl", seed: { ...newDeck("pl", 30, false), ...newDeck("de", 12, false) } });
+  await p.waitForSelector(".deck-list");
+  eq(await p.locator("#langMenu").isHidden(), true, "cerrado al principio");
+  await p.click("#langBtn");
+  ok(await p.locator("#langMenu").isVisible() && (await p.locator("#langBtn").getAttribute("aria-expanded")) === "true", "al pulsar el botón se despliega el menú");
+  eq(await p.locator(".lang-opt").count(), 8, "con los 8 idiomas");
+  eq(await p.locator('.lang-opt[aria-selected="true"]').getAttribute("data-lang"), "pl", "el actual va marcado");
+  ok(await p.evaluate(() => { const r = document.getElementById("langMenu").getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth; }), "el menú cabe en la pantalla");
+  await p.click('.lang-opt[data-lang="de"]'); await countIs(p, 12);
+  ok(await p.evaluate(() => document.getElementById("picker").hidden), "se cambia directamente: la pantalla inicial no aparece");
+  eq([await p.evaluate(() => location.hash), await txt(p.locator("#langBtn")), await p.locator("#langMenu").isHidden()], ["#de", "DE", true], "el idioma cambia, el botón lo muestra y el menú se cierra");
+  noErrors(p);
+});
+
+test("Idioma · se cierra con Escape y al pulsar fuera, y se maneja con el teclado", async () => {
+  const p = await open({ lang: "de", seed: newDeck("de", 12, false) }); await p.waitForSelector(".deck-list");
+  await p.click("#langBtn"); await p.keyboard.press("Escape");
+  eq(await p.locator("#langMenu").isHidden(), true, "Escape lo cierra");
+  await p.click("#langBtn"); await p.mouse.click(5, 5);
+  eq(await p.locator("#langMenu").isHidden(), true, "pulsar fuera lo cierra");
+  await p.click("#langBtn");
+  eq(await p.evaluate(() => document.activeElement.dataset.lang), "de", "al abrir, el foco está en el idioma actual");
+  await p.keyboard.press("ArrowDown"); eq(await p.evaluate(() => document.activeElement.dataset.lang), "el", "flecha abajo pasa al siguiente");
+  await p.keyboard.press("Enter"); await p.waitForFunction(() => location.hash === "#el");
+  ok(true, "Intro lo elige: se abre el griego");
+  await p.click(".brand-mark"); await p.waitForFunction(() => !document.getElementById("picker").hidden);
+  ok(true, "la marca «Vocabulando.» sigue llevando a la pantalla inicial");
   noErrors(p);
 });
 

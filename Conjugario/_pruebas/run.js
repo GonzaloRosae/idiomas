@@ -124,14 +124,170 @@ test("Repetición adaptativa · lo fallado vuelve a los 3 ejercicios, se explica
   noErrors(p);
 });
 
-test("Progreso · no se guarda nada en el navegador (decisión de diseño)", async () => {
-  const p = await open("de"); await practice(p, "praesens", "table");
-  await p.evaluate(() => { document.querySelectorAll("#panelPractice input.ans").forEach((i) => { i.value = cleanFill(i.dataset.answer); }); });
-  await p.locator("#panelPractice button", { hasText: /Comprobar/ }).click(); await p.waitForSelector(".banner.show");
-  ok(await p.locator(".chip.mastered").count() === 1, "se marca «dominado» en la sesión");
-  eq(await p.evaluate(() => Object.keys(localStorage)), [], "pero no se escribe nada en localStorage");
+// =====================================================================================================================
+// PROGRESO GUARDADO: solo un test final superado deja el tiempo en dorado (y queda guardado)
+// =====================================================================================================================
+const KEY = "conjugario:progreso";
+const fillTable = (p) => p.evaluate(() => { document.querySelectorAll("#panelPractice input.ans").forEach((i) => { i.value = cleanFill(i.dataset.answer); }); });
+async function answerTest(p, good) {   // contesta las 8 preguntas del test cerrado por la pantalla: todas bien o todas mal
+  for (let k = 0; k < 8; k++) {
+    const idx = await p.evaluate((g) => { const s = state.testSession, q = s.questions[s.qi]; return q.options.findIndex((o) => isOptionCorrect(q, o) === g); }, good);
+    await p.locator("#panelPractice .optbtn").nth(idx).click();
+    await p.locator("#panelPractice button", { hasText: /Siguiente pregunta|Ver resultado/ }).click();
+  }
+}
+const unlockTest = (p) => p.evaluate(() => { const st = S().stats[S().currentTense]; Object.keys(st.modesDone).forEach((k) => { st.modesDone[k] = true; }); renderPractice(); });
+const stored = (p) => p.evaluate((k) => localStorage.getItem(k), KEY);
+
+test("Progreso · la práctica suelta no guarda nada y un test suspendido tampoco", async () => {
+  const p = await open("it"); await practice(p, "imperativo", "table");
+  await fillTable(p); await p.locator("#panelPractice button", { hasText: /Comprobar/ }).click(); await p.waitForSelector(".banner.show");
+  ok(await p.locator(".chip.mastered").count() === 1, "la tabla sin fallos marca ✓ («tabla perfecta») en la sesión");
+  ok(await p.locator(".chip.gold").count() === 0, "pero eso no es «dominado»: no hay botón dorado");
+  eq(await stored(p), null, "y no se escribe nada en localStorage");
+  await unlockTest(p); await p.locator("#testcta button").click(); await answerTest(p, false);
+  ok(await p.locator(".testscore").innerText() === "0%", "test con todo mal: 0 %");
+  ok(await p.locator(".goldnote.soft").count() === 1 && /nota necesaria: 80 %/.test(await txt(p.locator(".goldnote.soft"))), "la pantalla explica qué nota hace falta para el dorado");
+  ok(await p.locator(".chip.gold").count() === 0, "suspender no da dorado");
+  eq(await stored(p), null, "ni guarda nada");
+  noErrors(p);
+});
+
+test("Progreso · superar el test deja el tiempo en dorado, guardado, y sobrevive a recargar y a «Reiniciar sesión»", async () => {
+  const p = await open("it"); await practice(p, "imperativo", "table"); await unlockTest(p);
+  await p.locator("#testcta button").click(); await answerTest(p, true);
+  ok(await p.locator(".testscore").innerText() === "100%", "test con todo bien: 100 %");
+  ok(await p.locator(".goldnote:not(.soft)").count() === 1 && /queda en dorado/.test(await txt(p.locator(".goldnote"))), "la pantalla de resultados lo anuncia");
+  ok(await p.locator(".chip.gold").count() === 1 && await p.locator(".chip.gold").evaluate((c) => c.getAttribute("aria-selected")) === "true", "el botón del tiempo se vuelve dorado nada más acabar");
+  ok(/mejor nota 100/.test(await p.locator(".chip.gold").getAttribute("title")), "y recuerda la nota en su ayuda emergente");
+  const raw = JSON.parse(await stored(p));
+  eq([raw.v, Object.keys(raw.d), Object.keys(raw.d.it), raw.d.it.imperativo.best, /^\d{4}-\d{2}-\d{2}$/.test(raw.d.it.imperativo.date)], [1, ["it"], ["imperativo"], 100, true], "se guarda solo ese tiempo de ese idioma, con la nota y la fecha");
   await p.reload(); await p.waitForFunction(() => window.__booted === true);
-  ok(await p.locator(".chip.mastered").count() === 0, "al recargar todo empieza de cero, como antes");
+  ok(await p.locator(".chip.gold").count() === 1, "al recargar sigue dorado");
+  ok(await p.locator(".chip.mastered").count() === 0, "mientras que lo demás de la sesión (✓) empieza de cero");
+  await practice(p, "imperativo", "table");
+  ok(await p.locator("#testcta button").count() === 1, "y su test final está disponible sin repetir los cuatro modos");
+  await p.click("#btnReset");
+  ok(await p.locator(".chip.gold").count() === 1, "«Reiniciar sesión» no quita el dorado");
+  await practice(p, "imperativo", "table"); await p.locator("#testcta button").click(); await answerTest(p, false);
+  ok(/sigue en dorado/.test(await txt(p.locator(".goldnote"))) && await p.locator(".chip.gold").count() === 1, "un mal intento posterior no lo quita");
+  eq(JSON.parse(await stored(p)).d.it.imperativo.best, 100, "y se conserva la mejor nota");
+  await p.evaluate(() => chooseLang("fr"));
+  ok(await p.locator(".chip.gold").count() === 0, "en otro idioma ese tiempo no está dorado");
+  noErrors(p);
+});
+
+test("Progreso · el examen por fases se supera con 95; con menos, no", async () => {
+  const p = await open("de"); await practice(p, "praesens", "table");
+  const run = (frac) => p.evaluate((frac) => { const t = T("praesens"); exStart(t); const s = state.examSession; s.exam.fases.forEach((f, gi) => f.items.forEach((_, i) => { s.pts[gi + "." + i] = exValor({ ...s, fi: gi }) * frac; })); exFinish(s, t); return { total: exTotal(s), gold: S().stats[t.id].gold, prog: s.prog }; }, frac);
+  const low = await run(0.9);
+  ok(low.total < 95 && low.gold === false && low.prog.gold === false, "con " + low.total + " de 100 («No superado») no hay dorado");
+  eq(await stored(p), null, "ni se guarda nada");
+  ok(/nota necesaria: 95 de 100/.test(await txt(p.locator(".goldnote.soft"))), "la pantalla dice que hace falta 95 de 100");
+  const high = await run(1);
+  ok(high.total === 100 && high.gold === true, "con " + high.total + " de 100 («Superado») sí");
+  eq(JSON.parse(await stored(p)).d.de.praesens.best, 100, "y se guarda");
+  ok(await p.locator(".chip.gold").count() === 1 && /queda en dorado/.test(await txt(p.locator(".goldnote"))), "el botón se vuelve dorado y la pantalla de resultados lo dice");
+  noErrors(p);
+});
+
+test("Progreso · un guardado ilegible o ajeno se ignora y, si el navegador no deja guardar, el dorado dura la sesión", async () => {
+  for (const basura of ["{roto", "null", '{"v":2,"d":{}}', '{"v":1,"d":{"zz":{"a":{"best":90}},"it":{"imperativo":{"best":"x"},"__proto__":{"best":99},"no valido!":{"best":70}}}}']) {
+    const ctx = await browser.newContext(); ctxs.push(ctx); await ctx.route((u) => !u.href.startsWith(BASE), (r) => r.abort());
+    await ctx.addInitScript(([k, v]) => { try { localStorage.setItem(k, v); } catch (e) { } }, [KEY, basura]);
+    const p = await ctx.newPage(); p.errs = []; p.on("pageerror", (e) => p.errs.push(String(e)));
+    await p.goto(BASE + "index.html#it"); await p.waitForFunction(() => window.__booted === true);
+    ok(await p.locator(".chip.gold").count() === 0 && ({}).best === undefined, "guardado «" + basura.slice(0, 24) + "…» → arranca sin dorados y sin contaminar nada");
+    noErrors(p);
+  }
+  const ctx = await browser.newContext(); ctxs.push(ctx); await ctx.route((u) => !u.href.startsWith(BASE), (r) => r.abort());
+  await ctx.addInitScript(() => { Storage.prototype.setItem = function () { throw new Error("cuota"); }; });
+  const p = await ctx.newPage(); p.errs = []; p.on("pageerror", (e) => p.errs.push(String(e)));
+  await p.goto(BASE + "index.html#it"); await p.waitForFunction(() => window.__booted === true);
+  await practice(p, "imperativo", "table"); await unlockTest(p); await p.locator("#testcta button").click(); await answerTest(p, true);
+  ok(await p.locator(".chip.gold").count() === 1 && /No se ha podido guardar/.test(await txt(p.locator(".goldnote"))), "sin poder guardar: sigue en dorado y la pantalla avisa de que no se ha guardado");
+  await p.click("#infoBtn"); ok(/no deja guardar datos/.test(await txt(p.locator("#infoProg"))) && await p.locator("#infoProg .sdot.ok").count() === 0, "la ayuda también avisa");
+  await p.keyboard.press("Escape"); await p.click("#btnReset");
+  ok(await p.locator(".chip.gold").count() === 1, "y «Reiniciar sesión» tampoco lo quita");
+  noErrors(p);
+});
+
+test("Progreso · otra pestaña abierta se entera al momento y el borrado se hace desde la ayuda, con confirmación", async () => {
+  const a = await open("it"); const b = await a.context().newPage(); b.errs = []; b.on("pageerror", (e) => b.errs.push(String(e)));
+  await b.goto(BASE + "index.html#it"); await b.waitForFunction(() => window.__booted === true);
+  await practice(a, "imperativo", "table"); await unlockTest(a); await a.locator("#testcta button").click(); await answerTest(a, true);
+  await b.waitForFunction(() => document.querySelectorAll(".chip.gold").length === 1, null, { timeout: 4000 });
+  ok(true, "la otra pestaña muestra el dorado sin recargar");
+  await b.click("#infoBtn");
+  ok(/Llevas 1 de 68 tiempos/.test(await txt(b.locator("#infoProg"))), "la ayuda cuenta los tiempos dorados: «" + await txt(b.locator("#infoProg .info-status")) + "»");
+  await b.click("#progDel"); ok(await b.locator("#progDelYes").isVisible() && await b.locator(".chip.gold").count() === 1, "borrar pide confirmación y todavía no borra");
+  await b.click("#progDelNo"); ok(await b.locator("#progDel").isVisible() && (await stored(b)) !== null, "«Cancelar» lo deja todo como estaba");
+  await b.click("#progDel"); await b.click("#progDelYes");
+  ok(await b.locator(".chip.gold").count() === 0 && (await stored(b)) === null, "«Sí, borrar» quita los dorados y lo guardado");
+  ok(/Todavía no hay ningún tiempo/.test(await txt(b.locator("#infoProg"))) && await b.locator("#progDel").count() === 0, "la ayuda lo refleja y el botón de borrar desaparece");
+  await a.waitForFunction(() => document.querySelectorAll(".chip.gold").length === 0, null, { timeout: 4000 });
+  ok(true, "y la primera pestaña también se entera");
+  noErrors(a); noErrors(b);
+});
+
+// =====================================================================================================================
+// AYUDA («Cómo funciona») E IDIOMA DESPLEGABLE
+// =====================================================================================================================
+test("Ayuda · botón «Cómo funciona» junto al del tema, con el mismo contenido que Vocabulando", async () => {
+  const p = await open();
+  eq(await p.evaluate(() => { const b = document.getElementById("infoBtn"); return [b.previousElementSibling.id, b.nextElementSibling]; }), ["themeBtn", null], "es el último botón de la cabecera, tras el del tema");
+  await p.click("#infoBtn"); ok(await p.locator("#infoOverlay").isVisible(), "se abre también desde la pantalla de inicio");
+  const cuerpo = await txt(p.locator("#infoOverlay"));
+  for (const h of ["Cómo funciona Conjugario", "Teoría", "Prácticas", "Acentos y repetición de fallos", "Test final y tiempos dorados", "Dónde se guarda tu progreso", "En el iPad o el móvil", "Qué sale de tu navegador", "Créditos"])
+    ok(cuerpo.includes(h), "tiene la sección «" + h + "»");
+  ok(/95 de 100/.test(cuerpo) && /80 %/.test(cuerpo), "dice con qué nota se consigue el dorado");
+  ok(/Todavía no hay ningún tiempo en dorado/.test(cuerpo), "y el estado de lo guardado");
+  await p.keyboard.press("Escape"); ok(await p.locator("#infoOverlay").count() === 0 && await p.evaluate(() => document.activeElement.id) === "infoBtn", "Escape la cierra y el foco vuelve al botón");
+  await p.click("#infoBtn"); await p.click("#infoClose"); ok(await p.locator("#infoOverlay").count() === 0, "la × la cierra");
+  await p.click("#infoBtn"); await p.mouse.click(5, 5); ok(await p.locator("#infoOverlay").count() === 0, "pulsar fuera la cierra");
+  await p.click("#infoBtn"); for (let k = 0; k < 6; k++) await p.keyboard.press("Tab");
+  ok(await p.evaluate(() => !!document.activeElement.closest("#infoOverlay")), "con Tab el foco se queda dentro de la ventana");
+  await p.keyboard.press("Escape");
+  await p.evaluate(() => chooseLang("fr")); await p.click("#infoBtn"); ok(await p.locator("#infoOverlay").isVisible(), "y dentro de un idioma");
+  noErrors(p);
+});
+
+test("Ayuda · cabe en el móvil y no desborda", async () => {
+  const p = await open("pt", { viewport: { width: 390, height: 780 } });
+  await p.click("#infoBtn");
+  const r = await p.evaluate(() => { const m = document.querySelector(".modal-lg").getBoundingClientRect(); return { dentro: m.left >= 0 && m.right <= innerWidth && m.top >= 0 && m.bottom <= innerHeight, scroll: document.documentElement.scrollWidth > innerWidth + 1, interno: document.querySelector(".modal-lg").scrollWidth > document.querySelector(".modal-lg").clientWidth + 1 }; });
+  eq(r, { dentro: true, scroll: false, interno: false }, "la ventana queda dentro de la pantalla, sin desplazamiento horizontal");
+  noErrors(p);
+});
+
+test("Idioma · el chip despliega los 8 idiomas sobre el propio botón y se elige ahí mismo", async () => {
+  const p = await open("fr");
+  ok(await p.locator("#langChip").isVisible() && await p.locator("#langMenu").isHidden(), "dentro de un idioma hay chip y la lista está cerrada");
+  await p.click("#langChip");
+  ok(await p.locator("#langMenu").isVisible() && await p.locator(".langopt").count() === 8, "al pulsarlo se despliegan los 8 idiomas");
+  eq(await p.evaluate(() => [...document.querySelectorAll(".langopt")].map((b) => b.dataset.lang)), ["fr", "it", "pt", "ca", "pl", "en", "de", "el"], "en el orden de la pantalla de inicio");
+  eq(await p.evaluate(() => [document.querySelector('.langopt[aria-selected="true"]').dataset.lang, document.activeElement.dataset.lang, document.getElementById("langChip").getAttribute("aria-expanded")]), ["fr", "fr", "true"], "el actual va marcado y con el foco");
+  const geo = await p.evaluate(() => { const m = document.getElementById("langMenu").getBoundingClientRect(), c = document.getElementById("langChip").getBoundingClientRect(); return { debajo: m.top >= c.bottom - 1 && m.top - c.bottom < 20, dentro: m.left >= 0 && m.right <= innerWidth }; });
+  eq(geo, { debajo: true, dentro: true }, "queda pegada al botón y dentro de la pantalla");
+  await p.click('.langopt[data-lang="de"]');
+  eq(await p.evaluate(() => [state.lang, location.hash, document.getElementById("welcome").hidden, document.getElementById("app").hidden, document.getElementById("langMenu").hidden, document.getElementById("eyebrow").textContent, state.tab]), ["de", "#de", true, false, true, "Conjugación · Alemán", "theory"], "se cambia de idioma directamente, sin volver a la pantalla de inicio");
+  ok(await p.locator("#langChip").innerText().then((t) => /DE/.test(t)), "el chip muestra el nuevo idioma");
+  await p.click("#langChip"); await p.click('.langopt[data-lang="de"]');
+  eq(await p.evaluate(() => [state.lang, document.getElementById("langMenu").hidden]), ["de", true], "elegir el idioma actual solo cierra la lista");
+  await p.click("#langChip"); await p.keyboard.press("Escape");
+  ok(await p.locator("#langMenu").isHidden() && await p.evaluate(() => document.activeElement.id) === "langChip", "Escape la cierra y devuelve el foco al botón");
+  await p.click("#langChip"); await p.mouse.click(5, 5); ok(await p.locator("#langMenu").isHidden(), "pulsar fuera la cierra");
+  await p.click("#langChip"); await p.keyboard.press("ArrowDown"); await p.keyboard.press("Enter");
+  eq(await p.evaluate(() => state.lang), "el", "con el teclado: flecha abajo e Intro eligen el siguiente (tras alemán, griego)");
+  await p.click("#brandBtn"); ok(await p.locator("#welcome").isVisible() && await p.locator("#langWrap").isHidden(), "«Conjugario» sigue llevando a la pantalla de inicio, sin chip");
+  noErrors(p);
+});
+
+test("Idioma · la lista cabe en una pantalla de móvil", async () => {
+  const p = await open("el", { viewport: { width: 390, height: 780 } });
+  await p.click("#langChip");
+  eq(await p.evaluate(() => { const m = document.getElementById("langMenu").getBoundingClientRect(); return [m.left >= 0, m.right <= innerWidth, document.documentElement.scrollWidth > innerWidth + 1]; }), [true, true, false], "la lista queda dentro de la pantalla");
+  await p.click('.langopt[data-lang="pl"]'); eq(await p.evaluate(() => state.lang), "pl", "y se puede elegir con el dedo");
   noErrors(p);
 });
 

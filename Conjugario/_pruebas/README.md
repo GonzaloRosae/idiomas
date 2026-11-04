@@ -4,8 +4,8 @@ Abren la app en un Chromium real (con [Playwright](https://playwright.dev)), la 
 **tabla de formas de referencia** escrita a mano (`formas.js`), separada del código de la app.
 
 Cubren: las formas de los 8 idiomas (más de 1800), el corrector de acentos, la mezcla de irregulares, la repetición adaptativa, los 10 tiempos de
-imperativo y subjuntivo (teoría, cuatro modos de práctica y test final), los exámenes que ya existían, un barrido de los 68 tiempos y que no se
-desborde en el móvil.
+imperativo y subjuntivo (teoría, cuatro modos de práctica y test final), los exámenes que ya existían, un barrido de los 68 tiempos, que no se
+desborde en el móvil, el progreso guardado (botón dorado al superar el test final), la ventana «Cómo funciona» y la lista desplegable de idiomas.
 
 ## Cómo ejecutarlas
 
@@ -29,7 +29,9 @@ Para ejecutar solo las pruebas cuyo nombre contenga un texto: `node run.js acent
 ## Qué tocan y qué no
 
 - No guardan nada: usan el navegador de pruebas, que se descarta al terminar, y bloquean todo lo que no sea su servidor local.
-- Hay una prueba que **vigila que Conjugario no escriba progreso en el navegador** (decisión de diseño: hoy el progreso vive solo en la sesión).
+- Conjugario guarda **una sola cosa** en el navegador (`conjugario:progreso`): los tiempos cuyo test final se ha superado (95 de 100 en los exámenes por fases,
+  80 % en los tests cerrados). Las pruebas vigilan que la práctica suelta y un test suspendido **no escriban nada**, que un guardado ilegible se ignore, que
+  funcione aunque el navegador no deje guardar y que dos pestañas abiertas se enteren una de otra.
 - `CJ_ROOT=ruta node run.js` prueba otra copia de la carpeta `Conjugario` (sirve para comprobar que las pruebas detectan un fallo: rompe algo a propósito y deben saltar).
 
 ## Añadir formas a la tabla de referencia
