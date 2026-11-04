@@ -451,6 +451,8 @@
   .typed { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
   .typed .in { font-size: 18px; text-align: center; }
   .typed-btns { display: flex; align-items: center; justify-content: center; gap: 18px; }
+  .typed-btns .btn { width: auto; flex: 0 0 auto; min-width: 180px; }
+  .typed-btns .link-btn { margin-top: 0; white-space: nowrap; }
   .typed-res { margin-top: 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 14px; line-height: 1.5; text-align: center; }
   .typed-res.ok { border-color: var(--easy); }
   .typed-res.near { border-color: var(--hard); }
@@ -468,6 +470,31 @@
   .chip.chip-hard { color: var(--again); background: #FBECEA; }
   .leech-note { margin-top: 16px; padding: 10px 12px; border: 1px solid var(--again); border-radius: 10px; font-size: 13.5px; line-height: 1.5; color: var(--ink); }
   .leech-note .link-btn { margin: 0; }
+
+  /* ---- hueco, dictado, otros idiomas y «Hoy» ---- */
+  .k-cloze { font-size: 24px; line-height: 1.55; font-weight: 600; }
+  .cloze-blank { display: inline-block; min-width: 3ch; height: 1em; border-bottom: 2px solid var(--accent); margin: 0 .15em; vertical-align: baseline; }
+  .k-trans { color: var(--muted); font-size: 15px; margin-top: 10px; line-height: 1.5; }
+  .k-trans b { color: var(--ink); }
+  .k-dict-front { font-size: 22px; }
+  .k-dict { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .typed-diff { margin-top: 8px; font-size: 15px; line-height: 1.7; }
+  .dd-bad { color: var(--again); text-decoration: underline; font-weight: 600; }
+  .dd-acc { text-decoration: underline wavy var(--hard); }
+  .k-xl { margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font-size: 14px; }
+  .k-xl-t { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .xl { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+  .row-xl { padding: 2px 6px 12px; display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 14px; }
+  .hoy-list { list-style: none; margin: 14px 0 0; padding: 0; }
+  .hoy-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 11px 8px; border-top: 1px solid var(--line); border-radius: 8px; color: inherit; text-decoration: none; }
+  .hoy-list li:first-child .hoy-row { border-top: 0; }
+  .hoy-row:hover, .hoy-row:focus-visible { background: var(--accent-soft); outline: none; }
+  .hoy-name { font-weight: 600; }
+  .hoy-n { margin-left: auto; color: var(--muted); font-size: 13.5px; }
+  .hoy-n b { color: var(--ink); }
+  .hoy-go { color: var(--accent); font-size: 13px; }
+  .hoy-conj { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); font-size: 14px; line-height: 1.6; }
+  .hoy-conj .link-btn { margin: 0; }
   body.theme-dark .chip.chip-hard { background: #3A2320; }
   .sel-sm { width: auto; min-width: 0; padding: 5px 9px; font-size: 14px; border-radius: 9px; }
   @media (pointer: coarse) { .sel-sm { font-size: 16px; } }
@@ -4921,12 +4948,12 @@
     var ICON_SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
 
     var LOG_MAX = 10000; // repasos que se conservan en el registro de cada idioma (los más antiguos se descartan)
-    var K_GOAL = "vocabulando:goal", K_TYPE = "vocabulando:type";
+    var K_GOAL = "vocabulando:goal", K_TYPE = "vocabulando:type", K_CLOZE = "vocabulando:cloze", K_DICT = "vocabulando:dict";
     var LEECH = 5; // fallos (sumando todas sus tarjetas) a partir de los cuales una entrada se considera «difícil»
     var DECK_PAGE = 100; // filas de la lista del mazo que se dibujan de una vez (el resto, con «Mostrar más»)
     var S = {
       lang: null, tab: "crear", deckDir: "es-it", autoSentence: false, theme: "dark",
-      editing: null, confirmDelete: null, expanded: {}, deckShown: DECK_PAGE, q: "", fState: "all", fSent: "all", fGender: "all", fSort: "new", qSent: true, goal: 10, typeOn: false, typed: null, editFrom: null, editY: 0, restoreY: null, undo: [], newExtra: {}, newWords: 20, newSents: 10, revOn: false, autoSpeak: false, mode: "word",
+      editing: null, confirmDelete: null, expanded: {}, deckShown: DECK_PAGE, q: "", fState: "all", fSent: "all", fGender: "all", fSort: "new", qSent: true, goal: 10, typeOn: false, typed: null, clozeOn: false, dictOn: false, xlOpen: {}, nextTab: null, dictPlayed: "", editFrom: null, editY: 0, restoreY: null, undo: [], newExtra: {}, newWords: 20, newSents: 10, revOn: false, autoSpeak: false, mode: "word",
       current: null, flipped: false, showSentence: false, studyAhead: false, bannerOff: false,
       formGender: "", formEsGender: "", formWikt: null, formBusy: false, suggErr: null, autoGen: true, detecting: false, autoSugg: true, sugg: null, suggBusy: false, sents: null, sentsBusy: false, sentsSlow: false, transBusy: false, tatDownAt: 0,
       deck: [], review: {}, stats: { reviewsTotal: 0, byDay: {} }
@@ -5176,6 +5203,7 @@
         var ok = true;
         for (var j = 0; j < codes.length; j++) { if (!(await persistLang(codes[j]))) ok = false; }
         if (!ok) { Object.keys(snap).forEach(function (c) { DATA.languages[c] = JSON.parse(snap[c]); }); bindLang(); }
+        xl.at = 0; // lo que ven «otros idiomas» ha podido cambiar
         return ok;
       });
       chain = run.catch(function () { });
@@ -5264,7 +5292,7 @@
       S.undo = S.undo.filter(function (u) { return u.key.split(":")[0] !== id; });
       return commit(function (b) {
         b.deck = b.deck.filter(function (e) { return e.id !== id; });
-        delete b.review[id + ":word"]; delete b.review[id + ":sentence"]; delete b.review[id + ":rev"];
+        MODES.forEach(function (m) { delete b.review[id + ":" + m]; });
       });
     }
     async function rate(key, ratingName) {
@@ -5329,7 +5357,7 @@
         }
         S.undo.pop();
         S.tab = "estudiar"; S.studyAhead = false; S.showSentence = S.autoSentence;
-        if (u.mode !== "rev" || S.revOn) { S.mode = u.mode; S.current = { key: u.key, entry: findEntry(u.key.split(":")[0]) }; S.flipped = true; }
+        if (modeEnabled(u.mode)) { S.mode = u.mode; S.current = { key: u.key, entry: findEntry(u.key.split(":")[0]) }; S.flipped = true; }
         else S.current = null;
         render(); toast("Repaso deshecho");
       } finally { rateBusy = false; }
@@ -5654,7 +5682,36 @@
     }
 
     // ---- cola de estudio ----
-    function usable(e, mode) { if (e.paused) return false; return mode === "sentence" ? !!(e.esSent && e.deSent) : !!(e.esWord && e.deWord); }
+    // modos de tarjeta: Palabras y Frases siempre; Inversa, Hueco y Dictado se activan en Actividad
+    var MODES = ["word", "sentence", "rev", "cloze", "dict"];
+    var MODE_LABEL = { word: "Palabras", sentence: "Frases", rev: "Inversa", cloze: "Hueco", dict: "Dictado" };
+    function modeEnabled(m, code) { return m === "word" || m === "sentence" || (m === "rev" && S.revOn) || (m === "cloze" && S.clozeOn) || (m === "dict" && S.dictOn && !!ttsVoice(code || S.lang)); }
+    function usable(e, mode, code) {
+      if (e.paused) return false;
+      if (mode === "sentence" || mode === "dict") return !!(e.esSent && e.deSent);
+      if (mode === "cloze") return !!(e.esSent && e.deSent && clozeInfo(e, code));
+      return !!(e.esWord && e.deWord);
+    }
+    // hueco: dónde está, en la frase del idioma, la palabra de la ficha (con la forma que tenga allí, sin su artículo)
+    var clozeCache = {};
+    function clozeInfo(e, code) {
+      code = code || S.lang;
+      var key = code + "\u0001" + e.deWord + "\u0001" + e.deSent;
+      if (Object.prototype.hasOwnProperty.call(clozeCache, key)) return clozeCache[key];
+      var r = null, text = String(e.deSent || ""), best = null;
+      if (text && e.deWord) {
+        hlRanges(text, e.deWord, code).forEach(function (rg) {
+          var seg = text.slice(rg[0], rg[1]), m = seg.match(/[\p{L}\p{N}][\p{L}\p{N}'’\-]*$/u);
+          if (!m) return;
+          var w = m[0], cut = w.match(/^(?:l|d|un|dell|all|nell|quell|sull|dall)['’]/i);
+          if (cut) w = w.slice(cut[0].length);
+          var st = rg[0] + seg.length - w.length;
+          if (!best || w.length > best.e - best.s) best = { s: st, e: st + w.length };
+        });
+        if (best && best.e - best.s >= 2) r = { s: best.s, e: best.e, answer: text.slice(best.s, best.e) };
+      }
+      return (clozeCache[key] = r);
+    }
     // Cuándo toca una tarjeta: las que están en repaso (intervalo de días) tocan al empezar su día de estudio (4:00); las que están en
     // aprendizaje o reaprendizaje (minutos), a su hora exacta. Las nuevas tocan siempre, detrás de los repasos atrasados.
     function dueAt(card) { return card.state === FS.State.Review ? studyDayStart(card.due.getTime()) : card.due.getTime(); }
@@ -5675,7 +5732,7 @@
     // «Estudiar más» suma 10 solo hasta que acabe el día.
     function modeKey(mode) { return todayKey() + ":" + mode; }
     function newToday(mode) { return (S.stats.newByDay && S.stats.newByDay[modeKey(mode)]) || 0; }
-    function capFor(mode) { return mode === "sentence" ? S.newSents : S.newWords; }
+    function capFor(mode) { return mode === "sentence" || mode === "cloze" || mode === "dict" ? S.newSents : S.newWords; }
     function newAllowance(mode) { var cap = capFor(mode); return cap ? Math.max(0, cap + (S.newExtra[S.lang + "|" + modeKey(mode)] || 0) - newToday(mode)) : Infinity; }
     // reviews: repasos que tocan ya · news: nuevas que se ofrecen hoy · waiting: nuevas que esperan a mañana · future: repasos aún no vencidos
     function studyQueue(mode, now) {
@@ -5827,7 +5884,7 @@
     function route() {
       var code = location.hash.replace(/^#/, ""), lang = LANG_BY[code] ? code : null;
       if (lang !== S.lang) {
-        S.lang = lang; S.tab = "crear"; S.editing = null; S.formGender = ""; S.formEsGender = ""; S.suggErr = null; S.formWikt = null; S.sugg = null; S.sents = null; S.suggBusy = false; S.confirmDelete = null; S.expanded = {}; S.deckShown = DECK_PAGE; resetDeckView(); S.editFrom = null; S.undo = [];
+        S.lang = lang; S.tab = S.nextTab || "crear"; S.nextTab = null; S.editing = null; S.formGender = ""; S.formEsGender = ""; S.suggErr = null; S.formWikt = null; S.sugg = null; S.sents = null; S.suggBusy = false; S.confirmDelete = null; S.expanded = {}; S.xlOpen = {}; S.deckShown = DECK_PAGE; resetDeckView(); S.editFrom = null; S.undo = [];
         S.current = null; S.flipped = false; S.studyAhead = false; S.mode = "word";
         bindLang(); window.scrollTo(0, 0);
         if (lang && initDone) { if (loaded[lang]) syncFromFile(); else openLang(lang); }
@@ -5858,6 +5915,9 @@
       view.innerHTML = content;
       var ti1 = document.getElementById("typedIn");   // si vuelve a dibujarse mientras escribes (cambio de ventana…), no se pierde lo escrito
       if (ti1) { if (draft && draft.k === ti1.getAttribute("data-key")) { ti1.value = draft.v; if (draft.f) ti1.focus(); } else if (S.tab === "estudiar") ti1.focus(); }
+      if (S.tab === "estudiar" && S.mode === "dict" && S.current && !S.flipped && S.dictPlayed !== S.current.key && (!navigator.userActivation || navigator.userActivation.hasBeenActive)) {
+        S.dictPlayed = S.current.key; speak(cardTarget(findEntry(S.current.entry.id) || S.current.entry, "dict"));
+      }
       if (S.restoreY !== null) { var y0 = S.restoreY; S.restoreY = null; window.scrollTo(0, y0); }
       if (S.tab === "crear") { updateDupUI(); updateGenderUI(); updateSuggUI(); updateSentUI(); fitSentences(); updateAiBtn(); }
     }
@@ -6454,9 +6514,12 @@
         "<li><b>Deshacer</b> (Z o el botón «Deshacer») anula los últimos repasos de esta sesión, de uno en uno, mientras sigas en este idioma.</li>" +
         "<li><b>Pronunciación:</b> usa la voz que tenga tu navegador para el idioma. Si no hay ninguna, no aparecen los botones de audio.</li>" +
         "<li><b>Escribir la respuesta:</b> en Actividad puedes activar que, en Palabras, teclees la traducción en vez de mostrarla. Se corrige sin que importen las mayúsculas ni los acentos (te dice «casi» si fallan) y se acepta cualquiera de las alternativas separadas por «/». Te sugiere la valoración (Bien si acierta, Difícil si casi, Otra vez si no), pero la eliges tú. «No lo sé» la muestra sin corregir.</li>" +
+        "<li><b>Hueco:</b> en Actividad puedes activar «frases con hueco»: se muestra tu frase en " + "el idioma con la palabra de la ficha tapada (y su traducción como pista) y escribes la palabra que falta, con la forma que lleva en la frase. Solo salen las frases en las que se localiza la palabra. Es recordar la palabra en contexto, que se retiene mejor que la tarjeta suelta. Se corrige como «escribir la respuesta» y sugiere la valoración.</li>" +
+        "<li><b>Dictado:</b> también en Actividad (si tu navegador tiene voz para el idioma): suena una de tus frases y la escribes entera. Se compara palabra por palabra, sin que importen la puntuación ni la mayúscula inicial; las palabras que fallas se subrayan. «Más despacio» la repite más lenta y la tecla P la repite.</li>" +
+        "<li><b>En tus otros idiomas:</b> al mostrar la respuesta, y con el botón «idiomas» de cada fila de Mazo, ves cómo tienes guardada esa misma palabra española en tus otros idiomas. Sirve para notar parecidos y no confundir francés, italiano, portugués o catalán.</li>" +
         "<li><b>Pausar:</b> el botón de pausa de la tarjeta (y el de cada fila de Mazo) aparta una entrada: no sale al estudiar ni cuenta en la previsión hasta que la reanudas. Las que te fallan mucho (" + LEECH + " veces o más) se marcan como «difíciles» en Mazo, con su filtro, y al mostrarte una te sugiere cambiarla o pausarla.</li>" +
         "<li><b>Racha:</b> cuenta los días en que llegas a tu meta diaria (10 repasos por defecto, se cambia en Actividad), sumando todos los idiomas. Un día suelto sin llegar a la meta se perdona (uno por semana). La pantalla de elegir idioma la muestra junto a las tarjetas que tocan en cada idioma.</li>" +
-        "<li><b>Actividad</b> muestra además la retención de los últimos 30 días y cuántos repasos vencen en los próximos 7.</li></ul>" +
+        "<li><b>Actividad</b> empieza por «Hoy»: qué toca en cada idioma (con enlace para estudiarlo) y un resumen de Conjugario, y muestra además la retención de los últimos 30 días y cuántos repasos vencen en los próximos 7.</li></ul>" +
         "<h3>Dónde se guardan tus datos</h3>" +
         '<div class="info-status"><i class="sdot' + (ok ? " ok" : "") + '"></i><span>' + status + "</span></div>" +
         "<p>Tus palabras, frases y el estado de cada repaso se guardan en una <b>carpeta de tu disco que eliges tú</b>, con un archivo por idioma: " + esc(files) + ". Cada palabra nueva o repaso se escribe al instante. Son archivos de texto (JSON): puedes copiarlos como copia de seguridad o guardarlos en una carpeta de OneDrive.</p>" +
@@ -6652,7 +6715,7 @@
     // ---- lista del mazo: más reciente primero, por tramos (con miles de palabras, dibujarlas todas a la vez es lo que ralentiza la pestaña) ----
     function rowHtml(e) {
       var hasS = e.esSent && e.deSent;
-      var open = !!S.expanded[e.id];
+      var open = !!S.expanded[e.id], xs = xlFor(e), xo = !!S.xlOpen[e.id];
       var esSpan = '<span class="row-es"' + esGenderStyle(e) + '>' + esc(e.esWord) + '</span>';
       var deSpan = '<span class="row-de"' + genderStyle(e) + '>' + esc(e.deWord) + '</span>';
       var arrow = '<span class="row-arrow">→</span>';
@@ -6669,11 +6732,12 @@
         (e.paused ? '<span class="chip">pausada</span>' : "") +
         (entryState(e, Date.now()).lapses >= LEECH ? '<span class="chip chip-hard" title="Te ha fallado muchas veces">difícil</span>' : "") +
         '<button class="say" data-say="' + esc(e.id) + '" aria-label="Escuchar" title="Escuchar">' + ICON_SPEAK + "</button>" +
+        (xs.length ? '<button class="chip-btn' + (xo ? " on" : "") + '" data-xl="' + esc(e.id) + '" title="La misma palabra en tus otros idiomas">idiomas</button>' : "") +
         (hasS ? '<button class="chip-btn' + (open ? " on" : "") + '" data-frase="' + esc(e.id) + '">frase</button>' : "") +
         '<button class="pause" data-pause="' + esc(e.id) + '" aria-label="' + (e.paused ? "Reanudar" : "Pausar") + '" title="' + (e.paused ? "Reanudar: vuelve a salir al estudiar" : "Pausar: no saldrá al estudiar hasta que la reanudes") + '">' + (e.paused ? ICON_PLAY : ICON_PAUSE) + "</button>" +
         '<button class="edit" data-edit="' + esc(e.id) + '" aria-label="Editar">✎</button>' +
         '<button class="del" data-del="' + esc(e.id) + '" aria-label="Eliminar">×</button></div></div>' +
-        frase + "</li>";
+        frase + (xs.length && xo ? '<div class="row-xl">' + xlItems(xs) + "</div>" : "") + "</li>";
     }
     function rowsHtml(from, to) { // filas from..to-1 de la lista que se muestra (curList)
       var out = [];
@@ -6736,7 +6800,7 @@
     function sortKey(w, code) { var k = fold(w).replace(/^[\s\-–¡¿"«(]+/, ""), re = ART_RE[code]; return re ? k.replace(re, "") : k; }
     function entryState(e, now) { // lo que dicen sus tarjetas (palabra, frase e inversa) que ya se han empezado a estudiar
       var st = { isNew: true, learning: false, review: false, due: false, next: Infinity, lapses: 0 };
-      ["word", "sentence", "rev"].forEach(function (m) {
+      MODES.forEach(function (m) {
         var raw = S.review[e.id + ":" + m];
         if (!raw || raw.state === FS.State.New) return;
         var c = reviveCard(raw), at = dueAt(c);
@@ -6873,18 +6937,27 @@
       var cnt = tot[tk] || 0;
       return { cur: cur, best: best, count: cnt, goal: goal, done: cnt >= goal };
     }
-    function langSummary(code) { // tarjetas que tocan ya en un idioma (sin contar las pausadas)
-      var b = peekBucket(code, true);
-      if (!b || !b.deck.length) return { n: 0, due: 0 };
-      var now = Date.now(), due = 0, modes = ["word", "sentence"].concat(S.revOn ? ["rev"] : []);
+    function bucketPlan(b, code) { // lo que toca ya y lo que se ofrece de nuevo hoy en un idioma, esté abierto o no
+      var now = Date.now(), tk = todayKey(), due = 0, news = 0, fresh = {};
+      var modes = MODES.filter(function (m) { return modeEnabled(m, code); });
       b.deck.forEach(function (e) {
         modes.forEach(function (m) {
-          if (!usable(e, m)) return;
+          if (!usable(e, m, code)) return;
           var raw = b.review[e.id + ":" + m];
-          if (raw && raw.state !== FS.State.New && dueAt(reviveCard(raw)) <= now) due++;
+          if (!raw || raw.state === FS.State.New) fresh[m] = (fresh[m] || 0) + 1;
+          else if (dueAt(reviveCard(raw)) <= now) due++;
         });
       });
-      return { n: b.deck.length, due: due };
+      modes.forEach(function (m) {
+        var cap = capFor(m), used = (b.stats.newByDay && b.stats.newByDay[tk + ":" + m]) || 0, left = cap ? Math.max(0, cap - used) : Infinity;
+        news += Math.min(fresh[m] || 0, left);
+      });
+      return { n: b.deck.length, due: due, news: news };
+    }
+    function langSummary(code) { // tarjetas que tocan ya en un idioma (sin contar las pausadas)
+      var b = peekBucket(code, true);
+      if (!b || !b.deck.length) return { n: 0, due: 0, news: 0 };
+      return bucketPlan(b, code);
     }
     function pickStreakHtml() {
       var s = streakInfo();
@@ -6931,13 +7004,47 @@
       if (re) for (i = 0; i < vs.length; i++) { var fv = fold(vs[i]), nv = fv.replace(re, ""); if (nv !== fv && nv === ft) return { v: "near", why: S.lang === "en" ? "falta la primera palabra" : "falta el artículo", fix: vs[i] }; }
       return { v: "bad" };
     }
+
+    // hueco: se escribe la palabra tal como va en la frase
+    function clozeVerdict(typed, e) {
+      var c = clozeInfo(e), t = tidy(typed), ans = c.answer, re = ART_RE[S.lang];
+      if (!t) return { v: "bad" };
+      if (t === ans) return { v: "ok" };
+      if (fold(t) === fold(ans)) return { v: "near", why: "revisa mayúsculas y acentos", fix: ans };
+      var heads = answerVariants(e.deWord).map(function (h) { var f = fold(h); return re ? f.replace(re, "") : f; });
+      if (heads.indexOf(fold(t)) >= 0) return { v: "near", why: "ojo con la forma que pide la frase", fix: ans };
+      return { v: "bad" };
+    }
+    // dictado: palabra por palabra, sin que importen los signos de puntuación (ni la mayúscula de la primera palabra)
+    function dictTokens(x) { return String(x || "").replace(/[.,;:!?¡¿…"«»“”„()\[\]]/g, " ").replace(/\s+/g, " ").trim().split(" ").filter(Boolean); }
+    function dictVerdict(typed, e) {
+      var exp = dictTokens(e.deSent), got = dictTokens(typed);
+      if (!got.length) return { v: "bad" };
+      var fe = exp.map(fold), fg = got.map(fold), n = exp.length, m = got.length, L = [], i, j;
+      for (i = 0; i <= n; i++) { L.push([]); for (j = 0; j <= m; j++) L[i].push(0); }
+      for (i = n - 1; i >= 0; i--) for (j = m - 1; j >= 0; j--) L[i][j] = fe[i] === fg[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+      var st = [], bad = 0, acc = 0;
+      i = 0; j = 0;
+      while (i < n) {
+        if (j < m && fe[i] === fg[j]) { var same = i === 0 ? exp[i].toLowerCase() === got[j].toLowerCase() : exp[i] === got[j]; st.push(same ? "ok" : "acc"); if (!same) acc++; i++; j++; }
+        else if (j < m && L[i][j + 1] > L[i + 1][j]) j++;
+        else { st.push("bad"); bad++; i++; }
+      }
+      var extra = m - (n - bad), errors = Math.max(bad, extra);
+      var html = exp.map(function (w, k) { return st[k] === "ok" ? esc(w) : '<span class="' + (st[k] === "acc" ? "dd-acc" : "dd-bad") + '">' + esc(w) + "</span>"; }).join(" ");
+      if (!errors && !acc) return { v: "ok" };
+      if (!errors) return { v: "near", why: "revisa mayúsculas y acentos", html: html };
+      if (errors === 1 && n >= 4) return { v: "near", why: "te falla una palabra", html: html };
+      return { v: "bad", html: html };
+    }
     function typedHtml() {
-      return '<div class="typed"><input id="typedIn" class="in" type="text" data-key="' + esc(S.current.key) + '" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Escribe la traducción en ' + langName() + '…" aria-label="Tu respuesta" />' +
+      var ph = S.mode === "cloze" ? "Escribe la palabra que falta…" : S.mode === "dict" ? "Escribe lo que oigas…" : "Escribe la traducción en " + langName() + "…";
+      return '<div class="typed"><input id="typedIn" class="in" type="text" data-key="' + esc(S.current.key) + '" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="' + ph + '" aria-label="Tu respuesta" />' +
         '<div class="typed-btns"><button class="btn btn-primary" id="typedCheck">Comprobar</button><button class="link-btn" id="typedSkip">No lo sé</button></div></div>';
     }
     function typedResHtml(t) {
-      var label = t.v === "ok" ? "Correcto ✓" : t.v === "near" ? "Casi: " + t.why + " (" + esc(t.fix) + ")" : "No coincide ✗";
-      return '<div class="typed-res ' + t.v + '">Tu respuesta: <b>' + (t.text ? esc(t.text) : "—") + "</b> · " + label + "</div>";
+      var label = t.v === "ok" ? "Correcto ✓" : t.v === "near" ? "Casi: " + t.why + (t.fix ? " (" + esc(t.fix) + ")" : "") : "No coincide ✗";
+      return '<div class="typed-res ' + t.v + '">Tu respuesta: <b>' + (t.text ? esc(t.text) : "—") + "</b> · " + label + (t.html ? '<div class="typed-diff">Debería ser: ' + t.html + "</div>" : "") + "</div>";
     }
     function checkTyped(skip) {
       if (!S.current || S.flipped) return;
@@ -6946,7 +7053,7 @@
       else {
         var txt = inp ? inp.value.trim() : "";
         if (!txt) { toast("Escribe tu respuesta o pulsa «No lo sé».", true); return; }
-        S.typed = typedVerdict(txt, e); S.typed.text = txt;
+        S.typed = S.mode === "cloze" ? clozeVerdict(txt, e) : S.mode === "dict" ? dictVerdict(txt, e) : typedVerdict(txt, e); S.typed.text = txt;
       }
       flipCard();
     }
@@ -6968,6 +7075,42 @@
       if (S.tab === "estudiar") { toast("«" + e.deWord + "» pausada. La encuentras en Mazo, con el filtro «Pausadas»."); S.current = null; pickNext(); render(); }
       else if (S.tab === "mazo") { updateDeckList(); toast(on ? "Pausada" : "Reanudada"); }
       else { render(); toast(on ? "Pausada" : "Reanudada"); }
+    }
+
+    // ---- «En tus otros idiomas»: la misma palabra española en los demás idiomas que ya tienes ----
+    var xl = { at: 0, lang: "", map: null };
+    function xlKey(w) { var k = fold(w).replace(/\([^)]*\)/g, " ").replace(/\s+/g, " ").trim(); return k.replace(ART_RE.es, ""); }
+    function xlIndex() {
+      if (xl.map && xl.lang === S.lang && Date.now() - xl.at < 20000) return xl.map;
+      var map = Object.create(null);
+      LANGS.forEach(function (l) {
+        if (l.code === S.lang) return;
+        var b = peekBucket(l.code, true); if (!b) return;
+        b.deck.forEach(function (e) { var k = xlKey(e.esWord); if (k) (map[k] || (map[k] = [])).push({ code: l.code, e: e }); });
+      });
+      xl = { at: Date.now(), lang: S.lang, map: map };
+      return map;
+    }
+    function xlFor(e) { var k = xlKey(e.esWord); return k ? (xlIndex()[k] || []).slice(0, 12) : []; }
+    function xlItems(list) {
+      return list.map(function (x) {
+        var g = genderInfo(x.e, x.code).g;
+        return '<span class="xl">' + flag(x.code) + "<span" + (g ? ' style="color:var(--' + GVAR[g] + ')"' : "") + ">" + esc(x.e.deWord) + "</span></span>";
+      }).join("");
+    }
+    function xlHtml(e) {
+      var list = xlFor(e);
+      return list.length ? '<div class="k-xl"><span class="k-xl-t">En tus otros idiomas</span>' + xlItems(list) + "</div>" : "";
+    }
+    function toggleXl(btn) {
+      var id = btn.getAttribute("data-xl"), li = btn.closest(".row"), e = findEntry(id);
+      S.xlOpen[id] = !S.xlOpen[id];
+      if (!li || !e) { render(); return; }
+      li.insertAdjacentHTML("afterend", rowHtml(e));
+      var nli = li.nextElementSibling;
+      li.remove();
+      var nb = nli && nli.querySelector("[data-xl]");
+      if (nb) nb.focus({ preventScroll: true });
     }
 
     function renderCrear() {
@@ -7030,17 +7173,17 @@
     }
     function updateTtsClass() { document.body.classList.toggle("tts-on", !!(S.lang && ttsVoice(S.lang))); }
     function speakClean(t) { return String(t || "").replace(/\([^)]*\)/g, " ").replace(/\s*\/\s*/g, ", ").replace(/\s+/g, " ").trim(); }
-    function speak(text) {
+    function speak(text, slow) {
       var v = S.lang && ttsVoice(S.lang), t = speakClean(text);
       if (!v || !t) return false;
-      try { window.speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(t); u.voice = v; u.lang = v.lang; u.rate = 0.9; window.speechSynthesis.speak(u); return true; } catch (e) { return false; }
+      try { window.speechSynthesis.cancel(); var u = new SpeechSynthesisUtterance(t); u.voice = v; u.lang = v.lang; u.rate = slow ? 0.55 : 0.9; window.speechSynthesis.speak(u); return true; } catch (e) { return false; }
     }
-    function cardTarget(e, mode) { return mode === "sentence" ? e.deSent : e.deWord; } // lo que se pronuncia: siempre el idioma que estudias
+    function cardTarget(e, mode) { return mode === "sentence" || mode === "cloze" || mode === "dict" ? e.deSent : e.deWord; } // lo que se pronuncia: siempre el idioma que estudias
     function flipCard() {
       S.flipped = true; render();
       if (S.autoSpeak && S.current) speak(cardTarget(findEntry(S.current.entry.id) || S.current.entry, S.mode));
     }
-    function modeNoun(m) { return m === "sentence" ? "frases" : "palabras"; }
+    function modeNoun(m) { return m === "sentence" || m === "cloze" || m === "dict" ? "frases" : "palabras"; }
 
     // límites diarios de nuevas, a la vista en Estudiar: uno para palabras y otro para frases
     function limitSelect(id, cur, what) {
@@ -7055,11 +7198,11 @@
         '<label class="newlim-i" for="newSents">Frases</label>' + limitSelect("newSents", S.newSents, "frases") + "</div>";
     }
     function renderEstudiar() {
-      if (S.mode === "rev" && !S.revOn) S.mode = "word";
+      if (!modeEnabled(S.mode)) S.mode = "word";
       var mode = S.mode, q = studyQueue(mode);
       var canUndo = S.undo.length && S.undo[S.undo.length - 1].code === S.lang;
       var npaused = S.deck.filter(function (e) { return e.paused; }).length;
-      var segs = [["word", "Palabras"], ["sentence", "Frases"]].concat(S.revOn ? [["rev", "Inversa"]] : []);
+      var segs = MODES.filter(function (m) { return modeEnabled(m); }).map(function (m) { return [m, MODE_LABEL[m]]; });
       var header = '<div class="seg">' + segs.map(function (g) {
           return '<button class="seg-btn ' + (mode === g[0] ? "is-active" : "") + '" data-mode="' + g[0] + '">' + g[1] + "</button>";
         }).join("") + "</div>" +
@@ -7070,8 +7213,9 @@
         (canUndo ? '<button class="link-btn undo-btn" id="undoBtn" title="Deshacer el último repaso (Z)">↶ Deshacer</button>' : "") + "</div>" + limitsHtml();
       var body;
       if (!q.all.length) {
-        body = '<div class="empty">' + (mode === "sentence"
+        body = '<div class="empty">' + (mode === "sentence" || mode === "dict"
           ? "No hay frases guardadas. Añade una oración de ejemplo al crear una palabra."
+          : mode === "cloze" ? "Ninguna frase sirve para un hueco: hace falta una frase con su traducción en la que aparezca la palabra de la ficha."
           : "El mazo está vacío. Ve a <b>Crear</b> para añadir palabras.") + "</div>";
       } else {
         if (!S.current) pickNext();
@@ -7089,33 +7233,48 @@
     }
 
     function renderCard() {
-      var e = findEntry(S.current.entry.id) || S.current.entry, mode = S.mode, isSent = mode === "sentence", isRev = mode === "rev";
-      var typing = S.typeOn && mode === "word";
+      var e = findEntry(S.current.entry.id) || S.current.entry, mode = S.mode;
+      var isSent = mode === "sentence", isRev = mode === "rev", isCloze = mode === "cloze", isDict = mode === "dict", sentLike = isSent || isCloze || isDict;
+      var typing = (S.typeOn && mode === "word") || isCloze || isDict;
       var front = isSent ? e.esSent : isRev ? e.deWord : e.esWord;
       var back = isSent ? e.deSent : isRev ? e.esWord : e.deWord;
-      var say = (isRev || S.flipped) ? '<button class="say k-say" data-say="card" aria-label="Escuchar" title="Escuchar (P)">' + ICON_SPEAK + "</button>" : "";
+      var say = (isRev || isDict || S.flipped) ? '<button class="say k-say" data-say="card" aria-label="Escuchar" title="Escuchar (P)">' + ICON_SPEAK + "</button>" : "";
       var pause = '<button class="k-pause" data-pause="card" aria-label="Pausar esta entrada" title="Pausar: no volverá a salir hasta que la reanudes en Mazo">' + ICON_PAUSE + "</button>";
-      var sw = !isSent
+      var sw = !sentLike
         ? '<button class="switch' + (S.autoSentence ? " on" : "") + '" id="autoSent" role="switch" aria-checked="' + (S.autoSentence ? "true" : "false") + '"><span class="switch-label">Frase</span><span class="switch-track"><span class="switch-thumb"></span></span></button>'
         : "";
-      var tag = (isSent ? "frase" : "palabra") + " · " + (isRev ? S.lang + " → es" : "es → " + S.lang);
-      var inner = '<div class="k-head"><div class="k-tag">' + tag + '</div><div class="k-tools">' + say + pause + sw + "</div></div>" +
-        '<div class="k-front"' + (isSent ? ">" + hlHTML(front, e.esWord, esGenderInfo(e).g, "es") : (isRev ? genderStyle(e) : esGenderStyle(e)) + ">" + esc(front)) + "</div>";
+      var tag = (isDict ? "dictado" : isCloze ? "hueco" : isSent ? "frase" : "palabra") + " · " + (isRev ? S.lang + " → es" : isDict ? S.lang : "es → " + S.lang);
+      var inner = '<div class="k-head"><div class="k-tag">' + tag + '</div><div class="k-tools">' + say + pause + sw + "</div></div>";
+      if (isDict) {
+        inner += '<div class="k-front k-dict-front">Escucha la frase y escríbela</div>' +
+          '<div class="k-dict"><button class="btn btn-ghost" data-say="card">▶ Escuchar</button><button class="btn btn-ghost" data-say-slow="card">Más despacio</button></div>';
+      } else if (isCloze) {
+        var ci = clozeInfo(e) || { s: 0, e: 0 }, dt = String(e.deSent);
+        inner += '<div class="k-front k-cloze">' + esc(dt.slice(0, ci.s)) + '<span class="cloze-blank" style="width:' + Math.max(4, ci.e - ci.s) + 'ch"></span>' + esc(dt.slice(ci.e)) + "</div>" +
+          '<div class="k-trans">' + esc(e.esSent) + '</div><div class="k-trans">Pista: <b>' + esc(e.esWord) + "</b></div>";
+      } else {
+        inner += '<div class="k-front"' + (isSent ? ">" + hlHTML(front, e.esWord, esGenderInfo(e).g, "es") : (isRev ? genderStyle(e) : esGenderStyle(e)) + ">" + esc(front)) + "</div>";
+      }
       if (!S.flipped) {
         inner += typing ? typedHtml() : '<button class="btn btn-primary reveal" id="show">Mostrar respuesta</button>';
       } else {
         inner += '<div class="k-divider"></div>';
-        inner += isSent
-          ? '<div class="k-back k-back-sent">' + hlHTML(back, e.deWord, genderInfo(e).g, S.lang) + "</div>"
-          : '<div class="k-back"' + (isRev ? esGenderStyle(e) : genderStyle(e)) + ">" + esc(back) + "</div>";
+        if (isCloze || isDict) {
+          inner += '<div class="k-back k-back-sent">' + hlHTML(e.deSent, e.deWord, genderInfo(e).g, S.lang) + "</div>" + (isDict ? '<div class="k-trans">' + esc(e.esSent) + "</div>" : "");
+        } else {
+          inner += isSent
+            ? '<div class="k-back k-back-sent">' + hlHTML(back, e.deWord, genderInfo(e).g, S.lang) + "</div>"
+            : '<div class="k-back"' + (isRev ? esGenderStyle(e) : genderStyle(e)) + ">" + esc(back) + "</div>";
+        }
         if (typing && S.typed) inner += typedResHtml(S.typed);
-        if (!isSent && e.esSent && e.deSent) {
+        if (!sentLike && e.esSent && e.deSent) {
           inner += '<button class="link-btn" id="seeSent">' + (S.showSentence ? "Ocultar frase" : "Ver frase") + "</button>";
           if (S.showSentence) {
             inner += '<div class="k-sent"><span class="k-sent-es">' + hlHTML(e.esSent, e.esWord, esGenderInfo(e).g, "es") + "</span>" +
               '<span class="k-sent-de">' + hlHTML(e.deSent, e.deWord, genderInfo(e).g, S.lang) + "</span></div>";
           }
         }
+        inner += xlHtml(e);
         var lap = entryState(e, Date.now()).lapses;
         if (lap >= LEECH) {
           inner += '<div class="leech-note">Esta entrada te ha fallado <b>' + lap + '</b> veces. Quizá ayude cambiarla (otra traducción o una frase de ejemplo) o pausarla un tiempo. ' +
@@ -7149,7 +7308,7 @@
       var pz = {}; S.deck.forEach(function (e) { if (e.paused) pz[e.id] = 1; });
       Object.keys(S.review).forEach(function (k) {
         var raw = S.review[k];
-        if (!raw || raw.state === FS.State.New || (k.slice(-4) === ":rev" && !S.revOn) || pz[k.split(":")[0]]) return;
+        if (!raw || raw.state === FS.State.New || !modeEnabled(k.split(":")[1]) || pz[k.split(":")[0]]) return;
         var off = Math.round((dueAt(reviveCard(raw)) - base) / 86400000);
         if (off < 0) off = 0;
         if (off < days) out[off]++;
@@ -7176,10 +7335,61 @@
         '<p class="act-sub" style="margin-top:0">Las palabras y las frases nuevas se introducen poco a poco: el límite diario de cada una se elige en la pestaña Estudiar (el día empieza a las 4:00). Los repasos que toquen salen siempre.</p>' +
         '<div class="sw-row">' + switchBtn("revSw", S.revOn, "Practicar también del idioma al español (tarjeta inversa)") + "</div>" +
         '<div class="sw-row">' + switchBtn("typeSw", S.typeOn, "Escribir la respuesta en Palabras, en vez de mostrarla") + "</div>" +
+        '<div class="sw-row">' + switchBtn("clozeSw", S.clozeOn, "Practicar también frases con hueco (escribir la palabra que falta)") + "</div>" +
+        (hasVoice ? '<div class="sw-row">' + switchBtn("dictSw", S.dictOn, "Practicar también dictado de frases (escuchar y escribir)") + "</div>"
+          : "") +
         (hasVoice ? '<div class="sw-row">' + switchBtn("autoSpeakSw", S.autoSpeak, "Pronunciar al mostrar la respuesta") + "</div>"
           : '<p class="act-sub" style="margin:14px 0 0">Este navegador no tiene una voz para ' + langName() + ', así que no hay botones de pronunciación.</p>') +
         "</section>";
     }
+    // ---- «Hoy» (en Actividad): qué toca en cada idioma y cómo va Conjugario ----
+    function conjSummary() { // lo que Conjugario ha guardado en este navegador (si es la misma dirección, se ve)
+      var gold = {}, ngold = 0, nfail = 0;
+      try {
+        var o = JSON.parse(lsGet("conjugario:progreso") || "null");
+        if (o && o.v === 1 && o.d && typeof o.d === "object") Object.keys(o.d).forEach(function (c) {
+          var d = o.d[c]; if (!LANG_BY[c] || !d || typeof d !== "object") return;
+          var n = Object.keys(d).length; if (n) { gold[c] = n; ngold += n; }
+        });
+      } catch (e) { }
+      try {
+        var f = JSON.parse(lsGet("conjugario:fallos") || "null");
+        if (f && f.v === 1 && f.d && typeof f.d === "object") Object.keys(f.d).forEach(function (c) {
+          var d = f.d[c]; if (!LANG_BY[c] || !d || typeof d !== "object") return;
+          Object.keys(d).forEach(function (t) { if (Array.isArray(d[t])) nfail += d[t].length; });
+        });
+      } catch (e) { }
+      return { gold: gold, ngold: ngold, nfail: nfail };
+    }
+    function hoyPanel() {
+      var rows = [], sInfo = streakInfo();
+      LANGS.forEach(function (l) {
+        var b = peekBucket(l.code, true); if (!b || !b.deck.length) return;
+        rows.push({ l: l, p: bucketPlan(b, l.code) });
+      });
+      rows.sort(function (a, b) { return (b.p.due - a.p.due) || (b.p.news - a.p.news); });
+      var totDue = rows.reduce(function (n, r) { return n + r.p.due; }, 0), totNew = rows.reduce(function (n, r) { return n + r.p.news; }, 0);
+      var list = rows.length ? '<ul class="hoy-list">' + rows.map(function (r) {
+        var parts = [];
+        if (r.p.due) parts.push("<b>" + r.p.due + "</b> por repasar");
+        if (r.p.news) parts.push("<b>" + r.p.news + "</b> " + (r.p.news === 1 ? "nueva" : "nuevas"));
+        return '<li><a class="hoy-row" href="#' + r.l.code + '" data-lang="' + r.l.code + '">' + flag(r.l.code) + '<span class="hoy-name">' + r.l.name + "</span>" +
+          '<span class="hoy-n">' + (parts.length ? parts.join(" · ") : "Al día") + '</span><span class="hoy-go">Estudiar →</span></a></li>';
+      }).join("") + "</ul>" : '<p class="act-sub">Todavía no hay palabras en ningún idioma.</p>';
+      var cj = conjSummary(), conj = "";
+      if (sibShow || cj.ngold || cj.nfail) {
+        var det = Object.keys(cj.gold).map(function (c) { return LANG_BY[c].name + " " + cj.gold[c]; }).join(", ");
+        conj = '<div class="hoy-conj"><b>Conjugario:</b> ' + (cj.ngold || cj.nfail
+          ? (cj.ngold ? "★ " + cj.ngold + (cj.ngold === 1 ? " tiempo dorado" : " tiempos dorados") + (det ? " (" + det + ")" : "") : "ningún tiempo dorado aún") +
+            (cj.nfail ? " · " + cj.nfail + (cj.nfail === 1 ? " forma fallada" : " formas falladas") + " por repasar" : "")
+          : "aún sin nada guardado en este navegador") +
+          (sibShow ? ' · <a class="link-btn" href="' + SIBLING_URL + '#' + S.lang + '">Abrir Conjugario →</a>' : "") + "</div>";
+      }
+      return '<section class="panel"><h2 class="panel-title">Hoy</h2>' +
+        '<p class="act-sub" style="margin-top:0"><b>' + totDue + "</b> por repasar y <b>" + totNew + "</b> " + (totNew === 1 ? "nueva" : "nuevas") + " entre todos los idiomas · racha de <b>" + sInfo.cur + "</b> " + (sInfo.cur === 1 ? "día" : "días") +
+        " · hoy <b>" + sInfo.count + "</b> / " + sInfo.goal + (sInfo.done ? " ✓" : "") + "</p>" + list + conj + "</section>";
+    }
+
     function renderActividad() {
       var tk = todayKey();
       var addedToday = S.deck.filter(function (e) { return dateKey(e.createdAt) === tk; }).length;
@@ -7193,7 +7403,7 @@
           '<div class="act-n"><b>' + total + "</b><span>en total</span></div>" +
           "</div></div>";
       }
-      return '<section class="panel">' +
+      return hoyPanel() + '<section class="panel">' +
         '<div class="act-head"><h2 class="panel-title">Actividad · ' + LANG_BY[S.lang].name + '</h2>' +
         "</div>" +
         '<div class="act-grid">' +
@@ -7340,6 +7550,8 @@
       }
       var fr = t.closest("[data-frase]");
       if (fr) { toggleFrase(fr); return; }
+      var xb = t.closest("[data-xl]");
+      if (xb) { toggleXl(xb); return; }
       if (t.closest(".js-freset")) { resetFilters(); render(); var q0 = document.getElementById("deckQ"); if (q0) q0.focus(); return; }
       if (t.closest("#goMazo")) { S.tab = "mazo"; S.deckShown = DECK_PAGE; render(); window.scrollTo(0, 0); return; }
       if (t.closest("#deckMore")) { showMoreRows(false); return; }
@@ -7356,14 +7568,25 @@
       if (t.closest("#ahead")) { S.studyAhead = true; pickNext(); render(); return; }
       if (t.closest("#moreNew")) { var xk = S.lang + "|" + modeKey(S.mode); S.newExtra[xk] = (S.newExtra[xk] || 0) + 10; S.current = null; render(); return; }
       if (t.closest("#undoBtn")) { undoLast(); return; }
+      var sl = t.closest("[data-say-slow]");
+      if (sl && S.current) { speak(cardTarget(findEntry(S.current.entry.id) || S.current.entry, S.mode), true); return; }
       var sy = t.closest("[data-say]");
       if (sy) { var sid = sy.getAttribute("data-say"), se = sid === "card" ? (S.current && (findEntry(S.current.entry.id) || S.current.entry)) : findEntry(sid); if (se) speak(sid === "card" ? cardTarget(se, S.mode) : se.deWord); return; }
       if (t.closest("#revSw")) { S.revOn = !S.revOn; lsSet(K_REV, S.revOn ? "1" : "0"); if (!S.revOn && S.mode === "rev") { S.mode = "word"; S.current = null; } render(); return; }
       if (t.closest("#autoSpeakSw")) { S.autoSpeak = !S.autoSpeak; lsSet(K_SPEAK, S.autoSpeak ? "1" : "0"); render(); return; }
+      var hr = t.closest(".hoy-row");
+      if (hr) {
+        ev.preventDefault(); var hc = hr.getAttribute("data-lang");
+        if (hc === S.lang) { S.tab = "estudiar"; S.studyAhead = false; S.current = null; render(); window.scrollTo(0, 0); }
+        else { S.nextTab = "estudiar"; location.hash = "#" + hc; }
+        return;
+      }
       var pz = t.closest("[data-pause]");
       if (pz) { await togglePause(pz.getAttribute("data-pause")); return; }
       if (t.closest("#typedCheck")) { checkTyped(false); return; }
       if (t.closest("#typedSkip")) { checkTyped(true); return; }
+      if (t.closest("#clozeSw")) { S.clozeOn = !S.clozeOn; lsSet(K_CLOZE, S.clozeOn ? "1" : "0"); if (!S.clozeOn && S.mode === "cloze") { S.mode = "word"; S.current = null; } render(); return; }
+      if (t.closest("#dictSw")) { S.dictOn = !S.dictOn; lsSet(K_DICT, S.dictOn ? "1" : "0"); if (!S.dictOn && S.mode === "dict") { S.mode = "word"; S.current = null; } render(); return; }
       if (t.closest("#typeSw")) { S.typeOn = !S.typeOn; lsSet(K_TYPE, S.typeOn ? "1" : "0"); S.typed = null; render(); return; }
       if (t.closest("#show")) { flipCard(); return; }
       if (t.closest("#seeSent")) { S.showSentence = !S.showSentence; render(); return; }
@@ -7426,7 +7649,7 @@
       if (ev.key === "Enter" && ev.target && ev.target.id === "typedIn") { ev.preventDefault(); checkTyped(false); return; }
       if (!S.lang || S.tab !== "estudiar" || !S.current) return;
       if (ev.target && /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
-      if ((ev.key === "p" || ev.key === "P") && !ev.ctrlKey && !ev.metaKey && !ev.altKey && (S.flipped || S.mode === "rev")) { speak(cardTarget(findEntry(S.current.entry.id) || S.current.entry, S.mode)); return; }
+      if ((ev.key === "p" || ev.key === "P") && !ev.ctrlKey && !ev.metaKey && !ev.altKey && (S.flipped || S.mode === "rev" || S.mode === "dict")) { speak(cardTarget(findEntry(S.current.entry.id) || S.current.entry, S.mode)); return; }
       if (!S.flipped) {
         if (ev.key === "." || ev.key === " ") { ev.preventDefault(); flipCard(); }
         return;
@@ -7467,7 +7690,7 @@
       S.revOn = lsGet(K_REV) === "1";
       S.autoSpeak = lsGet(K_SPEAK) === "1";
       S.goal = Math.max(1, Math.min(500, parseInt(lsGet(K_GOAL), 10) || 10));
-      S.typeOn = lsGet(K_TYPE) === "1";
+      S.typeOn = lsGet(K_TYPE) === "1"; S.clozeOn = lsGet(K_CLOZE) === "1"; S.dictOn = lsGet(K_DICT) === "1";
       ttsInit();
       try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { } // pide que el navegador no borre los datos locales
       if (/^https?:$/.test(location.protocol)) { // servida como web: instalable y con copia sin conexión (abierta como archivo no hace falta)

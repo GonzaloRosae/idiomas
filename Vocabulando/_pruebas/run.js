@@ -414,6 +414,126 @@ test("Pausar · lo pausado no cuenta en la previsión y las entradas que fallas 
   noErrors(p);
 });
 
+// ---- hueco, dictado, otros idiomas y «Hoy» ----
+const frases = (extra = {}) => bucket("de", [
+  { esWord: "la manzana", deWord: "der Apfel", esSent: "Me como una manzana", deSent: "Ich esse einen Apfel gern" },
+  { esWord: "el gato", deWord: "die Katze (pl. Katzen) / der Kater", esSent: "Los gatos duermen mucho", deSent: "Die Katzen schlafen viel" },
+  { esWord: "la calle", deWord: "die Straße", esSent: "La calle es larga", deSent: "Die Straße ist lang" },
+  { esWord: "la ciudad", deWord: "die Stadt" },
+  { esWord: "la casa", deWord: "das Haus", esSent: "Mi casa es grande", deSent: "Das ist ein Wort" }], extra);   // la última frase no lleva la palabra: no sirve para hueco
+const hint = (p) => txt(p.locator(".karte .k-trans").first());
+
+test("Hueco · se tapa la palabra de la ficha en tu frase y se escribe con la forma que lleva", async () => {
+  const p = await open({ prefs: { "vocabulando:cloze": "1" }, seed: { de: frases() } }); await study(p);
+  eq(await p.locator(".seg-btn").allInnerTexts(), ["Palabras", "Frases", "Hueco"], "con el modo activado aparece la pestaña «Hueco»");
+  await p.click('.seg-btn[data-mode="cloze"]');
+  ok(/0 por repasar 3 nuevas hoy/.test(await txt(p.locator(".stats"))), "solo 3 frases valen (la que no lleva la palabra se descarta): " + await txt(p.locator(".stats")));
+  const casos = { "Me como una manzana": ["Apfel", "ok", "Good", "Ich esse einen", "gern", /Correcto/], "Los gatos duermen mucho": ["Katze", "near", "Hard", "Die", "schlafen viel", /forma que pide la frase \(Katzen\)/], "La calle es larga": ["strasse", "near", "Hard", "Die", "ist lang", /mayúsculas y acentos \(Straße\)/] };
+  const rating = {};
+  for (let k = 0; k < 3; k++) {
+    const es = await hint(p), c = casos[es];
+    const fr = await p.locator(".k-cloze").evaluate((e) => ({ t: e.innerText.replace(/\s+/g, " ").trim(), blank: !!e.querySelector(".cloze-blank") }));
+    ok(fr.blank && !/Apfel|Katzen|Straße/.test(fr.t) && fr.t.startsWith(c[3]) && fr.t.endsWith(c[4]), "«" + es + "» → «" + fr.t + "» (hueco en lugar de la palabra)");
+    await typeInto(p, c[0]);
+    ok(await p.locator(".typed-res." + c[1]).count() === 1 && c[5].test(await txt(p.locator(".typed-res"))), c[0] + " → " + c[1] + ": " + await txt(p.locator(".typed-res")));
+    eq(await p.locator(".r.suggested").getAttribute("data-rate"), c[2], "se sugiere «" + c[2] + "»");
+    ok(/Katzen|Apfel|Straße/.test(await txt(p.locator(".k-back-sent"))), "al corregir se ve la frase entera");
+    await p.click(".r.suggested"); await p.waitForFunction(() => !document.querySelector("[data-rate]"));
+  }
+  const d = await stored(p); eq(Object.keys(d.review).sort(), ["x0:cloze", "x1:cloze", "x2:cloze"], "cada frase tiene su propia tarjeta de hueco");
+  ok(await p.locator(".done").count() === 1, "y al terminar queda «todo al día»");
+  await p.click('.seg-btn[data-mode="word"]'); ok(/5 nuevas/.test(await txt(p.locator(".stats"))), "las Palabras no se ven afectadas (5)");
+  await p.click('.tab[data-tab="mazo"]'); await p.click('[data-del="x0"]'); await p.click("#confirmYes"); await waitCount(p, "4 palabras");
+  ok(Object.keys((await stored(p)).review).every((k) => !k.startsWith("x0:")), "al borrar la palabra desaparece también su tarjeta de hueco");
+  await p.click('.tab[data-tab="actividad"]'); await p.click("#clozeSw"); await study(p);
+  eq(await p.locator(".seg-btn").allInnerTexts(), ["Palabras", "Frases"], "apagado el modo, desaparece la pestaña");
+  noErrors(p);
+});
+
+test("Hueco · usa el tope de frases nuevas y no sale si no hay ninguna frase válida", async () => {
+  const p = await open({ prefs: { "vocabulando:cloze": "1", "vocabulando:newSents": "1" }, seed: { de: frases() } }); await study(p);
+  await p.click('.seg-btn[data-mode="cloze"]');
+  ok(/1 nueva hoy/.test(await txt(p.locator(".stats"))) && /2 en espera/.test(await txt(p.locator(".stats"))), "con el tope de frases en 1 ofrece 1 y deja 2 en espera: " + await txt(p.locator(".stats")));
+  const q = await open({ prefs: { "vocabulando:cloze": "1" }, seed: { de: bucket("de", [{ esWord: "la casa", deWord: "das Haus", esSent: "Mi casa", deSent: "Das ist ein Wort" }]) } }); await study(q);
+  await q.click('.seg-btn[data-mode="cloze"]'); ok(/Ninguna frase sirve para un hueco/.test(await txt(q.locator(".study"))), "sin frases válidas lo explica");
+  noErrors(p); noErrors(q);
+});
+
+test("Dictado · suena la frase, se escribe entera y se marca palabra por palabra", async () => {
+  const p = await open({ speech: ["de-DE"], prefs: { "vocabulando:dict": "1" }, seed: { de: frases() } }); await study(p);
+  eq(await p.locator(".seg-btn").allInnerTexts(), ["Palabras", "Frases", "Dictado"], "con voz y el modo activado aparece «Dictado»");
+  await p.click('.seg-btn[data-mode="dict"]'); await p.waitForSelector("#typedIn");
+  const spoken = () => p.evaluate(() => window.__spoken.map((x) => x.text));
+  const oida = async () => (await spoken()).pop();
+  ok((await spoken()).length >= 1, "la frase suena sola al aparecer la tarjeta");
+  const antes = (await spoken()).length; await p.click(".k-dict [data-say]"); eq((await spoken()).length, antes + 1, "«Escuchar» la repite");
+  await p.click("[data-say-slow]"); eq((await spoken()).length, antes + 2, "«Más despacio» también");
+  await p.keyboard.press("p"); eq((await spoken()).length, antes + 3, "y la tecla P");
+  const fr = await txt(p.locator(".karte")); ok(!/Apfel|Katzen|Straße|Wort/.test(fr), "antes de corregir no se ve la frase: «" + fr + "»");
+  const mut = { 0: (t) => t.replace(/[.,!?]/g, "").replace(/^./, (c) => c.toLowerCase()), 1: (t) => t.replace(/Katzen|Apfel|Straße|Wort/, (w) => w.toLowerCase()), 2: (t) => t.replace(/(lang|viel|gern|Wort)$/, "kurz"), 3: () => "una frase que no tiene nada que ver" };
+  const exp = [["ok", "Good"], ["near", "Hard"], ["near", "Hard"], ["bad", "Again"]];
+  for (let k = 0; k < 4; k++) {
+    const sent = await oida(); await p.fill("#typedIn", mut[k](sent)); await p.keyboard.press("Enter"); await p.waitForSelector(".typed-res");
+    ok(await p.locator(".typed-res." + exp[k][0]).count() === 1, "«" + mut[k](sent) + "» → " + exp[k][0] + " (" + await txt(p.locator(".typed-res")) + ")");
+    eq(await p.locator(".r.suggested").getAttribute("data-rate"), exp[k][1], "se sugiere «" + exp[k][1] + "»");
+    if (k === 1) ok(await p.locator(".dd-acc").count() >= 1, "lo que solo falla en mayúscula o acento se subraya aparte");
+    if (k === 2) ok(await p.locator(".dd-bad").count() === 1, "la palabra que falla se marca");
+    await p.click(".r.suggested"); await p.waitForFunction(() => !document.querySelector("[data-rate]"));
+  }
+  eq(Object.keys((await stored(p)).review).sort(), ["x0:dict", "x1:dict", "x2:dict", "x4:dict"], "cada frase tiene su tarjeta de dictado");
+  noErrors(p);
+  const q = await open({ prefs: { "vocabulando:dict": "1" }, seed: { de: frases() } }); await q.click('.tab[data-tab="actividad"]');
+  eq([await q.locator("#dictSw").count(), await q.locator('.tab[data-tab="estudiar"]').count()], [0, 1], "sin voz en el navegador no se ofrece el dictado");
+  await study(q); eq(await q.locator(".seg-btn").allInnerTexts(), ["Palabras", "Frases"], "ni aparece la pestaña aunque estuviera activado");
+  noErrors(q);
+});
+
+const otros = () => ({
+  de: frases(),
+  fr: bucket("fr", [{ esWord: "la manzana", deWord: "la pomme" }, { esWord: "la calle", deWord: "la rue" }]),
+  it: bucket("it", [{ esWord: "manzana", deWord: "la mela" }]),
+  pt: bucket("pt", [{ esWord: "La Manzana", deWord: "a maçã" }]) });
+
+test("En tus otros idiomas · la misma palabra en los demás idiomas, al mostrar la respuesta y en Mazo", async () => {
+  const p = await open({ seed: otros() }); await study(p);
+  const q = async () => (await front(p));
+  for (let k = 0; k < 5 && (await q()) !== "la manzana"; k++) { await p.click("#show"); await p.click('[data-rate="Good"]'); await p.waitForFunction(() => !document.querySelector("[data-rate]")); }
+  eq(await q(), "la manzana", "llega «la manzana»");
+  eq(await p.locator(".k-xl").count(), 0, "antes de mostrar la respuesta no se ve (no se revela)");
+  await p.click("#show");
+  const xl = await txt(p.locator(".k-xl"));
+  ok(/la pomme/.test(xl) && /la mela/.test(xl) && /a maçã/.test(xl) && !/Apfel/.test(xl), "salen francés, italiano y portugués (mayúsculas, artículos y orden no estorban), no el propio idioma: «" + xl + "»");
+  eq(await p.locator(".k-xl .flag").count(), 3, "cada uno con su bandera");
+  await mazo(p);
+  const filas = await p.locator("li.row").evaluateAll((r) => r.map((x) => [x.querySelector(".row-de").innerText, !!x.querySelector("[data-xl]")]));
+  eq(Object.fromEntries(filas), { "das Haus": false, "die Stadt": false, "die Straße": true, "die Katze (pl. Katzen) / der Kater": false, "der Apfel": true }, "el botón «idiomas» solo sale donde hay coincidencias");
+  await p.locator("li.row", { hasText: "der Apfel" }).locator("[data-xl]").click();
+  eq(await txt(p.locator(".row-xl")), "la pomme la mela a maçã", "se despliegan en la fila");
+  await p.locator("li.row", { hasText: "der Apfel" }).locator("[data-xl]").click(); eq(await p.locator(".row-xl").count(), 0, "y se pliegan");
+  noErrors(p);
+});
+
+test("Hoy · en Actividad: qué toca en cada idioma, con enlace, y el resumen de Conjugario", async () => {
+  const cj = { v: 1, d: { fr: { present: { best: 99, date: "2026-03-01" }, passe: { best: 96, date: "2026-03-01" } }, de: { praesens: { best: 97, date: "2026-03-01" } } } };
+  const fl = { v: 1, d: { fr: { present: [["manger", 0, 1, "2026-03-04"], ["aller", 2, 2, "2026-03-04"]] }, de: { praesens: [["gehen", 1, 1, "2026-03-04"]] } } };
+  const p = await open({ now: [2026, 3, 5, 12, 0, 0], prefs: { "conjugario:progreso": JSON.stringify(cj), "conjugario:fallos": JSON.stringify(fl) }, seed: { de: G.deck("de", 12, true), fr: G.deck("fr", 3, false) } });
+  await p.click('.tab[data-tab="actividad"]');
+  eq(await p.locator("#view section.panel").first().locator(".panel-title").innerText(), "Hoy", "«Hoy» es la primera sección de Actividad");
+  const top = await txt(p.locator("#view section.panel").first());
+  ok(/12 por repasar y 6 nuevas entre todos los idiomas/.test(top) && /racha de 0 días/.test(top), "resumen de arriba: " + top.slice(0, 150));
+  eq(await p.locator(".hoy-row").evaluateAll((r) => r.map((x) => x.innerText.replace(/\s+/g, " ").trim())), ["Alemán 12 por repasar Estudiar →", "Francés 6 nuevas Estudiar →"], "alemán (lo que más toca) antes que francés; los idiomas vacíos no salen");
+  const conj = await txt(p.locator(".hoy-conj"));
+  ok(/★ 3 tiempos dorados \(Francés 2, Alemán 1\)/.test(conj) && /3 formas falladas por repasar/.test(conj), "Conjugario: «" + conj + "»");
+  await p.click('.hoy-row[data-lang="fr"]');
+  await p.waitForFunction(() => document.querySelector('.tab[data-tab="estudiar"]').classList.contains("is-active") && /Francés/.test(document.getElementById("brandSub").textContent));
+  ok(true, "pulsar un idioma lo abre directamente en Estudiar");
+  await p.click('.tab[data-tab="actividad"]'); await p.click('.hoy-row[data-lang="fr"]');
+  ok(await p.locator('.tab[data-tab="estudiar"]').evaluate((b) => b.classList.contains("is-active")), "y el idioma abierto también lleva a Estudiar");
+  const q = await open({ prefs: { "conjugario:progreso": "{roto", "conjugario:fallos": '{"v":1,"d":{"zz":{"a":[["x"]]},"fr":"no"}}' }, seed: newDeck("de", 3, false) }); await q.click('.tab[data-tab="actividad"]');
+  eq(await q.locator(".hoy-conj").count(), 0, "con datos de Conjugario ilegibles o ajenos, no se inventa nada");
+  noErrors(p); noErrors(q);
+});
+
 test("Guardado · formato del archivo y reversión si falla", async () => {
   const p = await open({ seed: { ...newDeck("de", 40, true), ...newDeck("fr", 5, false) } });
   await p.waitForSelector(".deck-list");
