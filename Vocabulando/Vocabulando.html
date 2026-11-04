@@ -434,6 +434,40 @@
   .deck-chk { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink); cursor: pointer; }
   .deck-filters .link-btn { margin-left: auto; font-size: 12.5px; }
   .empty .link-btn { display: inline-block; margin-top: 8px; }
+
+  /* ---- racha general y resumen del selector ---- */
+  .pick-streak { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: calc(8 * var(--u)) calc(30 * var(--u)); margin-top: calc(26 * var(--u)); font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: calc(18 * var(--u)); color: var(--p-muted); }
+  .pick-streak b { font-family: "Fredoka", sans-serif; font-weight: 700; font-size: calc(30 * var(--u)); color: inherit; line-height: 1; }
+  .pick-streak .ps-main { color: var(--p-accent); }
+  .pick-streak .ps-flame svg { width: calc(30 * var(--u)); height: calc(30 * var(--u)); color: var(--p-accent); vertical-align: middle; }
+  .pick-streak .ps-item.is-done { color: var(--p-accent); }
+  .lc-stat { margin-top: calc(10 * var(--u)); font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: calc(16 * var(--u)); line-height: 1.4; color: var(--p-muted); }
+  .lc-stat.has-due { color: var(--p-accent); }
+  .goal-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 16px; font-size: 14px; }
+  .goal-row label { color: var(--ink); }
+
+  /* ---- escribir la respuesta ---- */
+  .typed { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
+  .typed .in { font-size: 18px; text-align: center; }
+  .typed-btns { display: flex; align-items: center; justify-content: center; gap: 18px; }
+  .typed-res { margin-top: 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 14px; line-height: 1.5; text-align: center; }
+  .typed-res.ok { border-color: var(--easy); }
+  .typed-res.near { border-color: var(--hard); }
+  .typed-res.bad { border-color: var(--again); }
+  .r.suggested { border-color: currentColor; box-shadow: 0 0 0 2px currentColor; }
+
+  /* ---- pausar y entradas difíciles ---- */
+  .k-pause { border: 0; background: transparent; color: var(--muted); cursor: pointer; padding: 6px; border-radius: 7px; line-height: 0; }
+  .k-pause svg { width: 21px; height: 21px; }
+  .k-pause:hover { color: var(--accent); }
+  .pause { border: 0; background: transparent; color: #AEB8C5; cursor: pointer; padding: 3px 6px; border-radius: 7px; line-height: 0; }
+  .pause svg { width: 16px; height: 16px; }
+  .pause:hover { color: var(--accent); background: var(--accent-soft); }
+  .row.is-paused .row-main { opacity: .5; }
+  .chip.chip-hard { color: var(--again); background: #FBECEA; }
+  .leech-note { margin-top: 16px; padding: 10px 12px; border: 1px solid var(--again); border-radius: 10px; font-size: 13.5px; line-height: 1.5; color: var(--ink); }
+  .leech-note .link-btn { margin: 0; }
+  body.theme-dark .chip.chip-hard { background: #3A2320; }
   .sel-sm { width: auto; min-width: 0; padding: 5px 9px; font-size: 14px; border-radius: 9px; }
   @media (pointer: coarse) { .sel-sm { font-size: 16px; } }
   .sel { width: auto; min-width: 190px; }
@@ -2479,7 +2513,7 @@
     }
 
     .lc-flag {
-      grid-row: 1 / 4;
+      grid-row: 1 / 5;
       width: 84px;
       height: 57px;
       margin: 0;
@@ -2705,6 +2739,7 @@
   <main class="pick-panel">
     <p class="pick-eyebrow">Elección de idioma</p>
     <h2 class="pick-h2">¿Qué idioma vas a practicar?</h2>
+    <div class="pick-streak" id="pickStreak"></div>
     <div class="pick-grid" id="langGrid"></div>
   </main>
   <footer class="pick-foot">
@@ -4885,10 +4920,12 @@
     var ICON_SUN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
 
     var LOG_MAX = 10000; // repasos que se conservan en el registro de cada idioma (los más antiguos se descartan)
+    var K_GOAL = "vocabulando:goal", K_TYPE = "vocabulando:type";
+    var LEECH = 5; // fallos (sumando todas sus tarjetas) a partir de los cuales una entrada se considera «difícil»
     var DECK_PAGE = 100; // filas de la lista del mazo que se dibujan de una vez (el resto, con «Mostrar más»)
     var S = {
       lang: null, tab: "crear", deckDir: "es-it", autoSentence: false, theme: "dark",
-      editing: null, confirmDelete: null, expanded: {}, deckShown: DECK_PAGE, q: "", fState: "all", fSent: "all", fGender: "all", fSort: "new", qSent: true, editFrom: null, editY: 0, restoreY: null, undo: [], newExtra: {}, newWords: 20, newSents: 10, revOn: false, autoSpeak: false, mode: "word",
+      editing: null, confirmDelete: null, expanded: {}, deckShown: DECK_PAGE, q: "", fState: "all", fSent: "all", fGender: "all", fSort: "new", qSent: true, goal: 10, typeOn: false, typed: null, editFrom: null, editY: 0, restoreY: null, undo: [], newExtra: {}, newWords: 20, newSents: 10, revOn: false, autoSpeak: false, mode: "word",
       current: null, flipped: false, showSentence: false, studyAhead: false, bannerOff: false,
       formGender: "", formEsGender: "", formWikt: null, formBusy: false, suggErr: null, autoGen: true, detecting: false, autoSugg: true, sugg: null, suggBusy: false, sents: null, sentsBusy: false, sentsSlow: false, transBusy: false, tatDownAt: 0,
       deck: [], review: {}, stats: { reviewsTotal: 0, byDay: {} }
@@ -5259,6 +5296,8 @@
         if (btn) btn.classList.add("pressed");
         var ok = await rate(S.current.key, name);
         if (!ok) { if (btn) btn.classList.remove("pressed"); return; } // no se guardó: sigue la misma tarjeta para volver a valorarla
+        var si = streakInfo(true);
+        if (si.count === si.goal) toast("Meta de hoy cumplida · " + si.cur + (si.cur === 1 ? " día" : " días") + " de racha");
         pickNext(); render();
       } finally { rateBusy = false; }
     }
@@ -5614,7 +5653,7 @@
     }
 
     // ---- cola de estudio ----
-    function usable(e, mode) { return mode === "sentence" ? !!(e.esSent && e.deSent) : !!(e.esWord && e.deWord); }
+    function usable(e, mode) { if (e.paused) return false; return mode === "sentence" ? !!(e.esSent && e.deSent) : !!(e.esWord && e.deWord); }
     // Cuándo toca una tarjeta: las que están en repaso (intervalo de días) tocan al empezar su día de estudio (4:00); las que están en
     // aprendizaje o reaprendizaje (minutos), a su hora exacta. Las nuevas tocan siempre, detrás de los repasos atrasados.
     function dueAt(card) { return card.state === FS.State.Review ? studyDayStart(card.due.getTime()) : card.due.getTime(); }
@@ -5650,7 +5689,7 @@
     function pickNext() {
       var q = studyQueue(S.mode), chosen = q.queue[0];
       if (!chosen && S.studyAhead) chosen = q.future[0]; // repasar por adelantado: solo tarjetas ya vistas, nunca más nuevas de las del tope
-      S.flipped = false; S.showSentence = S.autoSentence;
+      S.flipped = false; S.typed = null; S.showSentence = S.autoSentence;
       S.current = chosen ? { key: chosen.key, entry: chosen.entry } : null;
     }
     function fmtIn(dueDate) {
@@ -5721,11 +5760,14 @@
     }
 
     function buildPicker() {
+      var ps = document.getElementById("pickStreak"); if (ps) ps.innerHTML = pickStreakHtml();
       document.getElementById("langGrid").innerHTML = LANGS.map(function (l) {
+        var sm = langSummary(l.code);
         return '<a class="lang-card" href="#' + l.code + '">' +
           '<span class="lc-flag">' + flagBig(l.code) + "</span>" +
           '<span class="lc-name">' + l.name + "</span>" +
           '<span class="lc-native">' + l.native + "</span>" +
+          '<span class="lc-stat' + (sm.due ? " has-due" : "") + '">' + (sm.n ? (sm.due ? sm.due + " por repasar" : "Al día") + " · " + sm.n + (sm.n === 1 ? " palabra" : " palabras") : "Aún sin palabras") + "</span>" +
           '<span class="lc-cta">Practicar ' + l.code.toUpperCase() + " →</span></a>";
       }).join("");
     }
@@ -5797,6 +5839,7 @@
       document.getElementById("app").hidden = !lang;
       document.body.classList.toggle("on-picker", !lang);
       document.title = lang ? "Vocabulando · " + LANG_BY[lang].name : "Vocabulando";
+      if (!lang) buildPicker();
       if (lang) {
         document.getElementById("brandSub").textContent = "Flashcard · " + LANG_BY[lang].name;
         document.getElementById("langBtn").innerHTML = flag(lang) + "<span>" + lang.toUpperCase() + "</span>";
@@ -5810,7 +5853,10 @@
       if (!initDone || !loaded[S.lang]) { view.innerHTML = '<div class="empty">Cargando el mazo…</div>'; return; }
       var content = S.tab === "crear" ? renderCrear() : S.tab === "estudiar" ? renderEstudiar() : S.tab === "mazo" ? renderMazo() : renderActividad();
       if (S.confirmDelete) content += renderConfirm();
+      var ti0 = document.getElementById("typedIn"), draft = ti0 ? { k: ti0.getAttribute("data-key"), v: ti0.value, f: document.activeElement === ti0 } : null;
       view.innerHTML = content;
+      var ti1 = document.getElementById("typedIn");   // si vuelve a dibujarse mientras escribes (cambio de ventana…), no se pierde lo escrito
+      if (ti1) { if (draft && draft.k === ti1.getAttribute("data-key")) { ti1.value = draft.v; if (draft.f) ti1.focus(); } else if (S.tab === "estudiar") ti1.focus(); }
       if (S.restoreY !== null) { var y0 = S.restoreY; S.restoreY = null; window.scrollTo(0, y0); }
       if (S.tab === "crear") { updateDupUI(); updateGenderUI(); updateSuggUI(); updateSentUI(); fitSentences(); updateAiBtn(); }
     }
@@ -6406,7 +6452,10 @@
         "<li><b>Palabras y frases nuevas por día:</b> en la propia pestaña Estudiar eliges cuántas palabras nuevas y cuántas frases nuevas se te ofrecen cada día (por defecto 20 y 10, o sin límite); el resto espera su turno. «Inversa» usa el límite de palabras. Si te quedas con ganas, el botón «Estudiar nuevas más» añade 10. Los repasos que toquen salen siempre.</li>" +
         "<li><b>Deshacer</b> (Z o el botón «Deshacer») anula los últimos repasos de esta sesión, de uno en uno, mientras sigas en este idioma.</li>" +
         "<li><b>Pronunciación:</b> usa la voz que tenga tu navegador para el idioma. Si no hay ninguna, no aparecen los botones de audio.</li>" +
-        "<li><b>Actividad</b> muestra tu racha, la retención de los últimos 30 días y cuántos repasos vencen en los próximos 7.</li></ul>" +
+        "<li><b>Escribir la respuesta:</b> en Actividad puedes activar que, en Palabras, teclees la traducción en vez de mostrarla. Se corrige sin que importen las mayúsculas ni los acentos (te dice «casi» si fallan) y se acepta cualquiera de las alternativas separadas por «/». Te sugiere la valoración (Bien si acierta, Difícil si casi, Otra vez si no), pero la eliges tú. «No lo sé» la muestra sin corregir.</li>" +
+        "<li><b>Pausar:</b> el botón de pausa de la tarjeta (y el de cada fila de Mazo) aparta una entrada: no sale al estudiar ni cuenta en la previsión hasta que la reanudas. Las que te fallan mucho (" + LEECH + " veces o más) se marcan como «difíciles» en Mazo, con su filtro, y al mostrarte una te sugiere cambiarla o pausarla.</li>" +
+        "<li><b>Racha:</b> cuenta los días en que llegas a tu meta diaria (10 repasos por defecto, se cambia en Actividad), sumando todos los idiomas. Un día suelto sin llegar a la meta se perdona (uno por semana). La pantalla de elegir idioma la muestra junto a las tarjetas que tocan en cada idioma.</li>" +
+        "<li><b>Actividad</b> muestra además la retención de los últimos 30 días y cuántos repasos vencen en los próximos 7.</li></ul>" +
         "<h3>Dónde se guardan tus datos</h3>" +
         '<div class="info-status"><i class="sdot' + (ok ? " ok" : "") + '"></i><span>' + status + "</span></div>" +
         "<p>Tus palabras, frases y el estado de cada repaso se guardan en una <b>carpeta de tu disco que eliges tú</b>, con un archivo por idioma: " + esc(files) + ". Cada palabra nueva o repaso se escribe al instante. Son archivos de texto (JSON): puedes copiarlos como copia de seguridad o guardarlos en una carpeta de OneDrive.</p>" +
@@ -6613,11 +6662,14 @@
         var fDe = '<span class="rf-de">' + hlHTML(e.deSent, e.deWord, genderInfo(e).g, S.lang) + '</span>';
         frase = '<div class="row-frase">' + (S.deckDir === "it-es" ? fDe + fEs : fEs + fDe) + '</div>';
       }
-      return '<li class="row' + (e.id === S.editing ? " is-editing" : "") + '" data-id="' + esc(e.id) + '">' +
+      return '<li class="row' + (e.id === S.editing ? " is-editing" : "") + (e.paused ? " is-paused" : "") + '" data-id="' + esc(e.id) + '">' +
         '<div class="row-top"><div class="row-main">' + main + '</div>' +
         '<div class="row-meta">' +
+        (e.paused ? '<span class="chip">pausada</span>' : "") +
+        (entryState(e, Date.now()).lapses >= LEECH ? '<span class="chip chip-hard" title="Te ha fallado muchas veces">difícil</span>' : "") +
         '<button class="say" data-say="' + esc(e.id) + '" aria-label="Escuchar" title="Escuchar">' + ICON_SPEAK + "</button>" +
         (hasS ? '<button class="chip-btn' + (open ? " on" : "") + '" data-frase="' + esc(e.id) + '">frase</button>' : "") +
+        '<button class="pause" data-pause="' + esc(e.id) + '" aria-label="' + (e.paused ? "Reanudar" : "Pausar") + '" title="' + (e.paused ? "Reanudar: vuelve a salir al estudiar" : "Pausar: no saldrá al estudiar hasta que la reanudes") + '">' + (e.paused ? ICON_PLAY : ICON_PAUSE) + "</button>" +
         '<button class="edit" data-edit="' + esc(e.id) + '" aria-label="Editar">✎</button>' +
         '<button class="del" data-del="' + esc(e.id) + '" aria-label="Eliminar">×</button></div></div>' +
         frase + "</li>";
@@ -6710,9 +6762,10 @@
         if (S.fSent === "with" && !both) continue;
         if (S.fSent === "without" && both) continue;
         if (hasG && S.fGender !== "all") { var g = genderInfo(e).g; if (S.fGender === "none" ? !!g : g !== S.fGender) continue; }
-        if (S.fState !== "all") {
+        if (S.fState === "paused") { if (!e.paused) continue; }
+        else if (S.fState !== "all") {
           var st = entryState(e, now);
-          if (S.fState === "new" ? !st.isNew : S.fState === "learning" ? !st.learning : S.fState === "review" ? !st.review : !st.due) continue;
+          if (S.fState === "hard" ? st.lapses < LEECH : S.fState === "new" ? !st.isNew : S.fState === "learning" ? !st.learning : S.fState === "review" ? !st.review : (e.paused || !st.due)) continue;
         }
         if (terms.length) {
           var hay = fold(e.esWord + " " + e.deWord + (S.qSent ? " " + (e.esSent || "") + " " + (e.deSent || "") : ""));
@@ -6761,7 +6814,7 @@
         '<div class="deck-head"><h2 class="panel-title">Mazo</h2><div class="deck-head-right"><span class="deck-count" id="deckCount">' + deckCountText() + "</span>" + dirToggleHtml() + "</div></div>" +
         '<div class="deck-tools"><div class="deck-search"><input id="deckQ" class="in" type="search" placeholder="Buscar una palabra o una frase…" aria-label="Buscar en el mazo" autocomplete="off" spellcheck="false" value="' + esc(S.q) + '" /></div>' +
         '<div class="deck-filters">' +
-        fselect("fState", "Estado", [["all", "Todas"], ["new", "Nuevas"], ["learning", "En aprendizaje"], ["review", "En repaso"], ["due", "Toca repasar"]], S.fState) +
+        fselect("fState", "Estado", [["all", "Todas"], ["new", "Nuevas"], ["learning", "En aprendizaje"], ["review", "En repaso"], ["due", "Toca repasar"], ["hard", "Difíciles"], ["paused", "Pausadas"]], S.fState) +
         fselect("fSent", "Frase", [["all", "Todas"], ["with", "Con frase"], ["without", "Sin frase"]], S.fSent) +
         (hasGender(S.lang) ? fselect("fGender", "Género", gOpts, S.fGender) : "") +
         fselect("fSort", "Orden", [["new", "Más recientes"], ["old", "Más antiguas"], ["az", "A-Z en " + langName()], ["azEs", "A-Z en español"], ["due", "Próximo repaso"], ["lapses", "Más fallos"]], S.fSort) +
@@ -6778,6 +6831,142 @@
     function afterEdit() { // si se empezó a editar desde Mazo, al guardar o cancelar se vuelve allí, en el mismo punto de la lista
       if (!S.editFrom) return;
       S.tab = S.editFrom; S.editFrom = null; S.restoreY = S.editY;
+    }
+
+    // ---- racha general (todos los idiomas juntos), resumen del selector, escribir la respuesta y pausar ----
+    var ICON_FLAME = gsvg('<path d="M12 3c.6 3.2 4.2 5 4.2 9a4.2 4.2 0 0 1-8.4 0c0-1.7.7-2.9 1.6-3.9.2 1.2.9 1.9 1.7 2 .5-2.3.3-4.5.9-7.1z"/>');
+    var ICON_PAUSE = gsvg('<rect x="6.5" y="5" width="3.6" height="14" rx="1"/><rect x="13.9" y="5" width="3.6" height="14" rx="1"/>');
+    var ICON_PLAY = gsvg('<path d="M7.5 5.5v13l11-6.5z"/>');
+    var GOALS = [1, 5, 10, 20, 30, 50];
+    var mirrors = {};   // código → { raw, b, at }: copia local ya analizada, para no repetirlo mientras no cambie
+    function peekBucket(code, fast) { // los datos de un idioma, esté abierto o no (los que no, de la copia local del navegador)
+      if (loaded[code] && DATA.languages[code]) return DATA.languages[code];
+      var m = mirrors[code];
+      if (fast && m && Date.now() - m.at < 60000) return m.b;
+      var raw = lsGet(K_DATA + code);
+      if (!raw) return DATA.languages[code] || null;
+      if (!m || m.raw !== raw) m = mirrors[code] = { raw: raw, b: parseLang(raw, code), at: 0 };
+      m.at = Date.now();
+      return m.b || DATA.languages[code] || null;
+    }
+    function dayNum(k) { var p = k.split("-"); return Math.round(Date.UTC(+p[0], +p[1] - 1, +p[2]) / 86400000); }
+    function dayTotals(fast) { // repasos de cada día de estudio, sumando todos los idiomas
+      var tot = {};
+      LANGS.forEach(function (l) {
+        var b = peekBucket(l.code, fast), by = b && b.stats && b.stats.byDay;
+        if (by) Object.keys(by).forEach(function (d) { tot[d] = (tot[d] || 0) + (by[d] || 0); });
+      });
+      return tot;
+    }
+    // Un día cuenta si se llega a la meta. Un día suelto sin llegar se perdona (uno por semana): no suma, pero no rompe la racha.
+    function streakInfo(fast) {
+      var tot = dayTotals(fast), goal = S.goal, tk = todayKey(), today = dayNum(tk), met = {}, first = Infinity;
+      Object.keys(tot).forEach(function (k) { if (tot[k] >= goal) { var n = dayNum(k); met[n] = 1; if (n < first) first = n; } });
+      var cur = 0, best = 0, grace = -1e9;
+      if (first !== Infinity) for (var d = first; d <= today; d++) {
+        if (met[d]) { cur++; if (cur > best) best = cur; }
+        else if (d === today) { /* hoy todavía puede cumplirse */ }
+        else if (cur > 0 && d - grace >= 7) grace = d;
+        else cur = 0;
+      }
+      var cnt = tot[tk] || 0;
+      return { cur: cur, best: best, count: cnt, goal: goal, done: cnt >= goal };
+    }
+    function langSummary(code) { // tarjetas que tocan ya en un idioma (sin contar las pausadas)
+      var b = peekBucket(code, true);
+      if (!b || !b.deck.length) return { n: 0, due: 0 };
+      var now = Date.now(), due = 0, modes = ["word", "sentence"].concat(S.revOn ? ["rev"] : []);
+      b.deck.forEach(function (e) {
+        modes.forEach(function (m) {
+          if (!usable(e, m)) return;
+          var raw = b.review[e.id + ":" + m];
+          if (raw && raw.state !== FS.State.New && dueAt(reviveCard(raw)) <= now) due++;
+        });
+      });
+      return { n: b.deck.length, due: due };
+    }
+    function pickStreakHtml() {
+      var s = streakInfo();
+      return '<span class="ps-flame">' + ICON_FLAME + '</span><span class="ps-main"><b>' + s.cur + "</b> " + (s.cur === 1 ? "día" : "días") + " de racha</span>" +
+        '<span class="ps-item ps-today' + (s.done ? " is-done" : "") + '">Hoy <b>' + s.count + "</b> / " + s.goal + (s.done ? " ✓" : "") + "</span>" +
+        '<span class="ps-item">Mejor <b>' + s.best + "</b></span>";
+    }
+    function goalSelect() {
+      var vals = GOALS.slice();
+      if (vals.indexOf(S.goal) < 0) { vals.push(S.goal); vals.sort(function (a, b) { return a - b; }); }
+      return '<select id="goalSel" class="in sel-sm" aria-label="Meta diaria de repasos">' +
+        vals.map(function (n) { return '<option value="' + n + '"' + (S.goal === n ? " selected" : "") + ">" + n + "</option>"; }).join("") + "</select>";
+    }
+    function statCard(label, big, sub) { return '<div class="act-card"><div class="act-label">' + label + '</div><div class="act-nums"><div class="act-n"><b>' + big + '</b></div></div><div class="st-sub">' + sub + "</div></div>"; }
+    function streakPanel() {
+      var s = streakInfo();
+      return '<section class="panel"><h2 class="panel-title">Racha · todos los idiomas</h2><div class="st-grid">' +
+        statCard("Racha", s.cur, s.cur === 1 ? "día seguido" : "días seguidos") +
+        statCard("Mejor racha", s.best, s.best === 1 ? "día" : "días") +
+        statCard("Hoy", s.count + " / " + s.goal, s.done ? "meta cumplida" : (s.goal - s.count) + " para la meta") + "</div>" +
+        '<div class="goal-row"><label for="goalSel">Meta diaria</label>' + goalSelect() + "<span>repasos, sumando todos los idiomas</span></div>" +
+        '<p class="act-sub">Cada día cuenta si llegas a la meta. Un día suelto sin llegar a ella se perdona (uno por semana): no suma, pero tampoco rompe la racha.</p></section>';
+    }
+    function lastStudy() { // cuándo fue el último repaso de este idioma
+      var by = S.stats.byDay || {}, ks = Object.keys(by).filter(function (k) { return by[k] > 0; }).sort();
+      if (!ks.length) return ["—", "aún sin repasos"];
+      var diff = dayNum(todayKey()) - dayNum(ks[ks.length - 1]);
+      return [diff <= 0 ? "hoy" : diff === 1 ? "ayer" : "hace " + diff + " d", "en este idioma"];
+    }
+
+    // escribir la respuesta (solo en Palabras): se teclea la traducción en vez de mostrarla
+    function tidy(x) { return String(x || "").replace(/\s+/g, " ").replace(/^[\s¡¿]+/, "").replace(/[\s.!?…]+$/, "").trim(); }
+    function answerVariants(t) { // «die Katze (pl. Katzen) / der Kater» → die Katze, der Kater
+      var whole = String(t || "").replace(/\([^)]*\)/g, " ").replace(/\s+/g, " ").trim();
+      var out = whole.split(/\s*[\/;]\s*/).map(tidy).filter(Boolean), all = tidy(whole);
+      if (all && out.indexOf(all) < 0) out.push(all);
+      return out;
+    }
+    function typedVerdict(typed, e) {
+      var t = tidy(typed), vs = answerVariants(e.deWord), ft = fold(t), re = ART_RE[S.lang], i;
+      if (!t) return { v: "bad" };
+      if (vs.indexOf(t) >= 0) return { v: "ok" };
+      for (i = 0; i < vs.length; i++) if (fold(vs[i]) === ft) return { v: "near", why: "revisa mayúsculas y acentos", fix: vs[i] };
+      if (re) for (i = 0; i < vs.length; i++) { var fv = fold(vs[i]), nv = fv.replace(re, ""); if (nv !== fv && nv === ft) return { v: "near", why: S.lang === "en" ? "falta la primera palabra" : "falta el artículo", fix: vs[i] }; }
+      return { v: "bad" };
+    }
+    function typedHtml() {
+      return '<div class="typed"><input id="typedIn" class="in" type="text" data-key="' + esc(S.current.key) + '" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Escribe la traducción en ' + langName() + '…" aria-label="Tu respuesta" />' +
+        '<div class="typed-btns"><button class="btn btn-primary" id="typedCheck">Comprobar</button><button class="link-btn" id="typedSkip">No lo sé</button></div></div>';
+    }
+    function typedResHtml(t) {
+      var label = t.v === "ok" ? "Correcto ✓" : t.v === "near" ? "Casi: " + t.why + " (" + esc(t.fix) + ")" : "No coincide ✗";
+      return '<div class="typed-res ' + t.v + '">Tu respuesta: <b>' + (t.text ? esc(t.text) : "—") + "</b> · " + label + "</div>";
+    }
+    function checkTyped(skip) {
+      if (!S.current || S.flipped) return;
+      var inp = document.getElementById("typedIn"), e = findEntry(S.current.entry.id) || S.current.entry;
+      if (skip) S.typed = null;
+      else {
+        var txt = inp ? inp.value.trim() : "";
+        if (!txt) { toast("Escribe tu respuesta o pulsa «No lo sé».", true); return; }
+        S.typed = typedVerdict(txt, e); S.typed.text = txt;
+      }
+      flipCard();
+    }
+
+    // pausar: una entrada pausada no sale al estudiar ni cuenta en la previsión hasta que se reanuda
+    async function setPaused(id, on) {
+      return commit(function (b) {
+        var e = null; b.deck.forEach(function (x) { if (x.id === id) e = x; });
+        if (!e) return false;
+        if (on) e.paused = true; else delete e.paused;
+        e.updatedAt = Date.now();
+      });
+    }
+    async function togglePause(attr) {
+      var id = attr === "card" ? (S.current && S.current.entry.id) : attr, e = id && findEntry(id);
+      if (!e) return;
+      var on = !e.paused, ok = await setPaused(id, on);
+      if (!ok) { toast("No se pudo guardar.", true); return; }
+      if (S.tab === "estudiar") { toast("«" + e.deWord + "» pausada. La encuentras en Mazo, con el filtro «Pausadas»."); S.current = null; pickNext(); render(); }
+      else if (S.tab === "mazo") { updateDeckList(); toast(on ? "Pausada" : "Reanudada"); }
+      else { render(); toast(on ? "Pausada" : "Reanudada"); }
     }
 
     function renderCrear() {
@@ -6868,6 +7057,7 @@
       if (S.mode === "rev" && !S.revOn) S.mode = "word";
       var mode = S.mode, q = studyQueue(mode);
       var canUndo = S.undo.length && S.undo[S.undo.length - 1].code === S.lang;
+      var npaused = S.deck.filter(function (e) { return e.paused; }).length;
       var segs = [["word", "Palabras"], ["sentence", "Frases"]].concat(S.revOn ? [["rev", "Inversa"]] : []);
       var header = '<div class="seg">' + segs.map(function (g) {
           return '<button class="seg-btn ' + (mode === g[0] ? "is-active" : "") + '" data-mode="' + g[0] + '">' + g[1] + "</button>";
@@ -6875,6 +7065,7 @@
         '<div class="stats"><span class="stat"><b>' + q.reviews.length + '</b> por repasar</span>' +
         '<span class="stat stat-muted"><b>' + q.news.length + "</b> " + (q.news.length === 1 ? "nueva" : "nuevas") + (capFor(mode) ? " hoy" : "") + "</span>" +
         (q.waiting ? '<span class="stat stat-muted">' + q.waiting + " en espera</span>" : "") +
+        (npaused ? '<span class="stat stat-muted">' + npaused + (npaused === 1 ? " pausada" : " pausadas") + "</span>" : "") +
         (canUndo ? '<button class="link-btn undo-btn" id="undoBtn" title="Deshacer el último repaso (Z)">↶ Deshacer</button>' : "") + "</div>" + limitsHtml();
       var body;
       if (!q.all.length) {
@@ -6898,22 +7089,25 @@
 
     function renderCard() {
       var e = findEntry(S.current.entry.id) || S.current.entry, mode = S.mode, isSent = mode === "sentence", isRev = mode === "rev";
+      var typing = S.typeOn && mode === "word";
       var front = isSent ? e.esSent : isRev ? e.deWord : e.esWord;
       var back = isSent ? e.deSent : isRev ? e.esWord : e.deWord;
       var say = (isRev || S.flipped) ? '<button class="say k-say" data-say="card" aria-label="Escuchar" title="Escuchar (P)">' + ICON_SPEAK + "</button>" : "";
+      var pause = '<button class="k-pause" data-pause="card" aria-label="Pausar esta entrada" title="Pausar: no volverá a salir hasta que la reanudes en Mazo">' + ICON_PAUSE + "</button>";
       var sw = !isSent
         ? '<button class="switch' + (S.autoSentence ? " on" : "") + '" id="autoSent" role="switch" aria-checked="' + (S.autoSentence ? "true" : "false") + '"><span class="switch-label">Frase</span><span class="switch-track"><span class="switch-thumb"></span></span></button>'
         : "";
       var tag = (isSent ? "frase" : "palabra") + " · " + (isRev ? S.lang + " → es" : "es → " + S.lang);
-      var inner = '<div class="k-head"><div class="k-tag">' + tag + '</div><div class="k-tools">' + say + sw + "</div></div>" +
+      var inner = '<div class="k-head"><div class="k-tag">' + tag + '</div><div class="k-tools">' + say + pause + sw + "</div></div>" +
         '<div class="k-front"' + (isSent ? ">" + hlHTML(front, e.esWord, esGenderInfo(e).g, "es") : (isRev ? genderStyle(e) : esGenderStyle(e)) + ">" + esc(front)) + "</div>";
       if (!S.flipped) {
-        inner += '<button class="btn btn-primary reveal" id="show">Mostrar respuesta</button>';
+        inner += typing ? typedHtml() : '<button class="btn btn-primary reveal" id="show">Mostrar respuesta</button>';
       } else {
         inner += '<div class="k-divider"></div>';
         inner += isSent
           ? '<div class="k-back k-back-sent">' + hlHTML(back, e.deWord, genderInfo(e).g, S.lang) + "</div>"
           : '<div class="k-back"' + (isRev ? esGenderStyle(e) : genderStyle(e)) + ">" + esc(back) + "</div>";
+        if (typing && S.typed) inner += typedResHtml(S.typed);
         if (!isSent && e.esSent && e.deSent) {
           inner += '<button class="link-btn" id="seeSent">' + (S.showSentence ? "Ocultar frase" : "Ver frase") + "</button>";
           if (S.showSentence) {
@@ -6921,13 +7115,20 @@
               '<span class="k-sent-de">' + hlHTML(e.deSent, e.deWord, genderInfo(e).g, S.lang) + "</span></div>";
           }
         }
+        var lap = entryState(e, Date.now()).lapses;
+        if (lap >= LEECH) {
+          inner += '<div class="leech-note">Esta entrada te ha fallado <b>' + lap + '</b> veces. Quizá ayude cambiarla (otra traducción o una frase de ejemplo) o pausarla un tiempo. ' +
+            '<button class="link-btn" data-pause="card">Pausarla</button> · <button class="link-btn" data-edit="' + esc(e.id) + '">Editarla</button></div>';
+        }
         var preview = schedPreview(getCard(S.current.key));
         function iv(r) { return fmtCard(preview[r]); }
+        var sug = typing && S.typed ? (S.typed.v === "ok" ? "Good" : S.typed.v === "near" ? "Hard" : "Again") : "";
+        function sg(r) { return sug === r ? " suggested" : ""; }
         inner += '<div class="rate">' +
-          '<button class="r r-again" data-rate="Again"><span>Otra vez</span><em>' + iv("Again") + "</em></button>" +
-          '<button class="r r-hard" data-rate="Hard"><span>Difícil</span><em>' + iv("Hard") + "</em></button>" +
-          '<button class="r r-good" data-rate="Good"><span>Bien</span><em>' + iv("Good") + "</em></button>" +
-          '<button class="r r-easy" data-rate="Easy"><span>Fácil</span><em>' + iv("Easy") + "</em></button></div>";
+          '<button class="r r-again' + sg("Again") + '" data-rate="Again"><span>Otra vez</span><em>' + iv("Again") + "</em></button>" +
+          '<button class="r r-hard' + sg("Hard") + '" data-rate="Hard"><span>Difícil</span><em>' + iv("Hard") + "</em></button>" +
+          '<button class="r r-good' + sg("Good") + '" data-rate="Good"><span>Bien</span><em>' + iv("Good") + "</em></button>" +
+          '<button class="r r-easy' + sg("Easy") + '" data-rate="Easy"><span>Fácil</span><em>' + iv("Easy") + "</em></button></div>";
       }
       return '<div class="karte ' + (S.flipped ? "is-flipped" : "") + '">' + inner + "</div>";
     }
@@ -6935,13 +7136,7 @@
     function switchBtn(id, on, label) {
       return '<button class="switch' + (on ? " on" : "") + '" id="' + id + '" role="switch" aria-checked="' + (on ? "true" : "false") + '"><span class="switch-label">' + label + '</span><span class="switch-track"><span class="switch-thumb"></span></span></button>';
     }
-    function streakDays() { // días de estudio seguidos con algún repaso; sigue viva si hoy aún no has repasado pero ayer sí
-      var by = S.stats.byDay || {}, d = studyDay(Date.now()), n = 0;
-      var key = function (x) { return x.getFullYear() + "-" + pad(x.getMonth() + 1) + "-" + pad(x.getDate()); };
-      if (!by[key(d)]) d.setDate(d.getDate() - 1);
-      while (by[key(d)]) { n++; d.setDate(d.getDate() - 1); }
-      return n;
-    }
+
     function retention30() { // de los repasos de tarjetas ya en repaso (no nuevas ni en aprendizaje), qué parte no fue «Otra vez»
       var cut = Date.now() / 1000 - 30 * 86400, n = 0, good = 0;
       (bucket(S.lang).log || []).forEach(function (r) { if (r[0] >= cut && r[3] === FS.State.Review) { n++; if (r[2] >= 2) good++; } });
@@ -6950,9 +7145,10 @@
     function forecast(days) { // repasos que vencen cada día de estudio (los atrasados cuentan en hoy)
       var out = [], base = studyDayStart(Date.now());
       for (var i = 0; i < days; i++) out.push(0);
+      var pz = {}; S.deck.forEach(function (e) { if (e.paused) pz[e.id] = 1; });
       Object.keys(S.review).forEach(function (k) {
         var raw = S.review[k];
-        if (!raw || raw.state === FS.State.New || (k.slice(-4) === ":rev" && !S.revOn)) return;
+        if (!raw || raw.state === FS.State.New || (k.slice(-4) === ":rev" && !S.revOn) || pz[k.split(":")[0]]) return;
         var off = Math.round((dueAt(reviveCard(raw)) - base) / 86400000);
         if (off < 0) off = 0;
         if (off < days) out[off]++;
@@ -6960,7 +7156,7 @@
       return out;
     }
     function statsPanel() {
-      var st = streakDays(), r = retention30(), fc = forecast(7), mx = Math.max.apply(null, fc.concat([1])), base = studyDay(Date.now());
+      var r = retention30(), fc = forecast(7), mx = Math.max.apply(null, fc.concat([1])), base = studyDay(Date.now());
       function card(label, big, sub) { return '<div class="act-card"><div class="act-label">' + label + '</div><div class="act-nums"><div class="act-n"><b>' + big + '</b></div></div><div class="st-sub">' + sub + "</div></div>"; }
       var bars = fc.map(function (n, i) {
         var d = new Date(base.getTime()); d.setDate(d.getDate() + i);
@@ -6968,7 +7164,7 @@
         return '<div class="fc-col"><span class="fc-n">' + n + '</span><div class="fc-bar"><i style="height:' + Math.round(100 * n / mx) + '%"></i></div><span class="fc-d">' + lab + "</span></div>";
       }).join("");
       return '<section class="panel"><h2 class="panel-title">Progreso · ' + LANG_BY[S.lang].name + '</h2><div class="st-grid">' +
-        card("Racha", st, st === 1 ? "día seguido" : "días seguidos") +
+        card("Último repaso", lastStudy()[0], lastStudy()[1]) +
         card("Retención", r.pct === null ? "—" : r.pct + " %", r.pct === null ? "faltan repasos de los últimos 30 días" : "de " + r.n + " repasos en 30 días") +
         card("Repasos hoy", fc[0], "pendientes de repasar") + "</div>" +
         '<div class="act-label" style="margin:22px 0 4px">Próximos 7 días</div><div class="fc">' + bars + "</div></section>";
@@ -6978,6 +7174,7 @@
       return '<section class="panel"><h2 class="panel-title">Estudio</h2>' +
         '<p class="act-sub" style="margin-top:0">Las palabras y las frases nuevas se introducen poco a poco: el límite diario de cada una se elige en la pestaña Estudiar (el día empieza a las 4:00). Los repasos que toquen salen siempre.</p>' +
         '<div class="sw-row">' + switchBtn("revSw", S.revOn, "Practicar también del idioma al español (tarjeta inversa)") + "</div>" +
+        '<div class="sw-row">' + switchBtn("typeSw", S.typeOn, "Escribir la respuesta en Palabras, en vez de mostrarla") + "</div>" +
         (hasVoice ? '<div class="sw-row">' + switchBtn("autoSpeakSw", S.autoSpeak, "Pronunciar al mostrar la respuesta") + "</div>"
           : '<p class="act-sub" style="margin:14px 0 0">Este navegador no tiene una voz para ' + langName() + ', así que no hay botones de pronunciación.</p>') +
         "</section>";
@@ -7001,7 +7198,7 @@
         '<div class="act-grid">' +
         card("Palabras añadidas", addedToday, addedTotal) +
         card("Palabras repasadas", revToday, revTotal) +
-        "</div></section>" + statsPanel() + studyPanel() + suggPanel() + genderPanel() + filePanel() + backupPanel();
+        "</div></section>" + streakPanel() + statsPanel() + studyPanel() + suggPanel() + genderPanel() + filePanel() + backupPanel();
     }
     function suggPanel() {
       return '<section class="panel">' +
@@ -7162,6 +7359,11 @@
       if (sy) { var sid = sy.getAttribute("data-say"), se = sid === "card" ? (S.current && (findEntry(S.current.entry.id) || S.current.entry)) : findEntry(sid); if (se) speak(sid === "card" ? cardTarget(se, S.mode) : se.deWord); return; }
       if (t.closest("#revSw")) { S.revOn = !S.revOn; lsSet(K_REV, S.revOn ? "1" : "0"); if (!S.revOn && S.mode === "rev") { S.mode = "word"; S.current = null; } render(); return; }
       if (t.closest("#autoSpeakSw")) { S.autoSpeak = !S.autoSpeak; lsSet(K_SPEAK, S.autoSpeak ? "1" : "0"); render(); return; }
+      var pz = t.closest("[data-pause]");
+      if (pz) { await togglePause(pz.getAttribute("data-pause")); return; }
+      if (t.closest("#typedCheck")) { checkTyped(false); return; }
+      if (t.closest("#typedSkip")) { checkTyped(true); return; }
+      if (t.closest("#typeSw")) { S.typeOn = !S.typeOn; lsSet(K_TYPE, S.typeOn ? "1" : "0"); S.typed = null; render(); return; }
       if (t.closest("#show")) { flipCard(); return; }
       if (t.closest("#seeSent")) { S.showSentence = !S.showSentence; render(); return; }
       if (t.closest("#autoSent")) { S.autoSentence = !S.autoSentence; S.showSentence = S.autoSentence; lsSet(K_AUTO, S.autoSentence ? "1" : "0"); render(); return; }
@@ -7179,6 +7381,7 @@
 
     view.addEventListener("change", function (ev) {
       var cid = ev.target && ev.target.id;
+      if (cid === "goalSel") { S.goal = Math.max(1, parseInt(ev.target.value, 10) || 10); lsSet(K_GOAL, String(S.goal)); render(); var gs = document.getElementById("goalSel"); if (gs) gs.focus(); toast("Meta diaria: " + S.goal + (S.goal === 1 ? " repaso" : " repasos")); return; }
       if (cid === "fState" || cid === "fSent" || cid === "fGender" || cid === "fSort") { S[cid] = ev.target.value; S.deckShown = DECK_PAGE; updateDeckList(); return; }
       if (cid === "qSent") { S.qSent = !!ev.target.checked; S.deckShown = DECK_PAGE; updateDeckList(); return; }
       if (ev.target && (ev.target.id === "newWords" || ev.target.id === "newSents")) {
@@ -7219,6 +7422,7 @@
       if (ev.key === "Escape") { closeGenderMenu(); closeInfo(); }
       if (S.confirmDelete) { if (ev.key === "Escape") { S.confirmDelete = null; render(); } return; }
       if (S.lang && S.tab === "estudiar" && (ev.key === "z" || ev.key === "Z") && !ev.altKey && !(ev.target && /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName))) { ev.preventDefault(); undoLast(); return; }
+      if (ev.key === "Enter" && ev.target && ev.target.id === "typedIn") { ev.preventDefault(); checkTyped(false); return; }
       if (!S.lang || S.tab !== "estudiar" || !S.current) return;
       if (ev.target && /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
       if ((ev.key === "p" || ev.key === "P") && !ev.ctrlKey && !ev.metaKey && !ev.altKey && (S.flipped || S.mode === "rev")) { speak(cardTarget(findEntry(S.current.entry.id) || S.current.entry, S.mode)); return; }
@@ -7261,6 +7465,8 @@
       S.newWords = capPref(K_NEWWORDS, 20); S.newSents = capPref(K_NEWSENTS, 10);
       S.revOn = lsGet(K_REV) === "1";
       S.autoSpeak = lsGet(K_SPEAK) === "1";
+      S.goal = Math.max(1, Math.min(500, parseInt(lsGet(K_GOAL), 10) || 10));
+      S.typeOn = lsGet(K_TYPE) === "1";
       ttsInit();
       try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) { } // pide que el navegador no borre los datos locales
       if (/^https?:$/.test(location.protocol)) { // servida como web: instalable y con copia sin conexión (abierta como archivo no hace falta)
@@ -7275,6 +7481,7 @@
       if (S.lang) await loadLang(S.lang);
       if (F.state === "connected") await flushPending();
       bindLang(); renderBanners(); render();
+      if (!S.lang) buildPicker();
       if (S.lang) focusFirst();
       if (!LS && !F.supported) toast("Vista previa: los datos no se guardan aquí.", true);
     })();

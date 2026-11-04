@@ -1,7 +1,7 @@
 # Pruebas automáticas de Vocabulando
 
 Abren la app en un Chromium real (con [Playwright](https://playwright.dev)) y la usan como tú: pulsan, escriben, cambian la hora, desconectan el servidor…
-Cubren la pestaña Mazo (lista por tramos, buscador sin acentos, filtros, orden y editar o borrar desde ella), las últimas añadidas de Crear, el guardado y la carpeta de datos, los repasos (doble pulsación, tope diario de nuevas, deshacer), el día de estudio de las 4:00
+Cubren la pestaña Mazo (lista por tramos, buscador sin acentos, filtros, orden y editar o borrar desde ella), las últimas añadidas de Crear, la racha general (meta diaria y día de gracia) y el resumen del selector, el modo «escribir la respuesta», pausar entradas y las difíciles, el guardado y la carpeta de datos, los repasos (doble pulsación, tope diario de nuevas, deshacer), el día de estudio de las 4:00
 en tres zonas horarias y con el cambio de hora, la tarjeta inversa, la pronunciación, la importación (JSON y listas), las estadísticas y el funcionamiento sin conexión.
 
 ## Cómo ejecutarlas
