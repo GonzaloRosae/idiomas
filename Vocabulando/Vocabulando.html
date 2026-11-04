@@ -1435,55 +1435,6 @@
     box-shadow: calc(2 * var(--u)) calc(2 * var(--u)) 0 var(--p-shadow);
   }
 
-  /* enlace a Conjugario: misma familia que el botón de tema, en forma de píldora */
-  .pick-sib {
-    flex: none;
-    display: inline-flex;
-    align-items: center;
-    gap: calc(10 * var(--u));
-    height: calc(66 * var(--u));
-    padding: 0 calc(26 * var(--u)) 0 calc(22 * var(--u));
-    border-radius: calc(33 * var(--u));
-    border: calc(4 * var(--u)) solid var(--p-line);
-    background: var(--p-card);
-    color: var(--p-ink);
-    box-shadow: calc(6 * var(--u)) calc(6 * var(--u)) 0 var(--p-shadow);
-    font-family: "Fredoka", sans-serif;
-    font-weight: 600;
-    font-size: calc(24 * var(--u));
-    line-height: 1;
-    text-decoration: none;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: transform .12s ease, box-shadow .12s ease;
-  }
-
-  .pick-sib[hidden],
-  .sib-btn[hidden] {
-    display: none;
-  }
-
-  .pick-sib svg {
-    width: calc(30 * var(--u));
-    height: calc(30 * var(--u));
-    flex: none;
-  }
-
-  .pick-sib:hover {
-    transform: translate(calc(-2 * var(--u)), calc(-2 * var(--u)));
-    box-shadow: calc(8 * var(--u)) calc(8 * var(--u)) 0 var(--p-shadow);
-  }
-
-  .pick-sib:active {
-    transform: translate(calc(4 * var(--u)), calc(4 * var(--u)));
-    box-shadow: calc(2 * var(--u)) calc(2 * var(--u)) 0 var(--p-shadow);
-  }
-
-  .pick-sib:focus-visible {
-    outline: calc(4 * var(--u)) solid var(--p-accent);
-    outline-offset: calc(4 * var(--u));
-  }
-
   .pick-panel {
     padding: calc(31 * var(--u)) calc(33 * var(--u)) calc(34 * var(--u));
     background: var(--p-card);
@@ -1774,14 +1725,82 @@
     margin-left: 0;
   }
 
+  /* ---------- cambio de web: desplegable con el logo de cada app ---------- */
+  .appwrap{position:relative;display:inline-flex;flex:none;--ap-bg:var(--card);--ap-line:var(--line);--ap-ink:var(--ink);--ap-soft:var(--muted);--ap-acc:var(--accent);--ap-hover:var(--accent-soft)}
+  .appwrap[hidden]{display:none}
+  .appchip{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 11px 0 7px;border-radius:999px;border:1px solid var(--ap-line);background:var(--ap-bg);color:var(--ap-ink);cursor:pointer;font:inherit}
+  .appchip:hover,.appchip[aria-expanded="true"]{border-color:var(--ap-acc)}
+  .appchip:focus-visible{outline:2px solid var(--ap-acc);outline-offset:2px}
+  .appchip::after{content:"";width:5px;height:5px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(45deg);margin:-3px 0 0 2px;opacity:.7}
+  .appchip[aria-expanded="true"]::after{transform:rotate(-135deg);margin-top:3px}
+  .applogo{width:24px;height:24px;flex:none;display:block;border-radius:7px}
+  .appmenu{position:absolute;top:calc(100% + 8px);right:0;z-index:40;min-width:268px;max-width:calc(100vw - 32px);padding:6px;background:var(--ap-bg);border:1px solid var(--ap-line);border-radius:14px;box-shadow:0 20px 50px -20px rgba(0,0,0,.55)}
+  .appmenu[hidden]{display:none}
+  .appopt{display:flex;align-items:center;gap:12px;width:100%;box-sizing:border-box;padding:9px 10px;border:0;border-radius:9px;background:transparent;color:var(--ap-ink);font:inherit;font-size:14px;text-align:left;text-decoration:none;cursor:pointer}
+  .appopt:hover,.appopt:focus-visible{background:var(--ap-hover);outline:none}
+  .appopt .applogo{width:34px;height:34px;border-radius:10px}
+  .appopt .apptx{display:flex;flex-direction:column;gap:1px;line-height:1.25;min-width:0}
+  .appopt .appnm{font-weight:700;font-size:15px}
+  .appopt .appsb{color:var(--ap-soft);font-size:12px;font-weight:400}
+  .appopt[aria-current="page"]{color:var(--ap-acc);cursor:default}
+  .appopt[aria-current="page"] .appsb{color:var(--ap-soft)}
+  .appopt[aria-current="page"]::after{content:"";margin-left:auto;width:5px;height:10px;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-2px,-2px);flex:none}
+
+  /* en la pantalla de idiomas el desplegable lleva el estilo de sus botones (borde grueso y sombra dura) */
+  .pick-btns .appwrap {
+    --ap-bg: var(--p-card);
+    --ap-line: var(--p-line);
+    --ap-ink: var(--p-ink);
+    --ap-soft: var(--p-muted);
+    --ap-acc: var(--p-accent);
+    --ap-hover: var(--p-dot);
+  }
+
+  .pick-btns .appchip {
+    height: calc(66 * var(--u));
+    padding: 0 calc(20 * var(--u)) 0 calc(14 * var(--u));
+    gap: calc(12 * var(--u));
+    border: calc(4 * var(--u)) solid var(--p-line);
+    box-shadow: calc(6 * var(--u)) calc(6 * var(--u)) 0 var(--p-shadow);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+
+  .pick-btns .appchip .applogo {
+    width: calc(40 * var(--u));
+    height: calc(40 * var(--u));
+    border-radius: calc(11 * var(--u));
+  }
+
+  .pick-btns .appchip:hover {
+    transform: translate(calc(-2 * var(--u)), calc(-2 * var(--u)));
+    box-shadow: calc(8 * var(--u)) calc(8 * var(--u)) 0 var(--p-shadow);
+  }
+
+  .pick-btns .appchip:active {
+    transform: translate(calc(4 * var(--u)), calc(4 * var(--u)));
+    box-shadow: calc(2 * var(--u)) calc(2 * var(--u)) 0 var(--p-shadow);
+  }
+
+  .pick-btns .appchip:focus-visible {
+    outline: calc(4 * var(--u)) solid var(--p-accent);
+    outline-offset: calc(4 * var(--u));
+  }
+
+  .pick-btns .appmenu {
+    top: calc(100% + 14px);
+    border: 3px solid var(--p-line);
+    border-radius: 20px;
+    box-shadow: 6px 6px 0 var(--p-shadow);
+  }
+
+  .pick-btns .appopt {
+    font-family: "Fredoka", sans-serif;
+  }
+
   .theme-btn svg {
     display: block;
     width: 18px;
     height: 18px;
-  }
-
-  a.sib-btn {
-    text-decoration: none;
   }
 
 
@@ -2496,22 +2515,32 @@
       height: 22px;
     }
 
-    .pick-sib {
+    .pick-top {
+      flex-wrap: wrap;
+    }
+
+    .pick-btns {
+      margin-left: auto;
+    }
+
+    .pick-btns .appchip {
       width: 44px;
       height: 44px;
       padding: 0;
+      gap: 0;
       justify-content: center;
       border-width: 3px;
       box-shadow: 4px 4px 0 var(--p-shadow);
     }
 
-    .pick-sib svg {
-      width: 22px;
-      height: 22px;
+    .pick-btns .appchip::after {
+      display: none;
     }
 
-    .pick-sib .sib-txt {
-      display: none;
+    .pick-btns .appchip .applogo {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
     }
 
     .pick-panel {
@@ -2758,7 +2787,10 @@
       <h1 class="pick-title">Vocabulando</h1>
     </div>
     <div class="pick-btns">
-      <a class="pick-sib js-sib" href="../Conjugario/index.html" hidden title="Cambiar a Conjugario (conjugaciones)" aria-label="Ir a Conjugario"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg><span class="sib-txt">Conjugario</span></a>
+      <div class="appwrap" hidden>
+        <button class="appchip" type="button" aria-haspopup="menu" aria-expanded="false" title="Cambiar de web"></button>
+        <div class="appmenu" role="menu" aria-label="Webs" hidden></div>
+      </div>
       <button class="pick-theme js-theme" aria-label="Cambiar tema"></button>
       <button class="pick-theme js-info" aria-label="Cómo funciona" title="Cómo funciona"></button>
     </div>
@@ -2794,7 +2826,10 @@
         <button class="lang-btn" id="langBtn" type="button" aria-haspopup="listbox" aria-expanded="false" title="Cambiar de idioma"></button>
         <div class="lang-menu" id="langMenu" role="listbox" aria-label="Idioma" hidden></div>
       </div>
-      <a class="theme-btn sib-btn js-sib" href="../Conjugario/index.html" hidden title="Cambiar a Conjugario (conjugaciones)" aria-label="Ir a Conjugario"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg></a>
+      <div class="appwrap" hidden>
+        <button class="appchip" type="button" aria-haspopup="menu" aria-expanded="false" title="Cambiar de web"></button>
+        <div class="appmenu" role="menu" aria-label="Webs" hidden></div>
+      </div>
       <button class="theme-btn js-theme" aria-label="Cambiar tema"></button>
       <button class="theme-btn js-info" aria-label="Cómo funciona" title="Cómo funciona"></button>
     </div>
@@ -2803,6 +2838,103 @@
   <main id="view"></main>
 </div>
 <div id="toast" class="toast"></div>
+
+<script>
+(function(){
+  /* cambio de web: desplegable con el logo de cada app. Solo aparece al abrir los archivos del disco (donde las rutas relativas
+     funcionan); si algún día se publican, pon aquí las direcciones completas. El idioma abierto (#pt) y el tema viajan con el enlace. */
+  var CUR = 'vocabulando';
+  var APPS = [
+    {id:'vocabulando', name:'Vocabulando', sub:'Vocabulario y frases', url:'../Vocabulando/Vocabulando.html'},
+    {id:'conjugario',  name:'Conjugario',  sub:'Conjugaciones',        url:'../Conjugario/index.html'},
+    {id:'declinario',  name:'Declinario',  sub:'Declinaciones y pronombres', url:'../Declinario/index.html'}
+  ];
+  var ST = " fill='none' stroke='#FFFFFF' stroke-width='7.2' stroke-linecap='round' stroke-linejoin='round'";
+  var GLYPH = {
+    vocabulando: "<path d='M14.5 19 L27 45.5 L39.5 19'" + ST + "/>",
+    conjugario:  "<path d='M35.36 22.54 A13 13 0 1 0 35.36 42.46'" + ST + "/>",
+    declinario:  "<path d='M17.5 19 H26 A13.25 13.25 0 0 1 26 45.5 H17.5 Z'" + ST + "/>"
+  };
+  var nLogo = 0;
+  function logo(id){
+    var g = 'sibg' + (++nLogo);
+    return '<svg class="applogo" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><defs><linearGradient id="' + g + '" x1="0" y1="0" x2="1" y2="1">' +
+      '<stop offset="0" stop-color="#5B7BF4"/><stop offset="1" stop-color="#2748D6"/></linearGradient></defs>' +
+      '<rect width="64" height="64" rx="15" fill="url(#' + g + ')"/>' + GLYPH[id] + '<circle cx="49" cy="44.2" r="4.9" fill="#FFB020"/></svg>';
+  }
+  function usable(u){ return /^https?:\/\//i.test(u) || location.protocol === 'file:'; }
+  function theme(){
+    try{ if(window.__sibTheme) return window.__sibTheme(); }catch(e){}
+    return document.documentElement.getAttribute('data-theme');
+  }
+  function sendTheme(){ var t = theme(); if(t === 'dark' || t === 'light'){ try{ localStorage.setItem('idiomas:theme', t); }catch(e){} } }
+  function menuOf(w){ return w.querySelector('.appmenu'); }
+  function chipOf(w){ return w.querySelector('.appchip'); }
+  function build(w){
+    var h = /^#[a-z]{2}$/.test(location.hash) ? location.hash : '';
+    menuOf(w).innerHTML = APPS.map(function(a){
+      var inner = logo(a.id) + '<span class="apptx"><span class="appnm">' + a.name + '</span><span class="appsb">' + a.sub + '</span></span>';
+      return a.id === CUR
+        ? '<span class="appopt" role="menuitem" tabindex="-1" aria-current="page" data-app="' + a.id + '">' + inner + '</span>'
+        : '<a class="appopt" role="menuitem" data-app="' + a.id + '" href="' + a.url + h + '">' + inner + '</a>';
+    }).join('');
+  }
+  function close(w, refocus){
+    var m = menuOf(w), b = chipOf(w);
+    if(!m || m.hidden) return;
+    m.hidden = true; m.style.transform = '';
+    b.setAttribute('aria-expanded', 'false');
+    if(refocus) b.focus();
+  }
+  function closeAll(except){ [].slice.call(document.querySelectorAll('.appwrap')).forEach(function(w){ if(w !== except) close(w); }); }
+  function open(w){
+    closeAll(w);
+    var m = menuOf(w), b = chipOf(w);
+    build(w); m.style.transform = ''; m.hidden = false; b.setAttribute('aria-expanded', 'true');
+    var r = m.getBoundingClientRect(), W = document.documentElement.clientWidth;   /* en pantallas estrechas no se sale por los lados */
+    var dx = r.left < 8 ? 8 - r.left : (r.right > W - 8 ? W - 8 - r.right : 0);
+    if(dx) m.style.transform = 'translateX(' + Math.round(dx) + 'px)';
+    var first = m.querySelector('.appopt:not([aria-current])') || m.querySelector('.appopt'); if(first) first.focus();
+  }
+  function openOne(){ return [].slice.call(document.querySelectorAll('.appwrap')).filter(function(w){ var m = menuOf(w); return m && !m.hidden; })[0]; }
+  try{
+    var wraps = [].slice.call(document.querySelectorAll('.appwrap'));
+    if(!wraps.length || !APPS.some(function(a){ return a.id !== CUR && usable(a.url); })) return;
+    var me = APPS.filter(function(a){ return a.id === CUR; })[0];
+    wraps.forEach(function(w){
+      var b = chipOf(w);
+      b.innerHTML = logo(CUR);
+      b.setAttribute('aria-label', 'Cambiar de web (ahora: ' + me.name + ')');
+      w.hidden = false;
+    });
+    document.addEventListener('click', function(ev){
+      var t = ev.target; if(!t || !t.closest) return;
+      var chip = t.closest('.appchip');
+      if(chip){ var w = chip.closest('.appwrap'), m = menuOf(w); if(m.hidden) open(w); else close(w); return; }
+      var opt = t.closest('.appopt');
+      if(opt){
+        var wo = opt.closest('.appwrap');
+        if(opt.tagName === 'A') sendTheme(); else close(wo, true);   /* la propia web: solo se cierra la lista */
+        return;
+      }
+      closeAll();
+    });
+    document.addEventListener('auxclick', function(ev){ var t = ev.target; if(t && t.closest && t.closest('.appopt')) sendTheme(); });
+    document.addEventListener('keydown', function(ev){
+      var chip = ev.target && ev.target.closest ? ev.target.closest('.appchip') : null;
+      if(chip && (ev.key === 'ArrowDown' || ev.key === 'ArrowUp')){ ev.preventDefault(); var w0 = chip.closest('.appwrap'); if(menuOf(w0).hidden) open(w0); return; }
+      var w = openOne(); if(!w) return;
+      var opts = [].slice.call(menuOf(w).querySelectorAll('.appopt')), i = opts.indexOf(document.activeElement);
+      if(ev.key === 'Escape'){ ev.preventDefault(); close(w, true); }
+      else if(ev.key === 'ArrowDown'){ ev.preventDefault(); opts[(i + 1) % opts.length].focus(); }
+      else if(ev.key === 'ArrowUp'){ ev.preventDefault(); opts[(i - 1 + opts.length) % opts.length].focus(); }
+      else if(ev.key === 'Home'){ ev.preventDefault(); opts[0].focus(); }
+      else if(ev.key === 'End'){ ev.preventDefault(); opts[opts.length - 1].focus(); }
+      else if(ev.key === 'Tab') close(w);
+    });
+  }catch(e){ /* sin desplegable: el resto de la página no depende de él */ }
+})();
+</script>
 
 <script>(function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
@@ -5870,16 +6002,13 @@
     function openLang(code) {
       loadLang(code).then(function () { if (S.lang === code) { bindLang(); renderBanners(); render(); focusFirst(); } });
     }
-    // ---- enlace con Conjugario (la otra web, en la carpeta vecina) ----
-    // Solo se muestra al abrir como archivo local (así la ruta relativa funciona); si algún día se publican, pon aquí su dirección completa.
+    // ---- enlaces con las otras webs (Conjugario y Declinario, en carpetas vecinas) ----
+    // El desplegable de webs (módulo del final del <body>) solo aparece al abrir como archivo local; aquí, el tema que viaja con él y los enlaces de «Hoy».
     var SIBLING_URL = "../Conjugario/index.html";
     var sibShow = /^https?:\/\//i.test(SIBLING_URL) || location.protocol === "file:";
-    document.addEventListener("auxclick", function (ev) { if (ev.target.closest && ev.target.closest(".js-sib")) lsSet(K_SHARED_THEME, S.theme); }); // clic central: también viaja el tema
+    window.__sibTheme = function () { return S.theme; };
     // si cambias el tema en la otra web mientras ésta está abierta, se sigue al instante
     window.addEventListener("storage", function (ev) { if (ev.key === K_SHARED_THEME && (ev.newValue === "dark" || ev.newValue === "light") && ev.newValue !== S.theme) applyTheme(ev.newValue); });
-    function updateSibling() { // el idioma abierto viaja en la dirección (#pt): Conjugario entra directamente en él
-      document.querySelectorAll(".js-sib").forEach(function (a) { a.hidden = !sibShow; a.href = SIBLING_URL + (S.lang ? "#" + S.lang : ""); });
-    }
     // pantalla previa ↔ app, según el fragmento de la URL (#fr, #it… o vacío)
     function route() {
       var code = location.hash.replace(/^#/, ""), lang = LANG_BY[code] ? code : null;
@@ -5889,7 +6018,6 @@
         bindLang(); window.scrollTo(0, 0);
         if (lang && initDone) { if (loaded[lang]) syncFromFile(); else openLang(lang); }
       }
-      updateSibling();
       updateTtsClass();
       renderBanners();
       closeLangMenu();
@@ -6497,7 +6625,7 @@
       var files = LANGS.map(function (l) { return fileName(l.code); }).join(", ");
       return '<div class="modal-top"><h2 class="modal-title" id="infoTitle">Cómo funciona Vocabulando</h2><button type="button" class="modal-x" id="infoClose" aria-label="Cerrar">×</button></div>' +
         '<div class="info-body">' +
-        "<p>Vocabulando es un cuaderno de vocabulario con tarjetas de repaso espaciado. Cada idioma tiene su propio mazo de palabras y frases, con sus repasos y estadísticas. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Vocabulando» vuelves a ella." + (sibShow ? " El botón «Conjugario» te lleva a la otra web (la de conjugaciones), en el mismo idioma." : "") + "</p>" +
+        "<p>Vocabulando es un cuaderno de vocabulario con tarjetas de repaso espaciado. Cada idioma tiene su propio mazo de palabras y frases, con sus repasos y estadísticas. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Vocabulando» vuelves a ella." + (sibShow ? " El botón con el logo (junto al del tema) te lleva a Conjugario (conjugaciones) o a Declinario (declinaciones y pronombres), en el mismo idioma." : "") + "</p>" +
         "<h3>Crear</h3><ul>" +
         "<li>Escribe la palabra en español: debajo del campo del idioma aparecen <b>traducciones sugeridas</b> del Wikcionario. Púlsalas para rellenar el campo, o escribe tú la palabra.</li>" +
         "<li>Cada campo de palabra lleva a la izquierda un botón de <b>género</b> (♂ ♀ neutro, ambiguo o ninguno), también el del español. Se detecta solo por el artículo («der Spiegel», «el coche») o consultando el Wikcionario, y también puedes elegirlo tú. La palabra se colorea —y también donde aparece en la frase—: azul masculino, rojo femenino, verde neutro, morado ambiguo; así ves de un vistazo si el género coincide en los dos idiomas. Si guardas un sustantivo sin su artículo se te avisa: se memoriza mejor con él.</li>" +
@@ -7489,7 +7617,6 @@
       if (t.closest("#diagBtn")) { runDiag(); return; }
       if (t.closest("#infoClose") || t.id === "infoOverlay") { closeInfo(); return; }
       if (t.closest(".js-theme")) { applyTheme(S.theme === "dark" ? "light" : "dark"); lsSet(K_THEME, S.theme); lsSet(K_SHARED_THEME, S.theme); return; }
-      if (t.closest(".js-sib")) { lsSet(K_SHARED_THEME, S.theme); return; } // la otra web se abre con el tema que tienes aquí
       var a = t.closest("[data-act]");
       if (!a) return;
       var act = a.getAttribute("data-act");

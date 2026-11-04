@@ -68,6 +68,16 @@ async function open(o = {}) {
   if (o.url !== false) { await page.goto(BASE + (o.html || "Vocabulando.html") + "#" + (o.lang || "de")); await page.waitForSelector("#view"); await page.waitForFunction(() => !document.querySelector("#view .empty") || !/Cargando/.test(document.querySelector("#view").innerText)); }
   return page;
 }
+// Abrir una de las tres webs directamente desde el disco (file://): así aparece el desplegable de webs, que por http se oculta
+// porque las rutas relativas entre carpetas no valdrían. Internet sigue bloqueado.
+const REPO = path.resolve(ROOT, "..");
+async function openFile(rel, o = {}) {
+  const ctx = await browser.newContext({ viewport: o.viewport || { width: 1100, height: 900 } }); ctxs.push(ctx);
+  await ctx.route((u) => /^https?:/.test(u.href), (r) => r.abort());
+  const page = await ctx.newPage(); page.errs = []; page.on("pageerror", (e) => page.errs.push(String(e)));
+  await page.goto("file://" + path.join(REPO, rel)); await page.waitForSelector(".appchip:visible");
+  return page;
+}
 const at = (page, str) => { const [d, t] = str.split(" "); const [y, mo, da] = d.split("-").map(Number), [h, mi, s] = t.split(":").map(Number); return page.evaluate((a) => window.__at(...a), [y, mo, da, h, mi, s || 0]); };
 const stored = async (page, code = "de") => JSON.parse(await page.evaluate((c) => localStorage.getItem("vocabulando:data:" + c), code));
 const txt = async (loc) => (await loc.innerText()).replace(/\s+/g, " ").trim();
@@ -1067,6 +1077,66 @@ test("Idioma · se cierra con Escape y al pulsar fuera, y se maneja con el tecla
 });
 
 // =====================================================================================================================
+// =====================================================================================================================
+// CAMBIO DE WEB: desplegable con el logo de cada app
+// =====================================================================================================================
+test("Cambio de web · desplegable con el logo de cada app, en la pantalla de idiomas y dentro de un idioma", async () => {
+  const h = await open({ lang: "de", seed: newDeck("de", 5, false) });
+  eq(await h.locator(".appwrap:visible").count(), 0, "por http no aparece: las rutas relativas entre carpetas no valdrían");
+  const p = await openFile("Vocabulando/Vocabulando.html");
+  await p.waitForSelector("#picker:not([hidden])");
+  const chip = () => p.locator(".appchip:visible"), menu = () => p.locator(".appmenu:visible");
+  eq([await chip().count(), await menu().count()], [1, 0], "en la pantalla de idiomas hay un botón y la lista está cerrada");
+  eq(await chip().locator("svg.applogo").count(), 1, "el botón lleva el logo de esta web");
+  await chip().click();
+  ok(await menu().isVisible() && (await chip().getAttribute("aria-expanded")) === "true", "al pulsarlo se despliega");
+  eq(await menu().locator(".appnm").allInnerTexts(), ["Vocabulando", "Conjugario", "Declinario"], "tres opciones, en este orden");
+  eq(await menu().locator(".appopt > svg.applogo").count(), 3, "cada opción empieza por su logo");
+  eq(await menu().evaluate((m) => new Set([...m.querySelectorAll(".appopt > svg.applogo path")].map((x) => x.getAttribute("d"))).size), 3, "y los tres logos son distintos");
+  eq(await menu().evaluate((m) => [...m.querySelectorAll(".appopt")].map((o) => o.tagName + ":" + (o.getAttribute("aria-current") || o.getAttribute("href")))),
+    ["SPAN:page", "A:../Conjugario/index.html", "A:../Declinario/index.html"], "los otros dos son enlaces (sin idioma, porque no hay ninguno abierto); esta web va marcada y no es un enlace");
+  eq(await p.evaluate(() => { const m = document.querySelector(".pick-btns .appmenu").getBoundingClientRect(); return [m.left >= 0, m.right <= innerWidth]; }), [true, true], "la lista cabe en la pantalla");
+  await p.keyboard.press("Escape"); ok(await menu().count() === 0 && await p.evaluate(() => document.activeElement.classList.contains("appchip")), "Escape la cierra y devuelve el foco al botón");
+  await chip().click(); await p.mouse.click(5, 5); eq(await menu().count(), 0, "pulsar fuera la cierra");
+  await chip().click(); eq(await p.evaluate(() => document.activeElement.dataset.app), "conjugario", "al abrir, el foco está en la primera web distinta de esta");
+  await p.keyboard.press("ArrowUp"); await p.keyboard.press("ArrowUp"); eq(await p.evaluate(() => document.activeElement.dataset.app), "declinario", "con el teclado, las flechas dan la vuelta");
+  await p.keyboard.press("Escape");
+  // dentro de un idioma: otro botón (el de la cabecera) y el idioma viaja en el enlace
+  await p.evaluate(() => { location.hash = "#it"; });
+  await p.waitForSelector("#app:not([hidden])");
+  eq([await chip().count(), await p.locator(".pick-btns .appchip").isVisible()], [1, false], "dentro de un idioma solo se ve el de la cabecera");
+  await chip().click();
+  eq(await menu().evaluate((m) => [...m.querySelectorAll(".appopt[href]")].map((a) => a.getAttribute("href"))), ["../Conjugario/index.html#it", "../Declinario/index.html#it"], "los enlaces llevan el idioma abierto");
+  // convive con el desplegable de idiomas
+  await p.click("#langBtn");
+  ok(await menu().count() === 0 && await p.locator("#langMenu").isVisible(), "abrir la lista de idiomas cierra la de webs");
+  await chip().click(); ok(await p.locator("#langMenu").isHidden() && await menu().isVisible(), "y al revés");
+  // el tema viaja con el enlace
+  await p.keyboard.press("Escape"); await p.locator(".js-theme:visible").click();
+  const th = await p.evaluate(() => document.body.classList.contains("theme-dark") ? "dark" : "light"); await p.evaluate(() => localStorage.removeItem("idiomas:theme"));
+  await chip().click(); await p.evaluate(() => document.querySelector(".appmenu:not([hidden]) .appopt[href]").addEventListener("click", (e) => e.preventDefault()));
+  await p.click(".appmenu:not([hidden]) .appopt[href]");
+  eq(await p.evaluate(() => localStorage.getItem("idiomas:theme")), th, "al pulsar un enlace, la otra web se abre con el tema que tienes aquí (" + th + ")");
+  // la ayuda lo explica solo cuando el botón existe
+  await p.locator(".js-info:visible").first().click(); await p.waitForSelector(".info-body");
+  ok(/Conjugario \([^)]*\) o a Declinario/.test(await txt(p.locator("#infoOverlay"))), "la ayuda explica el botón del logo");
+  noErrors(p); noErrors(h);
+});
+
+test("Cambio de web · en el móvil la pantalla de idiomas y la cabecera no desbordan", async () => {
+  for (const vp of [{ width: 390, height: 780 }, { width: 360, height: 700 }, { width: 320, height: 700 }]) {
+    for (const hash of ["", "#el"]) {
+      const p = await openFile("Vocabulando/Vocabulando.html" + hash, { viewport: vp });
+      await p.waitForTimeout(250);
+      await p.locator(".appchip:visible").click();
+      eq(await p.evaluate(() => { const m = document.querySelector(".appmenu:not([hidden])").getBoundingClientRect(); return [m.left >= 0, m.right <= innerWidth, document.documentElement.scrollWidth <= innerWidth + 1]; }), [true, true, true],
+        "a " + vp.width + " px " + (hash ? "dentro de un idioma" : "en la pantalla de idiomas") + ": la lista cabe y la página no se ensancha");
+      noErrors(p);
+    }
+  }
+});
+
+
 (async () => {
   const filter = process.argv[2];
   await startServer(); browser = await chromium.launch(); const t0 = Date.now();

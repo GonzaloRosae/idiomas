@@ -5,7 +5,7 @@ Abren la app en un Chromium real (con [Playwright](https://playwright.dev)), la 
 
 Cubren: las formas de los 8 idiomas (más de 1800), el corrector de acentos, la mezcla de irregulares, la repetición adaptativa, los 10 tiempos de
 imperativo y subjuntivo (teoría, cuatro modos de práctica y test final), los exámenes que ya existían, un barrido de los 68 tiempos, que no se
-desborde en el móvil, el progreso guardado (botón dorado al superar el test final y formas falladas que vuelven otro día), los dorados por idioma en el inicio, «Mezclar tiempos», la ventana «Cómo funciona» y la lista desplegable de idiomas.
+desborde en el móvil, el progreso guardado (botón dorado al superar el test final y formas falladas que vuelven otro día), los dorados por idioma en el inicio, «Mezclar tiempos», la ventana «Cómo funciona», la lista desplegable de idiomas y el desplegable de webs con el logo de cada app (que solo aparece al abrir los archivos del disco: esas pruebas abren `file://` y necesitan las carpetas `Vocabulando`, `Conjugario` y `Declinario` juntas).
 
 ## Cómo ejecutarlas
 

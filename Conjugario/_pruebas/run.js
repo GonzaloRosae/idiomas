@@ -28,6 +28,16 @@ async function open(lang, o = {}) {
   await page.goto(BASE + "index.html" + (lang ? "#" + lang : "")); await page.waitForFunction(() => window.__booted === true);
   return page;
 }
+// Abrir una de las tres webs directamente desde el disco (file://): así aparece el desplegable de webs, que por http se oculta
+// porque las rutas relativas entre carpetas no valdrían. Internet sigue bloqueado.
+const REPO = path.resolve(ROOT, "..");
+async function openFile(rel, o = {}) {
+  const ctx = await browser.newContext({ viewport: o.viewport || { width: 1000, height: 900 } }); ctxs.push(ctx);
+  await ctx.route((u) => /^https?:/.test(u.href), (r) => r.abort());
+  const page = await ctx.newPage(); page.errs = []; page.on("pageerror", (e) => page.errs.push(String(e)));
+  await page.goto("file://" + path.join(REPO, rel)); await page.waitForSelector(".appchip");
+  return page;
+}
 const txt = async (loc) => (await loc.innerText()).replace(/\s+/g, " ").trim();
 const practice = async (p, tense, mode) => p.evaluate(([t, m]) => { setTab("practice"); S().currentTense = t; state.mode = m; newExercise(); }, [tense, mode]);
 
@@ -475,6 +485,66 @@ test("Móvil · los tiempos nuevos no desbordan en 390 px", async () => {
 });
 
 // =====================================================================================================================
+// =====================================================================================================================
+// CAMBIO DE WEB: desplegable con el logo de cada app
+// =====================================================================================================================
+test("Cambio de web · desplegable con el logo de cada app (solo al abrir los archivos del disco)", async () => {
+  const h = await open("fr"); ok(await h.locator("#appWrap").isHidden(), "por http no aparece: las rutas relativas entre carpetas no valdrían");
+  const p = await openFile("Conjugario/index.html#fr");
+  ok(await p.locator("#appChip").isVisible() && await p.locator("#appMenu").isHidden(), "desde el disco hay botón y la lista está cerrada");
+  eq(await p.locator("#appChip svg.applogo").count(), 1, "el botón lleva el logo de esta web");
+  await p.click("#appChip");
+  ok(await p.locator("#appMenu").isVisible() && (await p.locator("#appChip").getAttribute("aria-expanded")) === "true", "al pulsarlo se despliega");
+  eq(await p.locator(".appopt .appnm").allInnerTexts(), ["Vocabulando", "Conjugario", "Declinario"], "tres opciones, en este orden");
+  eq(await p.locator(".appopt > svg.applogo").count(), 3, "cada opción empieza por su logo");
+  eq(await p.evaluate(() => new Set([...document.querySelectorAll(".appopt > svg.applogo path")].map((x) => x.getAttribute("d"))).size), 3, "y los tres logos son distintos");
+  eq(await p.evaluate(() => [...document.querySelectorAll(".appopt")].map((o) => o.tagName + ":" + (o.getAttribute("aria-current") || o.getAttribute("href")))),
+    ["A:../Vocabulando/Vocabulando.html#fr", "SPAN:page", "A:../Declinario/index.html#fr"], "los otros dos son enlaces con el idioma abierto; esta web va marcada y no es un enlace");
+  const geo = await p.evaluate(() => { const m = document.getElementById("appMenu").getBoundingClientRect(), c = document.getElementById("appChip").getBoundingClientRect(); return { debajo: m.top >= c.bottom - 1, dentro: m.left >= 0 && m.right <= innerWidth }; });
+  eq(geo, { debajo: true, dentro: true }, "la lista queda pegada al botón y dentro de la pantalla");
+  await p.click("#appChip"); ok(await p.locator("#appMenu").isHidden(), "pulsar el botón otra vez la cierra");
+  await p.click("#appChip"); await p.keyboard.press("Escape");
+  ok(await p.locator("#appMenu").isHidden() && await p.evaluate(() => document.activeElement.id) === "appChip", "Escape la cierra y devuelve el foco al botón");
+  await p.click("#appChip"); await p.mouse.click(5, 5); ok(await p.locator("#appMenu").isHidden(), "pulsar fuera la cierra");
+  await p.click("#appChip"); eq(await p.evaluate(() => document.activeElement.dataset.app), "vocabulando", "al abrir, el foco está en la primera web distinta de esta");
+  await p.keyboard.press("ArrowDown"); await p.keyboard.press("ArrowDown"); eq(await p.evaluate(() => document.activeElement.dataset.app), "declinario", "con el teclado, las flechas recorren la lista y dan la vuelta");
+  await p.keyboard.press("End"); eq(await p.evaluate(() => document.activeElement.dataset.app), "declinario", "Fin va a la última");
+  await p.keyboard.press("Home"); eq(await p.evaluate(() => document.activeElement.dataset.app), "vocabulando", "Inicio va a la primera");
+  await p.keyboard.press("Escape");
+  // el idioma que abres viaja en el enlace
+  await p.evaluate(() => chooseLang("de")); await p.click("#appChip");
+  eq(await p.evaluate(() => [...document.querySelectorAll(".appopt[href]")].map((a) => a.getAttribute("href").split("#")[1])), ["de", "de"], "al cambiar de idioma, los enlaces llevan el idioma nuevo");
+  // pantalla de inicio: sin idioma, sin «#»
+  await p.keyboard.press("Escape"); await p.click("#brandBtn"); await p.click("#appChip");
+  eq(await p.evaluate(() => [...document.querySelectorAll(".appopt[href]")].map((a) => a.getAttribute("href").includes("#"))), [false, false], "sin idioma elegido, los enlaces no llevan «#»");
+  await p.keyboard.press("Escape");
+  // convive con el desplegable de idiomas: abrir uno cierra el otro
+  await p.evaluate(() => chooseLang("fr")); await p.click("#appChip"); await p.click("#langChip");
+  ok(await p.locator("#appMenu").isHidden() && await p.locator("#langMenu").isVisible(), "abrir la lista de idiomas cierra la de webs");
+  await p.click("#appChip"); ok(await p.locator("#langMenu").isHidden() && await p.locator("#appMenu").isVisible(), "y al revés");
+  // el tema viaja con el enlace
+  await p.keyboard.press("Escape"); await p.click("#themeBtn"); await p.evaluate(() => localStorage.removeItem("idiomas:theme"));
+  await p.click("#appChip"); await p.evaluate(() => document.querySelector(".appopt[href]").addEventListener("click", (e) => e.preventDefault()));
+  await p.click(".appopt[href]"); ok(await p.evaluate(() => localStorage.getItem("idiomas:theme") === "dark" && document.documentElement.getAttribute("data-theme") === "dark"), "al pulsar un enlace, la otra web se abre con el tema oscuro de esta");
+  // la ayuda lo explica solo cuando el botón existe
+  await p.click("#infoBtn"); ok(/Vocabulando \([^)]*\) o a Declinario/.test(await txt(p.locator("#infoOverlay"))), "la ayuda explica el botón del logo");
+  await p.keyboard.press("Escape");
+  noErrors(p); noErrors(h);
+});
+
+test("Cambio de web · en el móvil la cabecera no desborda y la lista cabe", async () => {
+  for (const vp of [{ width: 390, height: 780 }, { width: 320, height: 700 }]) {
+    for (const hash of ["", "#el"]) {
+      const p = await openFile("Conjugario/index.html" + hash, { viewport: vp });
+      await p.click("#appChip");
+      eq(await p.evaluate(() => { const m = document.getElementById("appMenu").getBoundingClientRect(); return [m.left >= 0, m.right <= innerWidth, document.documentElement.scrollWidth <= innerWidth + 1]; }), [true, true, true],
+        "a " + vp.width + " px " + (hash ? "dentro de un idioma" : "en la pantalla de inicio") + ": la lista cabe y la página no se ensancha");
+      noErrors(p);
+    }
+  }
+});
+
+
 (async () => {
   const filter = process.argv[2];
   await start(); browser = await chromium.launch(); const t0 = Date.now();
