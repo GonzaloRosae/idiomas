@@ -1,0 +1,7 @@
+{
+  "name": "conjugario-pruebas",
+  "private": true,
+  "description": "Pruebas automáticas de Conjugario (navegador real con Playwright y una tabla de formas verbales de referencia)",
+  "scripts": { "test": "node run.js" },
+  "devDependencies": { "playwright": "^1.40.0" }
+}
