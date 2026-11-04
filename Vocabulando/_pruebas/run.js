@@ -277,6 +277,142 @@ test("Mazo · cuatro pestañas caben en el móvil y la ayuda lo explica", async 
   noErrors(p);
 });
 
+// ---- racha general, resumen del selector, escribir la respuesta y pausar ----
+const goPicker = async (p) => { await p.evaluate(() => { location.hash = ""; }); await p.waitForSelector("#pickStreak .ps-main"); };
+const streakTxt = (p) => txt(p.locator("#pickStreak"));
+const withDays = (code, n, days) => { const d = G.deck(code, n, false); d.stats.byDay = days; return d; };
+
+test("Racha · cuenta los días en que llegas a la meta sumando todos los idiomas, y perdona un día suelto por semana", async () => {
+  const p = await open({ now: [2026, 11, 10, 12, 0, 0], seed: {
+    de: withDays("de", 3, { "2026-11-09": 6, "2026-11-08": 12, "2026-11-06": 10, "2026-11-05": 10, "2026-11-04": 3 }),
+    fr: withDays("fr", 3, { "2026-11-09": 5, "2026-11-07": 4, "2026-11-04": 8 }) } });
+  await goPicker(p);
+  const s1 = await streakTxt(p);
+  ok(/5 días de racha/.test(s1) && /Hoy 0 \/ 10/.test(s1) && /Mejor 5/.test(s1), "5 días de racha (el 7 no llegó, pero se perdona) y hoy aún puede cumplirse: «" + s1 + "»");
+  await p.click('.lang-card[href="#de"]'); await p.waitForSelector(".deck-list"); await p.click('.tab[data-tab="actividad"]');
+  const g = await txt(p.locator(".st-grid").first());
+  ok(/RACHA 5 días seguidos/i.test(g) && /MEJOR RACHA 5 días/i.test(g) && /HOY 0 \/ 10 10 para la meta/i.test(g), "Actividad lo cuenta igual: " + g);
+  await p.selectOption("#goalSel", "20");
+  eq(await p.evaluate(() => localStorage.getItem("vocabulando:goal")), "20", "la meta se guarda");
+  ok(/RACHA 0 días seguidos/i.test(await txt(p.locator(".st-grid").first())), "con meta 20 no llegó ningún día");
+  await p.selectOption("#goalSel", "5"); ok(/RACHA 5 días/i.test(await txt(p.locator(".st-grid").first())), "con meta 5 vuelve a salir (el día 7, con 4, sigue siendo el perdonado)");
+  await p.selectOption("#goalSel", "1"); ok(/RACHA 6 días seguidos/i.test(await txt(p.locator(".st-grid").first())), "con meta 1 no hace falta perdonar nada: 6 días seguidos (del 4 al 9)");
+  noErrors(p);
+});
+
+test("Racha · dos días fallados en una semana la rompen, y hoy cumplido la alarga", async () => {
+  const p = await open({ now: [2026, 11, 10, 12, 0, 0], seed: { de: withDays("de", 3, { "2026-11-08": 12, "2026-11-06": 10, "2026-11-05": 10, "2026-11-04": 11 }) } });
+  await goPicker(p);
+  ok(/0 días de racha/.test(await streakTxt(p)) && /Mejor 4/.test(await streakTxt(p)), "faltan el 9 y el 7 (el 7 se perdona, el 9 no): racha 0 y mejor 4: «" + await streakTxt(p) + "»");
+  const q = await open({ now: [2026, 11, 10, 12, 0, 0], seed: { de: withDays("de", 3, { "2026-11-10": 10, "2026-11-09": 10, "2026-11-08": 10 }) } });
+  await goPicker(q);
+  ok(/3 días de racha/.test(await streakTxt(q)) && /Hoy 10 \/ 10 ✓/.test(await streakTxt(q)), "con hoy cumplido cuenta hoy y se marca ✓: «" + await streakTxt(q) + "»");
+  const r = await open({ now: [2026, 11, 11, 3, 0, 0], seed: { de: withDays("de", 3, { "2026-11-09": 10, "2026-11-10": 10 }) } });
+  await goPicker(r);
+  ok(/2 días de racha/.test(await streakTxt(r)) && /Hoy 10 \/ 10 ✓/.test(await streakTxt(r)), "a las 3 de la madrugada todavía es el día de estudio anterior (hasta las 4:00)");
+  noErrors(p); noErrors(q); noErrors(r);
+});
+
+test("Racha · avisa al llegar a la meta del día", async () => {
+  const p = await open({ prefs: { "vocabulando:goal": "2" }, seed: newDeck("de", 6, false) }); await study(p);
+  await rateOnce(p, "Good"); ok(!/Meta de hoy/.test(await p.locator("#toast").innerText()), "con 1 de 2 todavía no");
+  await rateOnce(p, "Good"); await p.waitForFunction(() => /Meta de hoy cumplida · 1 día de racha/.test(document.getElementById("toast").textContent));
+  ok(true, "con el segundo repaso: «" + await txt(p.locator("#toast")) + "»");
+  noErrors(p);
+});
+
+test("Selector · cada idioma dice cuántas tarjetas tocan (sin contar las pausadas)", async () => {
+  const de = G.deck("de", 12, true); de.deck[0].paused = true;
+  const p = await open({ now: [2026, 3, 5, 12, 0, 0], seed: { de, fr: G.deck("fr", 3, false) } });
+  await goPicker(p);
+  const card = (c) => txt(p.locator('.lang-card[href="#' + c + '"] .lc-stat'));
+  eq(await card("de"), "10 por repasar · 12 palabras", "alemán: 6 palabras vencen con palabra y frase (12 tarjetas), menos las 2 de la pausada");
+  eq(await card("fr"), "Al día · 3 palabras", "francés: nada que repasar");
+  eq(await card("pl"), "Aún sin palabras", "polaco: vacío");
+  ok(await p.locator('.lang-card[href="#de"] .lc-stat.has-due').count() === 1 && await p.locator('.lang-card[href="#fr"] .lc-stat.has-due').count() === 0, "solo se resalta el que tiene trabajo");
+  await p.click('.lang-card[href="#de"]'); await p.waitForSelector(".deck-list"); await goPicker(p);
+  eq(await card("de"), "10 por repasar · 12 palabras", "al volver desde un idioma sigue igual");
+  noErrors(p);
+});
+
+const lib = (extra = {}) => bucket("de", [
+  { esWord: "la manzana", deWord: "der Apfel" }, { esWord: "el gato", deWord: "die Katze (pl. Katzen) / der Kater" },
+  { esWord: "la calle", deWord: "die Straße" }, { esWord: "la ciudad", deWord: "die Stadt" }, { esWord: "el niño", deWord: "das Kind", esSent: "El niño duerme", deSent: "Das Kind schläft" }], extra);
+const front = (p) => txt(p.locator(".k-front"));
+const typeInto = async (p, v) => { await p.fill("#typedIn", v); await p.click("#typedCheck"); await p.waitForSelector(".typed-res"); };
+
+test("Escribir la respuesta · corrige con tolerancia, sugiere la nota y no confunde las teclas", async () => {
+  const p = await open({ prefs: { "vocabulando:type": "1" }, seed: { de: lib() } }); await study(p);
+  ok(await p.locator("#typedIn").isVisible() && await p.locator("#show").count() === 0, "con el modo activado hay un campo en vez de «Mostrar respuesta»");
+  ok(await p.evaluate(() => document.activeElement && document.activeElement.id === "typedIn"), "y está enfocado");
+  await p.fill("#typedIn", "jklñ0123p"); await p.click("#typedCheck", { trial: true });
+  eq(await p.locator("[data-rate]").count(), 0, "las letras J K L Ñ y los números no valoran mientras escribes");
+  await p.fill("#typedIn", "");
+  await p.click("#typedCheck"); ok(/Escribe tu respuesta/.test(await txt(p.locator("#toast"))), "sin escribir nada no corrige: avisa");
+  const cases = { "la manzana": ["Apfel", "near", "Hard", /falta el artículo/], "el gato": ["der Kater", "ok", "Good", /Correcto/], "la calle": ["die strasse", "near", "Hard", /mayúsculas y acentos/], "la ciudad": ["das Haus", "bad", "Again", /No coincide/] };
+  const ratings = {};
+  for (let k = 0; k < 4; k++) {
+    const f = await front(p), c = cases[f];
+    await p.fill("#typedIn", c[0]); await p.keyboard.press("Enter"); await p.waitForSelector(".typed-res");
+    const res = await txt(p.locator(".typed-res"));
+    ok(await p.locator(".typed-res." + c[1]).count() === 1 && c[3].test(res), f + " ← «" + c[0] + "»: " + res);
+    eq(await p.locator(".r.suggested").getAttribute("data-rate"), c[2], "se sugiere «" + c[2] + "»");
+    ratings[f] = c[2]; await p.click(".r.suggested"); await p.waitForFunction(() => !document.querySelector("[data-rate]"));
+  }
+  const d = await stored(p); eq(d.log.map((r) => r[2]), [2, 3, 2, 1], "lo valorado queda guardado con esas notas (Difícil, Bien, Difícil, Otra vez)");
+  ok(await p.locator("#typedIn").count() === 1 && await p.locator("#typedIn").inputValue() === "", "la siguiente tarjeta trae el campo vacío");
+  await p.fill("#typedIn", "abc"); await p.evaluate(() => window.dispatchEvent(new HashChangeEvent("hashchange")));
+  eq(await p.inputValue("#typedIn"), "abc", "si la página se vuelve a dibujar mientras escribes (cambio de ventana…), lo escrito no se pierde");
+  await p.click("#typedSkip"); ok(await p.locator(".typed-res").count() === 0 && await p.locator(".r.suggested").count() === 0, "«No lo sé» la muestra sin corregir ni sugerir nota");
+  await p.click('[data-rate="Again"]'); await p.waitForFunction(() => !document.querySelector("[data-rate]"));
+  await p.click('.seg-btn[data-mode="sentence"]'); ok(await p.locator("#show").count() === 1 && await p.locator("#typedIn").count() === 0, "en Frases no se escribe: sigue «Mostrar respuesta»");
+  await p.click('.tab[data-tab="actividad"]'); await p.click("#typeSw");
+  await study(p); ok(await p.locator("#show").count() === 1, "apagado el modo, vuelve «Mostrar respuesta»");
+  noErrors(p);
+});
+
+test("Pausar · la entrada deja de salir al estudiar, se ve en Mazo y se reanuda desde allí", async () => {
+  const p = await open({ seed: { de: lib() } }); await study(p);
+  eq(await txt(p.locator(".stats")), "0 por repasar 5 nuevas hoy", "5 nuevas");
+  const f0 = await front(p);
+  await p.click(".k-pause");
+  await p.waitForFunction(() => /pausada/.test(document.getElementById("toast").textContent)); ok(true, "avisa dónde encontrarla");
+  ok((await front(p)) !== f0, "pasa a otra tarjeta");
+  ok(/4 nuevas hoy/.test(await txt(p.locator(".stats"))) && /1 pausada/.test(await txt(p.locator(".stats"))), "quedan 4 y se anota «1 pausada»");
+  ok((await stored(p)).deck.filter((e) => e.paused).length === 1, "se guarda en el mazo");
+  await mazo(p); await p.selectOption("#fState", "paused"); await waitCount(p, "1 de 5 palabras");
+  ok(await p.locator("li.row.is-paused .chip", { hasText: "pausada" }).count() === 1, "en Mazo sale marcada como pausada");
+  await p.click("li.row [data-pause]"); await waitCount(p, "0 de 5 palabras");
+  eq((await stored(p)).deck.filter((e) => e.paused).length, 0, "reanudarla la quita del archivo");
+  await study(p); ok(/5 nuevas hoy/.test(await txt(p.locator(".stats"))) && !/pausada/.test(await txt(p.locator(".stats"))), "vuelve a la cola");
+  noErrors(p);
+});
+
+test("Pausar · lo pausado no cuenta en la previsión y las entradas que fallas mucho se marcan como difíciles", async () => {
+  const g = G.deck("de", 6, true);   // 6 palabras con palabra y frase en repaso
+  g.review["id000001:word"] = { ...G.card(3, 8), lapses: 6, due: "2026-03-03T12:00:00.000Z" };
+  g.deck[2].paused = true;
+  const p = await open({ now: [2026, 3, 9, 12, 0, 0], seed: { de: g } }); await mazo(p);
+  await p.selectOption("#fState", "hard"); await waitCount(p, "1 de 6 palabras");
+  eq(await p.locator("li.row .chip-hard").count(), 1, "una entrada «difícil» (más de " + 4 + " fallos)");
+  await p.selectOption("#fState", "due"); await waitCount(p, "5 de 6 palabras"); ok(true, "«Toca repasar» no incluye la pausada");
+  await p.selectOption("#fState", "all");
+  await p.click('.tab[data-tab="actividad"]');
+  eq(await p.locator(".fc-n").first().innerText(), "10", "la previsión de hoy son 10 tarjetas (5 palabras × 2), sin las de la pausada");
+  await study(p);
+  let seen = false;
+  for (let k = 0; k < 12 && !seen; k++) {
+    if (await p.locator("#show").count() === 0) break;
+    await p.click("#show"); if (await p.locator(".leech-note").count()) { seen = true; break; }
+    await p.click('[data-rate="Good"]'); await p.waitForFunction(() => !document.querySelector("[data-rate]"));
+  }
+  ok(seen, "al mostrar la difícil sugiere cambiarla o pausarla");
+  const id = await p.evaluate(() => document.querySelector(".leech-note [data-edit]").getAttribute("data-edit"));
+  await p.click(".leech-note [data-pause]");
+  ok((await stored(p)).deck.find((e) => e.id === id).paused === true, "«Pausarla» la aparta");
+  noErrors(p);
+});
+
 test("Guardado · formato del archivo y reversión si falla", async () => {
   const p = await open({ seed: { ...newDeck("de", 40, true), ...newDeck("fr", 5, false) } });
   await p.waitForSelector(".deck-list");
@@ -718,7 +854,7 @@ test("Datos · el registro anota cada repaso", async () => {
   noErrors(p);
 });
 
-test("Actividad · racha, retención y previsión de los próximos 7 días", async () => {
+test("Actividad · retención, último repaso y previsión de los próximos 7 días", async () => {
   const now = Date.UTC(2026, 10, 3, 9, 0, 0) / 1000, D = 86400;
   const g = G.deck("de", 5, false);
   g.review = { "id000000:word": { ...G.card(1, 4), due: "2026-11-03T08:00:00.000Z" }, "id000001:word": { ...G.card(1, 4), due: "2026-10-20T08:00:00.000Z" },
@@ -729,16 +865,16 @@ test("Actividad · racha, retención y previsión de los próximos 7 días", asy
   for (let i = 0; i < 10; i++) g.log.push([now - (40 + i) * D, "id000000:word", 1, 2]);                              // más antiguos: no cuentan
   for (let i = 0; i < 5; i++) g.log.push([now - (i + 1) * 3600, "id000001:word", 1, 1]);                              // en aprendizaje: no cuentan
   const p = await open({ now: [2026, 11, 3, 10, 0, 0], seed: { de: g } }); await p.waitForSelector(".deck-list"); await p.click('.tab[data-tab="actividad"]');
-  const grid = await txt(p.locator(".st-grid"));
-  ok(/RACHA 3 días seguidos/i.test(grid), "racha de 3 días (hoy, ayer y anteayer): " + grid);
+  const grid = await txt(p.locator(".st-grid").nth(1));
+  ok(/ÚLTIMO REPASO hoy/i.test(grid), "último repaso: hoy (" + grid + ")");
   ok(/RETENCIÓN 80 % de 25 repasos en 30 días/i.test(grid), "retención 80 % sobre los 25 repasos maduros de los últimos 30 días");
   eq(await p.locator(".fc-n").allInnerTexts(), ["2", "1", "0", "1", "0", "0", "0"], "previsión: 2 hoy (uno atrasado), 1 mañana y 1 dentro de 3 días");
   eq((await txt(p.locator(".fc-d").first())) + "/" + (await txt(p.locator(".fc-d").nth(1))), "hoy/mañ.", "con sus etiquetas");
   await patchLS(p, "d.stats.byDay = { '2026-11-02': 1, '2026-11-01': 1 }; d.log = d.log.slice(0, 3);"); await p.click('.tab[data-tab="actividad"]');
-  const g2 = await txt(p.locator(".st-grid"));
-  ok(/RACHA 2 días seguidos/i.test(g2) && /RETENCIÓN — faltan repasos/i.test(g2), "si hoy aún no has repasado pero ayer sí, la racha sigue viva (2); con pocos repasos no se inventa la retención");
+  const g2 = await txt(p.locator(".st-grid").nth(1));
+  ok(/ÚLTIMO REPASO ayer/i.test(g2) && /RETENCIÓN — faltan repasos/i.test(g2), "si hoy aún no has repasado pero ayer sí, dice «ayer»; con pocos repasos no se inventa la retención");
   await patchLS(p, "d.stats.byDay = { '2026-10-30': 1 };"); await p.click('.tab[data-tab="actividad"]');
-  ok(/RACHA 0 días seguidos/i.test(await txt(p.locator(".st-grid"))), "con un hueco de más de un día la racha vuelve a 0");
+  ok(/ÚLTIMO REPASO hace 4 d/i.test(await txt(p.locator(".st-grid").nth(1))), "con un hueco, cuenta los días: «hace 4 d»");
   noErrors(p);
 });
 
