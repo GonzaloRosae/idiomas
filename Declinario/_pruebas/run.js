@@ -215,17 +215,19 @@ test("Tabla completa · se rellena entera, se corrige casilla a casilla y se pue
   await p.evaluate(() => { document.querySelectorAll("#panelPractice input.ans")[document.querySelectorAll("#panelPractice input.ans").length - 1].focus(); }); await p.keyboard.press("Enter");
   ok(await p.locator(".banner.show").count() === 1, "y en la última comprueba");
   // «—» no es una casilla
-  await topic(p, "artindef"); const it = await p.evaluate(() => state.current.item.title);
-  ok(it === "ein" ? await p.locator("#panelPractice input.ans").count() === 12 : true, "las casillas «—» no se rellenan (ein: 12 de 16)");
+  await topic(p, "artindef"); await p.evaluate(() => { const tp = curTopic(); state.current = { kind: "table", topic: tp, item: tp.items[0] }; renderPractice(); });
+  eq(await p.locator("#panelPractice input.ans").count(), 12, "las casillas «—» no son casillas (ein: 12 de 16)");
   noErrors(p);
 });
 
 test("Tabla completa · los acentos se avisan donde no son obligatorios y se exigen donde sí", async () => {
   const p = await open("pl"); await topic(p, "ten");
+  await p.evaluate(() => { const tp = curTopic(); state.current = { kind: "table", topic: tp, item: tp.items[0] }; renderPractice(); });   // «ten · ta · to» (no «mój», que no tiene «tą»)
   await p.evaluate(() => { document.querySelectorAll("#panelPractice input.ans").forEach((i) => { i.value = i.dataset.answer; }); const ins = document.querySelectorAll("#panelPractice input.ans"); ins.forEach((i) => { if (i.dataset.answer === "tą") i.value = "ta"; }); });
   await p.click("#panelPractice .btn.primary");
   eq(await p.locator("input.ans.bad").count(), 1, "«ta» no vale por «tą» (son formas distintas): solo esa casilla falla");
   const g = await open("el"); await topic(g, "nom");
+  await g.evaluate(() => { const tp = curTopic(); state.current = { kind: "table", topic: tp, item: tp.items[0] }; renderPractice(); });
   await g.evaluate(() => { document.querySelectorAll("#panelPractice input.ans").forEach((i) => { i.value = i.dataset.answer.split("|")[0].normalize("NFD").replace(/[̀-ͯ]/g, ""); }); });
   await g.click("#panelPractice .btn.primary");
   ok(await g.locator(".banner.good").count() === 1 && await g.locator(".fix.soft").count() > 0, "en griego, sin acentos vale y avisa de cómo se escribe");
