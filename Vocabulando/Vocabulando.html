@@ -425,6 +425,15 @@
   .newlim { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: -6px 0 16px 2px; font-size: 13px; }
   .newlim-t { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
   .newlim-i { color: var(--ink); }
+
+  /* ---- pestaña Mazo: buscador y filtros ---- */
+  .deck-tools { display: flex; flex-direction: column; gap: 10px; margin: 0 0 12px; }
+  .deck-search .in { -webkit-appearance: none; appearance: none; }
+  .deck-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+  .fsel { display: inline-flex; align-items: center; gap: 7px; }
+  .deck-chk { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink); cursor: pointer; }
+  .deck-filters .link-btn { margin-left: auto; font-size: 12.5px; }
+  .empty .link-btn { display: inline-block; margin-top: 8px; }
   .sel-sm { width: auto; min-width: 0; padding: 5px 9px; font-size: 14px; border-radius: 9px; }
   @media (pointer: coarse) { .sel-sm { font-size: 16px; } }
   .sel { width: auto; min-width: 190px; }
@@ -2715,6 +2724,7 @@
       <nav class="tabs">
         <button class="tab is-active" data-tab="crear">Crear</button>
         <button class="tab" data-tab="estudiar">Estudiar</button>
+        <button class="tab" data-tab="mazo">Mazo</button>
         <button class="tab" data-tab="actividad">Actividad</button>
       </nav>
       <div class="lang-wrap" id="langWrap">
@@ -4878,7 +4888,7 @@
     var DECK_PAGE = 100; // filas de la lista del mazo que se dibujan de una vez (el resto, con «Mostrar más»)
     var S = {
       lang: null, tab: "crear", deckDir: "es-it", autoSentence: false, theme: "dark",
-      editing: null, confirmDelete: null, expanded: {}, deckShown: DECK_PAGE, undo: [], newExtra: {}, newWords: 20, newSents: 10, revOn: false, autoSpeak: false, mode: "word",
+      editing: null, confirmDelete: null, expanded: {}, deckShown: DECK_PAGE, q: "", fState: "all", fSent: "all", fGender: "all", fSort: "new", qSent: true, editFrom: null, editY: 0, restoreY: null, undo: [], newExtra: {}, newWords: 20, newSents: 10, revOn: false, autoSpeak: false, mode: "word",
       current: null, flipped: false, showSentence: false, studyAhead: false, bannerOff: false,
       formGender: "", formEsGender: "", formWikt: null, formBusy: false, suggErr: null, autoGen: true, detecting: false, autoSugg: true, sugg: null, suggBusy: false, sents: null, sentsBusy: false, sentsSlow: false, transBusy: false, tatDownAt: 0,
       deck: [], review: {}, stats: { reviewsTotal: 0, byDay: {} }
@@ -5774,7 +5784,7 @@
     function route() {
       var code = location.hash.replace(/^#/, ""), lang = LANG_BY[code] ? code : null;
       if (lang !== S.lang) {
-        S.lang = lang; S.tab = "crear"; S.editing = null; S.formGender = ""; S.formEsGender = ""; S.suggErr = null; S.formWikt = null; S.sugg = null; S.sents = null; S.suggBusy = false; S.confirmDelete = null; S.expanded = {}; S.deckShown = DECK_PAGE; S.undo = [];
+        S.lang = lang; S.tab = "crear"; S.editing = null; S.formGender = ""; S.formEsGender = ""; S.suggErr = null; S.formWikt = null; S.sugg = null; S.sents = null; S.suggBusy = false; S.confirmDelete = null; S.expanded = {}; S.deckShown = DECK_PAGE; resetDeckView(); S.editFrom = null; S.undo = [];
         S.current = null; S.flipped = false; S.studyAhead = false; S.mode = "word";
         bindLang(); window.scrollTo(0, 0);
         if (lang && initDone) { if (loaded[lang]) syncFromFile(); else openLang(lang); }
@@ -5798,9 +5808,10 @@
       if (!S.lang) return;
       document.querySelectorAll(".tab").forEach(function (b) { b.classList.toggle("is-active", b.dataset.tab === S.tab); });
       if (!initDone || !loaded[S.lang]) { view.innerHTML = '<div class="empty">Cargando el mazo…</div>'; return; }
-      var content = S.tab === "crear" ? renderCrear() : S.tab === "estudiar" ? renderEstudiar() : renderActividad();
+      var content = S.tab === "crear" ? renderCrear() : S.tab === "estudiar" ? renderEstudiar() : S.tab === "mazo" ? renderMazo() : renderActividad();
       if (S.confirmDelete) content += renderConfirm();
       view.innerHTML = content;
+      if (S.restoreY !== null) { var y0 = S.restoreY; S.restoreY = null; window.scrollTo(0, y0); }
       if (S.tab === "crear") { updateDupUI(); updateGenderUI(); updateSuggUI(); updateSentUI(); fitSentences(); updateAiBtn(); }
     }
     function renderConfirm() {
@@ -6379,12 +6390,16 @@
       var files = LANGS.map(function (l) { return fileName(l.code); }).join(", ");
       return '<div class="modal-top"><h2 class="modal-title" id="infoTitle">Cómo funciona Vocabulando</h2><button type="button" class="modal-x" id="infoClose" aria-label="Cerrar">×</button></div>' +
         '<div class="info-body">' +
-        "<p>Vocabulando es un cuaderno de vocabulario con tarjetas de repaso espaciado. Cada idioma tiene su propio mazo de palabras y frases, con sus repasos y estadísticas. Con el chip del idioma (arriba) vuelves a la pantalla de inicio." + (sibShow ? " El botón «Conjugario» te lleva a la otra web (la de conjugaciones), en el mismo idioma." : "") + "</p>" +
+        "<p>Vocabulando es un cuaderno de vocabulario con tarjetas de repaso espaciado. Cada idioma tiene su propio mazo de palabras y frases, con sus repasos y estadísticas. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Vocabulando» vuelves a ella." + (sibShow ? " El botón «Conjugario» te lleva a la otra web (la de conjugaciones), en el mismo idioma." : "") + "</p>" +
         "<h3>Crear</h3><ul>" +
         "<li>Escribe la palabra en español: debajo del campo del idioma aparecen <b>traducciones sugeridas</b> del Wikcionario. Púlsalas para rellenar el campo, o escribe tú la palabra.</li>" +
         "<li>Cada campo de palabra lleva a la izquierda un botón de <b>género</b> (♂ ♀ neutro, ambiguo o ninguno), también el del español. Se detecta solo por el artículo («der Spiegel», «el coche») o consultando el Wikcionario, y también puedes elegirlo tú. La palabra se colorea —y también donde aparece en la frase—: azul masculino, rojo femenino, verde neutro, morado ambiguo; así ves de un vistazo si el género coincide en los dos idiomas. Si guardas un sustantivo sin su artículo se te avisa: se memoriza mejor con él.</li>" +
         "<li>El botón <b>Sugerir frases</b> (la burbuja dentro de la oración en español) trae frases reales de Tatoeba que contienen la palabra y, si has rellenado las dos palabras, solo las que la usan con el significado de tu traducción (si Tatoeba falla o no tiene la palabra, ejemplos del Wikcionario, con traducción al inglés: el español se traduce solo al elegirlos); el botón <b>Traducir</b> (icono de idiomas, aparece en la oración que está vacía) traduce la que hayas escrito (MyMemory). Las traducciones automáticas pueden fallar: revísalas antes de guardar. En portugués se avisa de las frases con rasgos de Brasil. Las oraciones se guardan sin el punto final (se conservan «…», «?», «!» y los signos combinados).</li>" +
         "<li>El botón ✨ abre ChatGPT con una petición que se adapta a lo que hayas rellenado: con una sola palabra, la traduce y propone una frase; con las dos, genera una frase con ese significado concreto; con oraciones, las traduce o revisa la traducción. Al pasar el ratón ves qué va a pedir.</li></ul>" +
+        "<h3>Mazo</h3><ul>" +
+        "<li>Aquí está la lista completa de tus palabras y frases. El buscador no distingue mayúsculas ni acentos (escribir «uber» encuentra «über») y, si lo dejas marcado, mira también dentro de las frases. Puedes escribir varias palabras: salen las entradas que las llevan todas.</li>" +
+        "<li>Filtros: por estado (nuevas, en aprendizaje, en repaso o que ya toca repasar), por tener o no frase y por género. Orden: más recientes o antiguas, alfabético (sin contar el artículo, así «der Apfel» va en la A), por próximo repaso o por las que más fallas.</li>" +
+        "<li>El lápiz lleva a Crear con la entrada cargada; al guardar o cancelar vuelves a la lista, en el mismo punto. La × borra (pide confirmación), «frase» abre la oración y el altavoz la pronuncia. En Crear, bajo el formulario, quedan las últimas 5 añadidas para comprobar lo que acabas de guardar.</li></ul>" +
         "<h3>Estudiar</h3>" +
         "<p>Se muestra la palabra (o la frase) en español, pulsas «Mostrar respuesta» y la valoras con <i>Otra vez, Difícil, Bien</i> o <i>Fácil</i>. La app programa el siguiente repaso con el algoritmo FSRS: cuanto mejor la sabes, más tarde vuelve. Las tarjetas con plazo de días tocan desde las 4:00 de su día, y el día nuevo (también para los contadores de Actividad) empieza a las 4:00: lo que repases de madrugada cuenta como el día anterior. Hay dos modos, Palabras y Frases (y, si lo activas, Inversa: del idioma al español). Atajos: punto o espacio para mostrar la respuesta; J, K, L, Ñ (o 0, 1, 2, 3) para valorar; Z para deshacer el último repaso; P para oír la pronunciación.</p>" +
         "<ul>" +
@@ -6607,19 +6622,19 @@
         '<button class="del" data-del="' + esc(e.id) + '" aria-label="Eliminar">×</button></div></div>' +
         frase + "</li>";
     }
-    function rowsHtml(from, to) { // filas from..to-1 de la lista (0 = la más reciente)
+    function rowsHtml(from, to) { // filas from..to-1 de la lista que se muestra (curList)
       var out = [];
-      for (var k = from; k < to; k++) out.push(rowHtml(S.deck[S.deck.length - 1 - k]));
+      for (var k = from; k < to; k++) out.push(rowHtml(curList[k]));
       return out.join("");
     }
-    // S.deckShown es un tope (DECK_PAGE, 2 × DECK_PAGE… o Infinity tras «Mostrar todas»); las filas dibujadas son min(tope, palabras)
-    function shownCount() { return Math.min(Math.max(S.deckShown, DECK_PAGE), S.deck.length); }
+    // S.deckShown es un tope (DECK_PAGE, 2 × DECK_PAGE… o Infinity tras «Mostrar todas»); las filas dibujadas son min(tope, lista)
+    function shownCount() { return Math.min(Math.max(S.deckShown, DECK_PAGE), curList.length); }
     function deckMoreLabels() {
-      var shown = shownCount(), left = S.deck.length - shown;
-      return { info: "Se muestran " + shown + " de " + S.deck.length, more: "Mostrar " + Math.min(DECK_PAGE, left) + " más", all: "Mostrar todas (" + left + " restantes)" };
+      var shown = shownCount(), left = curList.length - shown;
+      return { info: "Se muestran " + shown + " de " + curList.length, more: "Mostrar " + Math.min(DECK_PAGE, left) + " más", all: "Mostrar todas (" + left + " restantes)" };
     }
     function deckMoreHtml() {
-      if (shownCount() >= S.deck.length) return "";
+      if (shownCount() >= curList.length) return "";
       var l = deckMoreLabels();
       return '<div class="deck-more" id="deckMoreBar"><span class="deck-more-info" id="deckMoreInfo">' + l.info + '</span>' +
         '<button class="btn btn-ghost btn-sm" id="deckMore">' + l.more + '</button>' +
@@ -6628,12 +6643,12 @@
     // «Mostrar más»: añade las filas que faltan al final de la lista sin redibujar el resto ni el formulario (no se pierde lo que estés escribiendo)
     function showMoreRows(all) {
       var ul = view.querySelector(".deck-list"), from = shownCount();
-      if (!ul || from >= S.deck.length) return;
+      if (!ul || from >= curList.length) return;
       S.deckShown = all ? Infinity : Math.max(S.deckShown, DECK_PAGE) + DECK_PAGE;
       ul.insertAdjacentHTML("beforeend", rowsHtml(from, shownCount()));
       var bar = document.getElementById("deckMoreBar");
       if (!bar) return;
-      if (shownCount() >= S.deck.length) { bar.remove(); return; }
+      if (shownCount() >= curList.length) { bar.remove(); return; }
       var l = deckMoreLabels();
       document.getElementById("deckMoreInfo").textContent = l.info;
       document.getElementById("deckMore").textContent = l.more;
@@ -6651,12 +6666,125 @@
       if (nb) nb.focus({ preventScroll: true });
     }
 
+    // ---- pestaña Mazo: buscar, filtrar y ordenar (la lista completa ya no vive en Crear; allí quedan las últimas añadidas) ----
+    var RECENT = 5;      // entradas que Crear enseña bajo el formulario
+    var curList = [];    // lo que Mazo muestra ahora: ya filtrado y ordenado
+    var deckQT = null;   // pausa corta mientras se escribe en el buscador
+    function fold(x) { // minúsculas y sin acentos, para comparar y buscar sin que importen
+      return String(x || "").toLowerCase().replace(/ß/g, "ss").replace(/ł/g, "l").replace(/ø/g, "o").replace(/œ/g, "oe").replace(/æ/g, "ae").replace(/ς/g, "σ")
+        .normalize("NFD").replace(/[̀-ͯ]/g, "");
+    }
+    var ART_RE = { // artículos que no cuentan al ordenar alfabéticamente (sobre el texto ya sin acentos)
+      es: /^(?:el |la |los |las |lo |un |una |unos |unas )/,
+      fr: /^(?:l['’]|le |la |les |un |une |des |du )/, it: /^(?:l['’]|il |lo |la |i |gli |le |un |uno |una |un['’])/,
+      pt: /^(?:o |a |os |as |um |uma |uns |umas )/, ca: /^(?:l['’]|el |la |els |les |un |una )/, en: /^(?:the |a |an |to )/,
+      de: /^(?:der |die |das |ein |eine )/, el: /^(?:ο |η |το |οι |τα |ενας |μια |ενα )/
+    };
+    function sortKey(w, code) { var k = fold(w).replace(/^[\s\-–¡¿"«(]+/, ""), re = ART_RE[code]; return re ? k.replace(re, "") : k; }
+    function entryState(e, now) { // lo que dicen sus tarjetas (palabra, frase e inversa) que ya se han empezado a estudiar
+      var st = { isNew: true, learning: false, review: false, due: false, next: Infinity, lapses: 0 };
+      ["word", "sentence", "rev"].forEach(function (m) {
+        var raw = S.review[e.id + ":" + m];
+        if (!raw || raw.state === FS.State.New) return;
+        var c = reviveCard(raw), at = dueAt(c);
+        st.isNew = false;
+        if (c.state === FS.State.Review) st.review = true; else st.learning = true;
+        if (at <= now) st.due = true;
+        if (at < st.next) st.next = at;
+        st.lapses += raw.lapses || 0;
+      });
+      return st;
+    }
+    function sortBy(arr, keyOf, desc) { // estable: a igual clave se mantiene el orden de antes (más reciente primero)
+      var k = arr.map(function (e, i) { return { e: e, k: keyOf(e), i: i }; });
+      k.sort(function (a, b) { return a.k < b.k ? (desc ? 1 : -1) : a.k > b.k ? (desc ? -1 : 1) : a.i - b.i; });
+      return k.map(function (x) { return x.e; });
+    }
+    function filtersActive() { return !!(S.q.trim() || S.fState !== "all" || S.fSent !== "all" || (hasGender(S.lang) && S.fGender !== "all")); }
+    function resetFilters() { S.q = ""; S.fState = "all"; S.fSent = "all"; S.fGender = "all"; S.deckShown = DECK_PAGE; }
+    function resetDeckView() { resetFilters(); S.fSort = "new"; S.qSent = true; }
+    function buildDeckList() {
+      var now = Date.now(), terms = fold(S.q).split(/\s+/).filter(Boolean), hasG = hasGender(S.lang), out = [], i;
+      for (i = S.deck.length - 1; i >= 0; i--) { // de la más reciente a la más antigua
+        var e = S.deck[i], both = !!(e.esSent && e.deSent);
+        if (S.fSent === "with" && !both) continue;
+        if (S.fSent === "without" && both) continue;
+        if (hasG && S.fGender !== "all") { var g = genderInfo(e).g; if (S.fGender === "none" ? !!g : g !== S.fGender) continue; }
+        if (S.fState !== "all") {
+          var st = entryState(e, now);
+          if (S.fState === "new" ? !st.isNew : S.fState === "learning" ? !st.learning : S.fState === "review" ? !st.review : !st.due) continue;
+        }
+        if (terms.length) {
+          var hay = fold(e.esWord + " " + e.deWord + (S.qSent ? " " + (e.esSent || "") + " " + (e.deSent || "") : ""));
+          if (!terms.every(function (t) { return hay.indexOf(t) >= 0; })) continue;
+        }
+        out.push(e);
+      }
+      if (S.fSort === "old") out.reverse();
+      else if (S.fSort === "az") out = sortBy(out, function (e) { return sortKey(e.deWord, S.lang); });
+      else if (S.fSort === "azEs") out = sortBy(out, function (e) { return sortKey(e.esWord, "es"); });
+      else if (S.fSort === "due") out = sortBy(out, function (e) { return entryState(e, now).next; });
+      else if (S.fSort === "lapses") out = sortBy(out, function (e) { return entryState(e, now).lapses; }, true);
+      return out;
+    }
+    function deckCountText() {
+      var n = S.deck.length;
+      return filtersActive() ? curList.length + " de " + n + " palabras" : n + " palabra" + (n === 1 ? "" : "s");
+    }
+    function deckBodyHtml() {
+      if (!S.deck.length) return '<div class="empty">Todavía no hay palabras. Añádelas en la pestaña Crear.</div>';
+      if (!curList.length) return '<div class="empty">Ninguna entrada coincide con lo que buscas.<br><button class="link-btn js-freset">Quitar filtros</button></div>';
+      return '<ul class="deck-list">' + rowsHtml(0, shownCount()) + "</ul>" + deckMoreHtml();
+    }
+    function updateDeckList() { // al escribir o cambiar un filtro solo se redibuja la lista: el buscador no pierde el foco
+      curList = buildDeckList();
+      var body = document.getElementById("deckBody"), c = document.getElementById("deckCount"), r = document.getElementById("fReset");
+      if (body) body.innerHTML = deckBodyHtml();
+      if (c) c.textContent = deckCountText();
+      if (r) r.hidden = !filtersActive();
+    }
+    function dirToggleHtml() {
+      return '<button class="dir-toggle" id="dirToggle" aria-label="Cambiar orden de idiomas">' +
+        (S.deckDir === "it-es" ? flag(S.lang) + '<span class="dir-arrow">→</span>' + flag("es") : flag("es") + '<span class="dir-arrow">→</span>' + flag(S.lang)) + "</button>";
+    }
+    function fselect(id, label, opts, cur) {
+      return '<label class="fsel"><span class="newlim-t">' + label + '</span><select id="' + id + '" class="in sel-sm" aria-label="' + label + '">' +
+        opts.map(function (o) { return '<option value="' + o[0] + '"' + (cur === o[0] ? " selected" : "") + ">" + o[1] + "</option>"; }).join("") + "</select></label>";
+    }
+    function renderMazo() {
+      curList = buildDeckList();
+      var pend = S.deck.filter(needsAny).length, gOpts = [["all", "Todos"]], key = {};
+      Object.keys(GVAR).forEach(function (k) { key[GVAR[k]] = k; });
+      LANG_BY[S.lang].gender.forEach(function (g) { gOpts.push([key[g[0]], g[1]]); });
+      gOpts.push(["none", "Sin género"]);
+      return '<section class="panel">' +
+        '<div class="deck-head"><h2 class="panel-title">Mazo</h2><div class="deck-head-right"><span class="deck-count" id="deckCount">' + deckCountText() + "</span>" + dirToggleHtml() + "</div></div>" +
+        '<div class="deck-tools"><div class="deck-search"><input id="deckQ" class="in" type="search" placeholder="Buscar una palabra o una frase…" aria-label="Buscar en el mazo" autocomplete="off" spellcheck="false" value="' + esc(S.q) + '" /></div>' +
+        '<div class="deck-filters">' +
+        fselect("fState", "Estado", [["all", "Todas"], ["new", "Nuevas"], ["learning", "En aprendizaje"], ["review", "En repaso"], ["due", "Toca repasar"]], S.fState) +
+        fselect("fSent", "Frase", [["all", "Todas"], ["with", "Con frase"], ["without", "Sin frase"]], S.fSent) +
+        (hasGender(S.lang) ? fselect("fGender", "Género", gOpts, S.fGender) : "") +
+        fselect("fSort", "Orden", [["new", "Más recientes"], ["old", "Más antiguas"], ["az", "A-Z en " + langName()], ["azEs", "A-Z en español"], ["due", "Próximo repaso"], ["lapses", "Más fallos"]], S.fSort) +
+        '<label class="deck-chk"><input type="checkbox" id="qSent"' + (S.qSent ? " checked" : "") + " /> Buscar también en las frases</label>" +
+        '<button class="link-btn js-freset" id="fReset"' + (filtersActive() ? "" : " hidden") + ">Quitar filtros</button></div></div>" +
+        legendHtml(pend ? '<button class="link-btn js-detect">' + detectLabel(pend) + "</button>" : "") +
+        '<div id="deckBody">' + deckBodyHtml() + "</div></section>";
+    }
+    function recentHtml() { // las últimas añadidas, de la más reciente a la más antigua
+      var out = [];
+      for (var k = S.deck.length - 1; k >= 0 && out.length < RECENT; k--) out.push(rowHtml(S.deck[k]));
+      return out.join("");
+    }
+    function afterEdit() { // si se empezó a editar desde Mazo, al guardar o cancelar se vuelve allí, en el mismo punto de la lista
+      if (!S.editFrom) return;
+      S.tab = S.editFrom; S.editFrom = null; S.restoreY = S.editY;
+    }
+
     function renderCrear() {
       if (S.editing && !findEntry(S.editing)) S.editing = null;
       var editing = S.editing ? findEntry(S.editing) : null;
       var e0 = editing || {};
       var count = S.deck.length;
-      var rows = rowsHtml(0, shownCount());
 
       var pend = S.deck.filter(needsAny).length;
       var legend = legendHtml(pend ? '<button class="link-btn js-detect">' + detectLabel(pend) + "</button>" : "");
@@ -6680,14 +6808,11 @@
         (editing ? '<button id="cancelEdit" class="btn btn-ghost btn-block">Cancelar</button>' : "") +
         "</section>" +
         '<section class="panel">' +
-        '<div class="deck-head"><h2 class="panel-title">Mazo</h2>' +
+        '<div class="deck-head"><h2 class="panel-title">Últimas añadidas</h2>' +
         '<div class="deck-head-right"><span class="deck-count">' + count + " palabra" + (count === 1 ? "" : "s") + "</span>" +
-        '<button class="dir-toggle" id="dirToggle" aria-label="Cambiar orden de idiomas">' +
-        (S.deckDir === "it-es" ? flag(S.lang) + '<span class="dir-arrow">→</span>' + flag("es")
-          : flag("es") + '<span class="dir-arrow">→</span>' + flag(S.lang)) +
-        "</button></div></div>" +
-        legend +
-        (count ? '<ul class="deck-list">' + rows + "</ul>" + deckMoreHtml()
+        dirToggleHtml() + "</div></div>" +
+        legendHtml() +
+        (count ? '<ul class="deck-list">' + recentHtml() + "</ul>" + '<div class="deck-more"><button class="link-btn" id="goMazo">Ver todo el mazo y buscar en él →</button></div>'
           : '<div class="empty">Todavía no hay palabras. Añade la primera arriba.</div>') +
         "</section>";
     }
@@ -6944,6 +7069,7 @@
       var b = ev.target.closest(".tab"); if (!b) return;
       S.tab = b.dataset.tab;
       if (S.tab === "estudiar") { S.studyAhead = false; S.current = null; }
+      if (S.tab === "mazo") S.deckShown = DECK_PAGE;
       render();
     });
 
@@ -7010,12 +7136,14 @@
         t.disabled = true;
         var ok = S.editing ? await updateEntry(S.editing, v) : await addEntry(v);
         t.disabled = false;
-        if (ok) { toast((S.editing ? "Cambios guardados" : "Guardada") + (F.state === "error" || F.state === "needs-permission" || F.err[S.lang] ? " solo en este navegador" : "")); S.editing = null; S.formGender = ""; S.formEsGender = ""; S.formWikt = null; S.sugg = null; S.sents = null; render(); focusFirst(); if (S.autoGen) detectGenders({ ids: [ok] }); }
+        if (ok) { toast((S.editing ? "Cambios guardados" : "Guardada") + (F.state === "error" || F.state === "needs-permission" || F.err[S.lang] ? " solo en este navegador" : "")); S.editing = null; S.formGender = ""; S.formEsGender = ""; S.formWikt = null; S.sugg = null; S.sents = null; afterEdit(); render(); focusFirst(); if (S.autoGen) detectGenders({ ids: [ok] }); }
         else { toast("No se pudo guardar. Reintenta.", true); }
         return;
       }
       var fr = t.closest("[data-frase]");
       if (fr) { toggleFrase(fr); return; }
+      if (t.closest(".js-freset")) { resetFilters(); render(); var q0 = document.getElementById("deckQ"); if (q0) q0.focus(); return; }
+      if (t.closest("#goMazo")) { S.tab = "mazo"; S.deckShown = DECK_PAGE; render(); window.scrollTo(0, 0); return; }
       if (t.closest("#deckMore")) { showMoreRows(false); return; }
       if (t.closest("#deckAll")) { showMoreRows(true); return; }
       var del = t.closest("[data-del]");
@@ -7023,8 +7151,8 @@
       if (t.closest("#confirmYes")) { var did = S.confirmDelete; S.confirmDelete = null; var okd = await deleteEntry(did); if (!okd) toast("No se pudo eliminar.", true); render(); return; }
       if (t.closest("#confirmNo") || t.id === "modalOverlay") { S.confirmDelete = null; render(); return; }
       var ed = t.closest("[data-edit]");
-      if (ed) { S.editing = ed.getAttribute("data-edit"); S.formGender = (findEntry(S.editing) || {}).gender || ""; S.formEsGender = (findEntry(S.editing) || {}).esGender || ""; S.formWikt = null; S.sugg = null; S.sents = null; S.tab = "crear"; render(); focusFirst(); return; }
-      if (t.closest("#cancelEdit")) { S.editing = null; S.formGender = ""; S.formEsGender = ""; S.formWikt = null; S.sugg = null; S.sents = null; render(); focusFirst(); return; }
+      if (ed) { S.editing = ed.getAttribute("data-edit"); S.formGender = (findEntry(S.editing) || {}).gender || ""; S.formEsGender = (findEntry(S.editing) || {}).esGender || ""; S.formWikt = null; S.sugg = null; S.sents = null; S.editFrom = S.tab === "mazo" ? "mazo" : null; S.editY = window.scrollY; S.tab = "crear"; render(); focusFirst(); return; }
+      if (t.closest("#cancelEdit")) { S.editing = null; S.formGender = ""; S.formEsGender = ""; S.formWikt = null; S.sugg = null; S.sents = null; afterEdit(); render(); focusFirst(); return; }
       var seg = t.closest(".seg-btn");
       if (seg) { S.mode = seg.dataset.mode; S.studyAhead = false; S.current = null; render(); return; }
       if (t.closest("#ahead")) { S.studyAhead = true; pickNext(); render(); return; }
@@ -7050,6 +7178,9 @@
     });
 
     view.addEventListener("change", function (ev) {
+      var cid = ev.target && ev.target.id;
+      if (cid === "fState" || cid === "fSent" || cid === "fGender" || cid === "fSort") { S[cid] = ev.target.value; S.deckShown = DECK_PAGE; updateDeckList(); return; }
+      if (cid === "qSent") { S.qSent = !!ev.target.checked; S.deckShown = DECK_PAGE; updateDeckList(); return; }
       if (ev.target && (ev.target.id === "newWords" || ev.target.id === "newSents")) {
         var isW = ev.target.id === "newWords", n = Math.max(0, parseInt(ev.target.value, 10) || 0), id = ev.target.id;
         if (isW) { S.newWords = n; lsSet(K_NEWWORDS, String(n)); } else { S.newSents = n; lsSet(K_NEWSENTS, String(n)); }
@@ -7059,6 +7190,11 @@
       }
     });
     view.addEventListener("input", function (ev) {
+      if (ev.target && ev.target.id === "deckQ") {
+        var qi = ev.target;
+        clearTimeout(deckQT); deckQT = setTimeout(function () { S.q = qi.value; S.deckShown = DECK_PAGE; updateDeckList(); }, 150);
+        return;
+      }
       if (ev.target && (ev.target.id === "esWord" || ev.target.id === "deWord")) updateDupUI();
       if (ev.target && ev.target.id === "deWord") { updateGenderUI(); scheduleFormLookup(); updateSuggUI(); }
       if (ev.target && ev.target.id === "esWord") { updateEsGenderUI(); scheduleSuggLookup(); }

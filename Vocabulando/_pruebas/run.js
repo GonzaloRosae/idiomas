@@ -91,21 +91,23 @@ const countIs = (page, n) => page.waitForFunction((n) => { const e = document.qu
 // =====================================================================================================================
 // CREAR: lista por tramos, guardar, editar, borrar
 // =====================================================================================================================
-test("Crear · lista por tramos con 2000 palabras", async () => {
+const mazo = async (p) => { await p.click('.tab[data-tab="mazo"]'); await p.waitForSelector("#deckBody"); };
+test("Mazo · lista por tramos con 2000 palabras", async () => {
   const p = await open({ seed: newDeck("de", 2000, false) });
   await p.waitForSelector(".deck-list");
-  eq(await p.locator("li.row").count(), 100, "se dibujan 100 filas de 2000");
+  eq(await p.locator("li.row").count(), 5, "Crear solo enseña las 5 últimas añadidas (no dibuja 2000 filas)");
+  await mazo(p);
+  eq(await p.locator("li.row").count(), 100, "Mazo dibuja 100 filas de 2000");
   ok((await p.locator("li.row").first().innerText()).includes("palabra 1999"), "la primera fila es la más reciente");
   eq(await p.locator("#deckMoreInfo").innerText(), "Se muestran 100 de 2000", "texto del pie");
-  await p.fill("#esWord", "borrador");
+  await p.fill("#deckQ", "Wort1999"); await p.waitForFunction(() => document.getElementById("deckCount").textContent === "1 de 2000 palabras");
+  await p.fill("#deckQ", ""); await p.waitForFunction(() => document.getElementById("deckCount").textContent === "2000 palabras");
   await p.click("#deckMore");
   eq(await p.locator("li.row").count(), 200, "«Mostrar 100 más» → 200 filas");
-  eq(await p.inputValue("#esWord"), "borrador", "el formulario conserva lo escrito");
   await p.evaluate(() => { document.querySelectorAll("li.row")[5].__m = 1; });
   await p.locator("li.row").first().locator("[data-frase]").click();
   eq(await p.locator(".row-frase").count(), 1, "abrir una frase");
   ok(await p.evaluate(() => document.querySelectorAll("li.row")[5].__m === 1), "las demás filas no se redibujan");
-  eq(await p.inputValue("#esWord"), "borrador", "el formulario sigue intacto al abrir una frase");
   await p.click("#deckAll");
   eq(await p.locator("li.row").count(), 2000, "«Mostrar todas» → 2000 filas");
   eq(await p.locator("#deckMoreBar").count(), 0, "desaparece el pie");
@@ -130,13 +132,148 @@ test("Crear · guardar, editar y borrar", async () => {
   noErrors(p);
 });
 
-test("Crear · cambiar de idioma reinicia el tope de la lista", async () => {
+test("Mazo · cambiar de idioma reinicia el tope de la lista", async () => {
   const p = await open({ seed: { ...newDeck("de", 150, false), ...newDeck("fr", 20, false) } });
   await p.waitForSelector(".deck-list");
-  await p.click("#deckAll"); eq(await p.locator("li.row").count(), 150, "«todas» en alemán");
+  await mazo(p); await p.click("#deckAll"); eq(await p.locator("li.row").count(), 150, "«todas» en alemán");
   await p.evaluate(() => { location.hash = "#fr"; }); await countIs(p, 20);
   await p.evaluate(() => { location.hash = "#de"; }); await countIs(p, 150);
+  await mazo(p);
   eq(await p.locator("li.row").count(), 100, "al volver, el tope es otra vez 100");
+  noErrors(p);
+});
+
+// ---- Mazo: buscar, filtrar, ordenar y editar desde la lista ----
+const T0 = Date.parse("2026-01-01T10:00:00Z");
+const bucket = (lang, entries, review = {}) => ({ app: "vocabulando", version: 2, lang, savedAt: new Date().toISOString(), review, stats: { reviewsTotal: 0, byDay: {} }, log: [],
+  deck: entries.map((e, i) => ({ id: "x" + i, createdAt: T0 + i * 60000, esSent: "", deSent: "", ...e })) });
+const cnt = (p) => txt(p.locator("#deckCount"));
+const waitCount = (p, t) => p.waitForFunction((t) => document.getElementById("deckCount").textContent === t, t, { timeout: 8000 });
+const find = async (p, q, t) => { await p.fill("#deckQ", q); await p.waitForTimeout(260); await waitCount(p, t); };   // el buscador espera una pausa corta antes de filtrar
+const des = (p) => p.locator("li.row .row-de").allInnerTexts();
+
+test("Mazo · el buscador no distingue mayúsculas ni acentos, junta varias palabras y busca en las frases", async () => {
+  const p = await open({ seed: { de: bucket("de", [
+    { esWord: "el coche", deWord: "das Auto", esSent: "Mi coche es rojo", deSent: "Mein Auto ist rot" },
+    { esWord: "la calle", deWord: "die Straße" },
+    { esWord: "el abrigo", deWord: "der Mantel", esSent: "Hace frío, ponte el abrigo", deSent: "Es ist kalt, zieh den Mantel an" },
+    { esWord: "sobre", deWord: "über" },
+    { esWord: "la escuela", deWord: "die Schule", esSent: "Voy a la escuela sobre ruedas", deSent: "Ich fahre mit dem Rad zur Schule" }]) } });
+  await mazo(p);
+  eq(await cnt(p), "5 palabras", "sin buscar: las 5");
+  await find(p, "UBER", "1 de 5 palabras"); eq(await des(p), ["über"], "«UBER» encuentra «über»");
+  await find(p, "strasse", "1 de 5 palabras"); eq(await des(p), ["die Straße"], "«strasse» encuentra «Straße»");
+  await find(p, "frio", "1 de 5 palabras"); eq(await des(p), ["der Mantel"], "también dentro de las frases, sin acento");
+  await find(p, "auto rot", "1 de 5 palabras"); eq(await des(p), ["das Auto"], "varias palabras: salen las entradas que las llevan todas (aunque estén en sitios distintos)");
+  await find(p, "schule mantel", "0 de 5 palabras"); ok(true, "si cada palabra está en una entrada distinta, no sale ninguna (hacen falta todas)");
+  await find(p, "sobre", "2 de 5 palabras"); eq(await des(p), ["die Schule", "über"], "sale lo más reciente primero: «sobre» está en una palabra y en una frase");
+  await p.uncheck("#qSent"); await waitCount(p, "1 de 5 palabras"); eq(await des(p), ["über"], "sin «Buscar también en las frases» solo cuentan las palabras");
+  await find(p, "zzz", "0 de 5 palabras");
+  ok(/Ninguna entrada coincide/.test(await txt(p.locator("#deckBody"))), "si no hay nada, lo dice");
+  await p.click("#deckBody .js-freset"); await waitCount(p, "5 palabras");
+  eq([await p.inputValue("#deckQ"), await p.locator("li.row").count()], ["", 5], "«Quitar filtros» vacía el buscador y vuelve a mostrar todo");
+  await p.fill("#deckQ", "  über  "); await waitCount(p, "1 de 5 palabras"); ok(true, "los espacios sobrantes no molestan");
+  noErrors(p);
+});
+
+test("Mazo · filtros por estado, por frase y por género", async () => {
+  const d = G.deck("de", 12, true);   // 12 palabras en repaso, con frase; i = 0,1,2,9,10,11 vencen el 5 de marzo
+  const extra = [{ esWord: "el coche", deWord: "Auto" }, { esWord: "la casa", deWord: "das Haus", esSent: "Mi casa", deSent: "Mein Haus" }, { esWord: "el pez", deWord: "Fisch" }];
+  extra.forEach((e, i) => { d.deck.push({ id: "n" + i, createdAt: T0 + (100 + i) * 60000, esSent: "", deSent: "", ...e }); });
+  d.review["n2:word"] = { ...G.card(5, 1), state: 1, due: "2026-03-20T12:00:00.000Z" };   // «Fisch»: en aprendizaje, aún no toca
+  const p = await open({ now: [2026, 3, 5, 12, 0, 0], seed: { de: d } }); await mazo(p);
+  eq(await cnt(p), "15 palabras", "15 entradas");
+  const sel = async (id, v, t) => { await p.selectOption("#" + id, v); await waitCount(p, t); };
+  await sel("fState", "new", "2 de 15 palabras"); eq(await des(p), ["das Haus", "Auto"], "Nuevas: las que aún no se han estudiado");
+  await sel("fState", "learning", "1 de 15 palabras"); eq(await des(p), ["Fisch"], "En aprendizaje");
+  await sel("fState", "review", "12 de 15 palabras"); ok(true, "En repaso: las 12 con intervalo de días");
+  await sel("fState", "due", "6 de 15 palabras"); ok(true, "Toca repasar: las 6 que vencen ya");
+  await sel("fState", "all", "15 palabras");
+  await sel("fSent", "without", "2 de 15 palabras"); eq(await des(p), ["Fisch", "Auto"], "Sin frase");
+  await sel("fSent", "with", "13 de 15 palabras"); ok(true, "Con frase");
+  await sel("fSent", "all", "15 palabras");
+  eq(await p.locator("#fGender option").allInnerTexts(), ["Todos", "masculino", "femenino", "neutro", "ambiguo", "Sin género"], "el filtro de género ofrece los del idioma");
+  await sel("fGender", "m", "4 de 15 palabras"); ok(true, "masculino: los «der» (4 de las 12)");
+  await sel("fGender", "none", "2 de 15 palabras"); eq(await des(p), ["Fisch", "Auto"], "Sin género: lo que no tiene artículo ni género");
+  await sel("fGender", "all", "15 palabras");
+  await sel("fState", "review", "12 de 15 palabras"); await sel("fSent", "with", "12 de 15 palabras"); await sel("fGender", "f", "4 de 15 palabras");
+  ok(await p.locator("#fReset").isVisible(), "con filtros puestos aparece «Quitar filtros»");
+  await p.click("#fReset"); await waitCount(p, "15 palabras");
+  eq(await p.evaluate(() => ["fState", "fSent", "fGender"].map((i) => document.getElementById(i).value)), ["all", "all", "all"], "y los deja todos en «Todas»");
+  const en = await open({ lang: "en", seed: { en: G.deck("en", 5, false) } }); await mazo(en);
+  eq(await en.locator("#fGender").count(), 0, "en inglés no hay filtro de género");
+  noErrors(p); noErrors(en);
+});
+
+test("Mazo · orden: recientes, antiguas, alfabético sin contar el artículo, próximo repaso y más fallos", async () => {
+  const E = [{ esWord: "el barco", deWord: "das Boot" }, { esWord: "la manzana", deWord: "der Apfel" }, { esWord: "el tiempo", deWord: "die Zeit" }, { esWord: "el tren", deWord: "ein Zug" }, { esWord: "el nuevo", deWord: "Zebra" }];
+  const rv = {
+    "x0:word": { ...G.card(7, 3), lapses: 0 }, "x1:word": { ...G.card(3, 3), lapses: 4 }, "x2:word": { ...G.card(5, 3), lapses: 2 }, "x3:word": { ...G.card(9, 3), lapses: 1 }
+  };   // x4 («Zebra») es nueva
+  const p = await open({ now: [2026, 3, 1, 12, 0, 0], seed: { de: bucket("de", E, rv) } }); await mazo(p);
+  const ord = async (v) => { await p.selectOption("#fSort", v); await p.waitForTimeout(80); return des(p); };
+  eq(await des(p), ["Zebra", "ein Zug", "die Zeit", "der Apfel", "das Boot"], "por defecto, lo más reciente primero");
+  eq(await ord("old"), ["das Boot", "der Apfel", "die Zeit", "ein Zug", "Zebra"], "más antiguas");
+  eq(await ord("az"), ["der Apfel", "das Boot", "Zebra", "die Zeit", "ein Zug"], "A-Z en alemán sin contar «der/die/das/ein»");
+  eq(await ord("azEs"), ["el barco", "la manzana", "el nuevo", "el tiempo", "el tren"].map((x) => ({ "el barco": "das Boot", "la manzana": "der Apfel", "el nuevo": "Zebra", "el tiempo": "die Zeit", "el tren": "ein Zug" })[x]), "A-Z en español sin contar «el/la»");
+  eq(await ord("due"), ["der Apfel", "die Zeit", "das Boot", "ein Zug", "Zebra"], "próximo repaso: lo que antes vence primero y lo nuevo al final");
+  eq(await ord("lapses"), ["der Apfel", "die Zeit", "ein Zug", "Zebra", "das Boot"], "más fallos primero (a igual número, lo más reciente)");
+  await p.selectOption("#fSort", "az"); await find(p, "ze", "2 de 5 palabras"); eq(await des(p), ["Zebra", "die Zeit"], "el orden elegido se mantiene al buscar");
+  noErrors(p);
+});
+
+test("Mazo · editar o borrar desde la lista no te saca de ella", async () => {
+  const p = await open({ seed: newDeck("de", 120, false) }); await mazo(p);
+  await find(p, "Wort", "120 de 120 palabras");
+  await find(p, "Wort1", "31 de 120 palabras");
+  await p.evaluate(() => window.scrollTo(0, 900)); await p.waitForTimeout(50);
+  const row = p.locator("li.row").nth(12); await row.scrollIntoViewIfNeeded();
+  const y0 = await p.evaluate(() => window.scrollY), name = await row.locator(".row-de").innerText();
+  await row.locator("[data-edit]").click();
+  ok(await p.locator('.tab[data-tab="crear"]').evaluate((b) => b.classList.contains("is-active")), "el lápiz lleva a Crear");
+  eq(await p.inputValue("#deWord"), name, "con la entrada cargada");
+  await p.fill("#deWord", "das Geändert"); await p.click("#save");
+  await p.waitForFunction(() => document.querySelector('.tab[data-tab="mazo"]').classList.contains("is-active"));
+  eq(await p.inputValue("#deckQ"), "Wort1", "al guardar vuelves a Mazo con la búsqueda que tenías");
+  ok(Math.abs((await p.evaluate(() => window.scrollY)) - y0) < 6, "y en el mismo punto de la lista");
+  ok((await des(p)).includes("das Geändert"), "con el cambio hecho");
+  await p.locator("li.row").first().locator("[data-edit]").click(); await p.click("#cancelEdit");
+  ok(await p.locator('.tab[data-tab="mazo"]').evaluate((b) => b.classList.contains("is-active")), "cancelar también vuelve a Mazo");
+  await p.locator("li.row").first().locator("[data-del]").click(); await p.click("#confirmYes");
+  await waitCount(p, "30 de 119 palabras");
+  eq(await p.inputValue("#deckQ"), "Wort1", "borrar desde Mazo mantiene la búsqueda y cuenta bien");
+  // el lápiz de las últimas añadidas (en Crear) sigue siendo de Crear
+  await p.click('.tab[data-tab="crear"]'); await p.locator("li.row").first().locator("[data-edit]").click(); await p.click("#cancelEdit");
+  ok(await p.locator('.tab[data-tab="crear"]').evaluate((b) => b.classList.contains("is-active")), "editar desde Crear no te manda a Mazo");
+  noErrors(p);
+});
+
+test("Crear · bajo el formulario quedan las 5 últimas añadidas y un enlace al mazo", async () => {
+  const p = await open({ seed: newDeck("de", 30, false) });
+  eq(await p.locator("li.row").count(), 5, "5 filas");
+  ok((await p.locator("li.row").first().innerText()).includes("palabra 29"), "la más reciente arriba");
+  eq(await txt(p.locator(".deck-count")), "30 palabras", "y el total del mazo");
+  await p.fill("#esWord", "la nueva"); await p.fill("#deWord", "die Neue"); await p.click("#save"); await countIs(p, 31);
+  ok((await p.locator("li.row").first().innerText()).includes("die Neue"), "lo que acabas de guardar aparece arriba del todo");
+  eq(await p.locator("li.row").count(), 5, "siguen siendo 5");
+  await p.click("#goMazo");
+  ok(await p.locator('.tab[data-tab="mazo"]').evaluate((b) => b.classList.contains("is-active")) && (await cnt(p)) === "31 palabras", "«Ver todo el mazo» abre Mazo");
+  await p.evaluate(() => { location.hash = "#fr"; }); await p.waitForTimeout(100);
+  await p.evaluate(() => { location.hash = "#de"; }); await p.waitForTimeout(100);
+  await p.click('.tab[data-tab="mazo"]'); await p.fill("#deckQ", "Neue"); await p.waitForTimeout(260); await waitCount(p, "1 de 31 palabras");
+  await p.evaluate(() => { location.hash = "#fr"; }); await p.waitForTimeout(100); await p.evaluate(() => { location.hash = "#de"; }); await p.waitForTimeout(100);
+  await p.click('.tab[data-tab="mazo"]'); eq(await p.inputValue("#deckQ"), "", "al cambiar de idioma la búsqueda se vacía");
+  const v = await open({ lang: "fr", seed: {} }); await v.click('.tab[data-tab="mazo"]');
+  ok(/Todavía no hay palabras/.test(await txt(v.locator("#deckBody"))), "con el mazo vacío, Mazo lo explica");
+  noErrors(p); noErrors(v);
+});
+
+test("Mazo · cuatro pestañas caben en el móvil y la ayuda lo explica", async () => {
+  const p = await open({ viewport: { width: 390, height: 800 }, seed: newDeck("de", 40, true) }); await mazo(p);
+  eq(await p.evaluate(() => [...document.querySelectorAll(".tab")].map((b) => b.textContent)), ["Crear", "Estudiar", "Mazo", "Actividad"], "las cuatro pestañas, en ese orden");
+  eq(await p.evaluate(() => [document.documentElement.scrollWidth > innerWidth + 1, [...document.querySelectorAll(".tab")].every((b) => b.getBoundingClientRect().right <= innerWidth && b.getBoundingClientRect().left >= 0)]), [false, true], "sin desplazamiento horizontal y todas dentro de la pantalla");
+  await p.click(".js-info:visible"); const h = await txt(p.locator("#infoOverlay"));
+  ok(/Mazo/.test(h) && /no distingue mayúsculas ni acentos/.test(h) && /cambias de idioma sin pasar por la pantalla de inicio/.test(h), "la ayuda describe Mazo y el chip del idioma");
   noErrors(p);
 });
 
@@ -412,7 +549,7 @@ test("Inversa · del idioma al español, con su propio contador y sin dejar rest
   const d = await stored(p); eq(Object.keys(d.review), ["id000000:rev"], "se guarda como tarjeta «inversa» de esa palabra");
   eq(Object.keys(d.stats.newByDay).map((k) => k.split(":")[1]), ["rev"], "el contador de nuevas es el del modo inversa");
   await p.click('.seg-btn[data-mode="word"]'); eq(await txt(p.locator(".stats")), "0 por repasar 20 nuevas hoy 10 en espera ↶ Deshacer", "el modo Palabras no se ve afectado");
-  await p.click('.tab[data-tab="crear"]'); await p.click('[data-del="id000000"]'); await p.click("#confirmYes"); await countIs(p, 29);
+  await p.click('.tab[data-tab="mazo"]'); await p.click('[data-del="id000000"]'); await p.click("#confirmYes"); await p.waitForFunction(() => document.getElementById("deckCount").textContent === "29 palabras");
   eq(Object.keys((await stored(p)).review).filter((k) => k.startsWith("id000000")), [], "al borrar la palabra desaparece también su tarjeta inversa");
   await p.click('.tab[data-tab="actividad"]'); await p.click("#revSw"); await study(p);
   eq(await p.locator(".seg-btn").allInnerTexts(), ["Palabras", "Frases"], "al apagarla desaparece la pestaña");
@@ -440,7 +577,7 @@ test("Pronunciación · botones, atajo P, audio automático y limpieza del texto
   eq([sp.length, sp[3].text], [4, "der Wort0"], "con «Pronunciar al mostrar la respuesta» habla al mostrarla");
   // texto con alternativas y paréntesis
   await p.evaluate(() => { const d = JSON.parse(localStorage.getItem("vocabulando:data:de")); d.deck[0].deWord = "die Katze (pl. Katzen) / der Kater"; localStorage.setItem("vocabulando:data:de", JSON.stringify(d)); });
-  await p.reload(); await p.waitForSelector("#view"); await p.locator("li.row").last().locator(".say").click();
+  await p.reload(); await p.waitForSelector("#view"); await mazo(p); await p.locator("li.row").last().locator(".say").click();
   eq((await p.evaluate(() => window.__spoken)).pop().text, "die Katze, der Kater", "quita los paréntesis y separa las alternativas");
   noErrors(p);
 });
