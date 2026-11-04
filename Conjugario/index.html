@@ -259,6 +259,7 @@ textarea.ans.bad{background:var(--bad-bg);border-color:var(--coral)}
 .fix{font-family:var(--mono);font-size:12.5px;color:var(--coral);margin:0;min-width:0;
   word-break:break-word;overflow-wrap:anywhere;line-height:1.35}
 .fix b{color:var(--ink);font-weight:500}
+.fix.soft{color:var(--ink-soft)}
 .conj.model .row .pron{font-size:12.5px;font-weight:700;color:var(--ink-soft)}
 .conj.model .staticwrap{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .conj.model .static{font-size:13.5px;padding:7px 10px;background:var(--paper)}
@@ -852,9 +853,9 @@ body.vcb footer{font-family:var(--mono);font-size:11px;letter-spacing:.04em;colo
    CONFIGURACIÓN DE COMPILACIÓN (progresión de niveles)
    1 = solo Presente · 2 = + Pasado · 3 = + Futuro · 4 = todo (+ Condicional)
    ========================================================= */
-const BUILD_LEVEL = 4;
-const CAT_LEVEL = {presente:1, pasado:2, futuro:3, condicional:4};
-const CAT_NAME  = {presente:'Presente', pasado:'Pasado', futuro:'Futuro', condicional:'Condicional'};
+const BUILD_LEVEL = 5;
+const CAT_LEVEL = {presente:1, pasado:2, futuro:3, condicional:4, subjuntivo:5, imperativo:5};
+const CAT_NAME  = {presente:'Presente', pasado:'Pasado', futuro:'Futuro', condicional:'Condicional', subjuntivo:'Subjuntivo', imperativo:'Imperativo'};
 const isUnlocked = t => CAT_LEVEL[t.cat] <= BUILD_LEVEL;
 /* =========================================================
    ICONOS SVG (trazo heredado de currentColor)
@@ -969,24 +970,65 @@ function cleanFill(ans){
   return v.find(x => !x.includes('/')) || v[0];
 }
 const PRON_HEADS = /^(j'\s*|je\s+|tu\s+|il\/elle\/on\s+|ils\/elles\s+|il\s+|elle\s+|on\s+|nous\s+|vous\s+|ils\s+|elles\s+|io\s+|lui\/lei\s+|lui\s+|lei\s+|noi\s+|voi\s+|loro\s+|eu\s+|ele\/ela\/você\s+|eles\/elas\/vocês\s+|ele\s+|ela\s+|você\s+|nós\s+|eles\s+|elas\s+|vocês\s+|i\s+|you\s+|he\/she\/it\s+|he\s+|she\s+|it\s+|we\s+|they\s+|ich\s+|du\s+|er\/sie\/es\s+|er\s+|sie\/Sie\s+|wir\s+|ihr\s+|ja\s+|ty\s+|on\/ona\/ono\s+|ona\s+|ono\s+|my\s+|wy\s+|oni\/one\s+|oni\s+|one\s+|gdyby\S*\s+|jo\s+|ell\/ella\s+|ells\/elles\s+|nosaltres\s+|vosaltres\s+|ella\s+|ells\s+|elles\s+|ell\s+|vostè\s+|voste\s+|vostès\s+|vostes\s+|εγώ\s+|εγω\s+|εσύ\s+|εσυ\s+|αυτό[ςσ]\/αυτή\/αυτό\s+|αυτό[ςσ]\s+|αυτο[ςσ]\s+|αυτή\s+|αυτη\s+|αυτό\s+|αυτο\s+|εμεί[ςσ]\s+|εμει[ςσ]\s+|εσεί[ςσ]\s+|εσει[ςσ]\s+|αυτοί\/αυτέ[ςσ]\/αυτά\s+|αυτοί\s+|αυτοι\s+|αυτέ[ςσ]\s+|αυτε[ςσ]\s+|αυτά\s+|αυτα\s+)/;
-/* siempre sin distinguir acentos: la comprobación de acentos queda fija en segundo plano */
-function norm(s){
+/* Los acentos no cuentan… salvo donde distinguen dos formas verbales reales del idioma (alemán fährt/fahrt, portugués falámos/falamos,
+   polaco pracuję/pracuje, catalán cantes/cantés…). Eso se calcula con los propios motores: si dos formas distintas de cualquier verbo,
+   tiempo y persona coinciden al quitar los acentos, en esas formas el acento es obligatorio; en las demás se acepta sin él y se avisa. */
+function stripAcc(t){ return t.normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
+function normBase(s){ // minúsculas, apóstrofos, sin puntuación final ni pronombre; con los acentos
   let t = String(s).toLowerCase().trim().replace(/ς/g,'σ')
     .replace(/[’´`]/g,"'").replace(/\s+/g,' ').replace(/[.!?,;:]+$/,'');
-  t = t.replace(PRON_HEADS,'');
-  t = t.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  return t;
+  return t.replace(PRON_HEADS,'').normalize('NFC');
+}
+const _amb = {};
+function ambKeys(code){ // formas (sin acentos) que corresponden a dos o más formas con acento distintas
+  if(_amb[code]) return _amb[code];
+  const Lg = LANGS[code], seen = new Map(), prev = state.lang;
+  state.lang = code;                          // verbByName, NP y PS dependen del idioma activo
+  try{
+    const names = new Set();
+    Lg.tenses.forEach(t => t.pool.forEach(n => names.add(n)));
+    Lg.irr.forEach(v => names.add(v.inf));
+    names.forEach(n => {
+      let v; try{ v = verbByName(n); }catch(e){ return; }
+      if(!v) return;
+      Lg.tenses.forEach(t => PS(t).forEach(i => t.slots.forEach(sl => {
+        let a; try{ a = Lg.conj(v, sl.key, i); }catch(e){ return; }
+        if(!a || a === '—') return;
+        variants(a).forEach(f => {
+          const b = normBase(f), lax = stripAcc(b);
+          if(!seen.has(lax)) seen.set(lax, new Set());
+          seen.get(lax).add(b);
+        });
+      })));
+    });
+  } finally { state.lang = prev; }
+  const out = new Set();
+  seen.forEach((forms, lax) => { if(forms.size > 1) out.add(lax); });
+  return (_amb[code] = out);
+}
+const isAmb = lax => !!state.lang && ambKeys(state.lang).has(lax);
+function norm(s){ // forma de comparación de una respuesta
+  const b = normBase(s), lax = stripAcc(b);
+  return isAmb(lax) ? b : lax;
 }
 function matches(input, answer){
   if(!input.trim()) return false;
   const a = norm(input);
   return variants(answer).some(x => norm(x) === a);
 }
+/* si se aceptó sin los acentos que lleva la forma correcta, devuelve esa forma (para recordarla); si no, null */
+function accentFix(input, answer){
+  const a = norm(input), v = variants(answer).find(x => norm(x) === a);
+  return v && normBase(input) !== normBase(v) ? v : null;
+}
+/* palabra de una frase, para compararla: sin acentos salvo en las formas donde el acento es obligatorio */
+function wordKey(w){
+  const b = String(w).toLowerCase().replace(/ς/g,'σ').replace(/[.,;:!?¡¿]/g,'').normalize('NFC'), lax = stripAcc(b);
+  return isAmb(lax) ? b : lax;
+}
 /* comprobación laxa de una frase completa (modo difícil de transcripción) */
 function normSentence(s){
-  return String(s).toLowerCase().trim().replace(/ς/g,'σ')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    .replace(/[.!?,;:¡¿]+/g,'').replace(/\s+/g,' ').trim();
+  return String(s).toLowerCase().trim().replace(/\s+/g,' ').split(' ').filter(Boolean).map(wordKey).filter(Boolean).join(' ');
 }
 function matchesSentence(input, answer){
   if(!input.trim()) return false;
@@ -1094,6 +1136,34 @@ function frCompound(v, i, auxTense){
   const agreed = (i===3 || i===5) ? pp+'(e)s' : (i===4 ? pp+'(e)(s)' : pp+'(e)');
   return aux + ' ' + agreed;
 }
+/* imperativo (tú · nosotros · vosotros = personas 1, 3, 4) y subjuntivo presente de los irregulares; pouvoir, vouloir y devoir no se usan en imperativo */
+const FR_IMP = {
+  'être':   ['—','sois','—','soyons','soyez','—'],
+  'avoir':  ['—','aie','—','ayons','ayez','—'],
+  'aller':  ['—','va','—','allons','allez','—'],
+  'faire':  ['—','fais','—','faisons','faites','—'],
+  'savoir': ['—','sache','—','sachons','sachez','—'],
+  'venir':  ['—','viens','—','venons','venez','—'],
+  'partir': ['—','pars','—','partons','partez','—'],
+  'prendre':['—','prends','—','prenons','prenez','—'],
+  'voir':   ['—','vois','—','voyons','voyez','—'],
+  'dire':   ['—','dis','—','disons','dites','—']
+};
+const FR_SUBJV = {
+  'être':   ['sois','sois','soit','soyons','soyez','soient'],
+  'avoir':  ['aie','aies','ait','ayons','ayez','aient'],
+  'aller':  ['aille','ailles','aille','allions','alliez','aillent'],
+  'faire':  ['fasse','fasses','fasse','fassions','fassiez','fassent'],
+  'pouvoir':['puisse','puisses','puisse','puissions','puissiez','puissent'],
+  'vouloir':['veuille','veuilles','veuille','voulions','vouliez','veuillent'],
+  'savoir': ['sache','saches','sache','sachions','sachiez','sachent'],
+  'devoir': ['doive','doives','doive','devions','deviez','doivent'],
+  'venir':  ['vienne','viennes','vienne','venions','veniez','viennent'],
+  'partir': ['parte','partes','parte','partions','partiez','partent'],
+  'prendre':['prenne','prennes','prenne','prenions','preniez','prennent'],
+  'voir':   ['voie','voies','voie','voyions','voyiez','voient'],
+  'dire':   ['dise','dises','dise','disions','disiez','disent']
+};
 function frConj(v, slot, i){
   const g = v.irr ? null : frGroup(v.inf);
   switch(slot){
@@ -1104,6 +1174,15 @@ function frConj(v, slot, i){
     case 'pc':         return frCompound(v, i, 'present');
     case 'pqp':        return frCompound(v, i, 'imparfait');
     case 'condpasse':  return frCompound(v, i, 'cond');
+    case 'imp': {       /* imperativo: tú sin la -s en los verbos en -er; nosotros y vosotros = presente */
+      if(v.irr) return (FR_IMP[v.inf] || [])[i] || '—';
+      const p = frConj(v, 'present', i);
+      return (i === 1 && g === 'er') ? p.slice(0, -1) : p;
+    }
+    case 'sub': {       /* subjuntivo: raíz de «ils» + -e -es -e -ions -iez -ent */
+      if(v.irr) return (FR_SUBJV[v.inf] || [])[i] || '—';
+      return (g === 'ir' ? frStem(v.inf) + 'iss' : frStem(v.inf)) + ['e','es','e','ions','iez','ent'][i];
+    }
     default: return '';
   }
 }
@@ -1293,6 +1372,58 @@ const FR_TENSES = [
     note:'Dos auxiliares distintos en la misma frase, y ambos en la misma persona. Fíjate primero en el auxiliar y después en el participio.' }
 ];
 
+FR_TENSES.push(
+  { id:'imperatif', name:'Impératif', code:'IMPÉR', cat:'imperativo', imperative:true, persons:[1,3,4], has: v => !!FR_IMP[v.inf],
+    slots:[{key:'imp', label:'Impératif'}],
+    markers:['Maintenant,','Ensuite,','Vite,'],
+    pool:['parler','écouter','regarder','manger','commencer','finir','choisir','vendre','attendre','répondre'],
+    use:'Sirve para dar órdenes, consejos e invitaciones. Solo tiene tres formas: «tu», «nous» (la invitación: «Allons-y !») y «vous» (varias personas, o una a la que se trata de usted). No se escribe el sujeto.',
+    rules:[
+      {t:'Verbos en -er', e:'-e · -ons · -ez', x:'parler → Parle ! · Parlons ! · Parlez !', model:'parler'},
+      {t:'Verbos en -ir (2.º grupo)', e:'-is · -issons · -issez', x:'finir → Finis ! · Finissons ! · Finissez !', model:'finir'},
+      {t:'Verbos en -re', e:'-s · -ons · -ez', x:'vendre → Vends ! · Vendons ! · Vendez !', model:'vendre'},
+      {t:'Irregulares frecuentes', e:'être: sois · soyons · soyez  |  avoir: aie · ayons · ayez  |  savoir: sache · sachons · sachez', x:'Sois patient ! · Aie confiance ! · Sache-le !', table:'none'}
+    ],
+    examples:[
+      {es:'Escucha la radio.', tgt:'Écoute la radio !'},
+      {es:'Empecemos la lección.', tgt:'Commençons la leçon !'},
+      {es:'Elige un plato.', tgt:'Choisis un plat !'},
+      {es:'Esperad el autobús.', tgt:'Attendez le bus !'}
+    ],
+    tips:[
+      'Con «tu», los verbos en -er (y <b>aller</b>) pierden la <b>-s</b> final: <span class="mono">tu parles → Parle !</span> · <span class="mono">tu vas → Va !</span>',
+      'Para prohibir, se rodea el verbo con <b>ne … pas</b>: <span class="mono">Ne parle pas !</span> · <span class="mono">Ne mangeons pas !</span>',
+      'Los pronombres van <b>detrás</b> del verbo, unidos con guion: <span class="mono">Écoute-moi !</span> · <span class="mono">Dis-le !</span>',
+      'En «nous», <b>manger</b> y <b>commencer</b> conservan su cambio de ortografía: <span class="mono">mangeons</span> · <span class="mono">commençons</span>.'
+    ],
+    video:{t:'L’impératif en français', d:'Mejor uno con órdenes de la vida cotidiana.', q:'impératif français explication débutant'},
+    note:'Solo hay tres personas: no existe «je», «il» ni «ils». Para ellas el francés recurre al subjuntivo («Qu’il parle !»).' },
+  { id:'subjonctif', name:'Subjonctif présent', code:'SUBJ', cat:'subjuntivo', lead:true, has: v => !!FR_SUBJV[v.inf],
+    slots:[{key:'sub', label:'Subjonctif présent'}],
+    markers:['Il faut','Je veux','Il est important'],
+    pool:['parler','écouter','regarder','manger','commencer','finir','choisir','vendre','attendre','répondre'],
+    use:'El modo de lo que se desea, se teme o se considera necesario, pero todavía no es un hecho. Casi siempre va detrás de «que» y de expresiones como «il faut que», «je veux que» o «il est important que».',
+    rules:[
+      {t:'Verbos en -er', e:'raíz de «ils» + -e · -es · -e · -ions · -iez · -ent', x:'que je parle · que nous parlions', model:'parler'},
+      {t:'Verbos en -ir (2.º grupo)', e:'-isse · -isses · -isse · -issions · -issiez · -issent', x:'que je finisse · que nous finissions', model:'finir'},
+      {t:'Verbos en -re', e:'raíz de «ils» + -e · -es · -e · -ions · -iez · -ent', x:'que je vende · que nous vendions', model:'vendre'},
+      {t:'Irregulares frecuentes', e:'être: sois · soyons  |  avoir: aie · ayons  |  aller: aille · allions  |  faire: fasse · fassions', x:'Il faut que je sois à l’heure.', table:'none'}
+    ],
+    examples:[
+      {es:'Es necesario que hables con tus vecinos.', tgt:'Il faut que tu parles à tes voisins.'},
+      {es:'Quiero que escuches la radio.', tgt:'Je veux que tu écoutes la radio.'},
+      {es:'Es importante que terminemos el trabajo.', tgt:'Il est important que nous finissions le travail.'},
+      {es:'Es necesario que esperéis el autobús.', tgt:'Il faut que vous attendiez le bus.'}
+    ],
+    tips:[
+      'El subjuntivo aparece casi siempre tras <b>que</b>: <span class="mono">Il faut que tu parles.</span>',
+      'En «nous» y «vous» la forma es igual que en imparfait: <span class="mono">que nous parlions</span> · <span class="mono">que vous parliez</span>.',
+      'Lo piden <b>il faut que</b>, <b>vouloir que</b>, <b>il est important que</b>, <b>avant que</b>, <b>pour que</b>…',
+      'No se usa con verbos de certeza: <span class="mono">Je sais que tu parles</span> (indicativo).'
+    ],
+    video:{t:'Le subjonctif présent', d:'Busca uno que explique cuándo usarlo y no solo cómo formarlo.', q:'subjonctif présent français explication quand l’utiliser'} }
+);
+
 /* =========================================================
    2. ITALIANO · motor
    ========================================================= */
@@ -1366,6 +1497,15 @@ function itImp(v, i){
   if(v.irr) return v.imp[i];
   return v.inf.slice(0,-2) + IT_END.imp[i];
 }
+/* imperativo (tu, Lei, noi, voi, Loro = personas 1-5); potere, volere y dovere no se usan en imperativo */
+const IT_IMPE = { are:['','a','i','iamo','ate','ino'], ere:['','i','a','iamo','ete','ano'], ire:['','i','a','iamo','ite','ano'], isc:['','isci','isca','iamo','ite','iscano'] };
+const IT_IMP = {
+  essere:['—','sii','sia','siamo','siate','siano'], avere:['—','abbi','abbia','abbiamo','abbiate','abbiano'],
+  andare:['—',"va'|vai",'vada','andiamo','andate','vadano'], fare:['—',"fa'|fai",'faccia','facciamo','fate','facciano'],
+  stare:['—',"sta'|stai",'stia','stiamo','state','stiano'], sapere:['—','sappi','sappia','sappiamo','sappiate','sappiano'],
+  venire:['—','vieni','venga','veniamo','venite','vengano'], prendere:['—','prendi','prenda','prendiamo','prendete','prendano'],
+  vedere:['—','vedi','veda','vediamo','vedete','vedano'], dire:['—',"di'",'dica','diciamo','dite','dicano']
+};
 function itConj(v, slot, i){
   switch(slot){
     case 'present':{
@@ -1381,6 +1521,11 @@ function itConj(v, slot, i){
     case 'pp':       return itCompound(v, i, 'present');
     case 'congtrap': return itCompound(v, i, 'cong');
     case 'condpass': return itCompound(v, i, 'cond');
+    case 'imper': {    /* imperativo: «Lei» y «Loro» llevan las vocales cambiadas (congiuntivo) */
+      if(v.irr) return (IT_IMP[v.inf] || [])[i] || '—';
+      const g = itGroup(v.inf), e = ((g === 'ire' && v.isc) ? IT_IMPE.isc : IT_IMPE[g])[i];
+      return e ? itEuph(itStem(v.inf), e) + e : '—';
+    }
     default: return '';
   }
 }
@@ -1572,6 +1717,35 @@ const IT_TENSES = [
     note:'El condizionale passato sirve además para el <b>futuro en el pasado</b>: <b class="mono">ha detto che sarebbe venuto</b> («dijo que vendría»), donde el español usa el condicional simple.' }
 ];
 
+IT_TENSES.push(
+  { id:'imperativo', name:'Imperativo', code:'IMPER', cat:'imperativo', imperative:true, persons:[1,2,3,4,5], has: v => !!IT_IMP[v.inf],
+    slots:[{key:'imper', label:'Imperativo'}],
+    markers:['Adesso,','Per favore,','Poi,'],
+    pool:['parlare','ascoltare','mangiare','cercare','pagare','credere','ripetere','dormire','sentire','finire'],
+    use:'Sirve para dar órdenes, consejos e invitaciones. Tiene cinco formas: «tu», «Lei» (trato de usted), «noi» (la invitación: «Andiamo!»), «voi» y «Loro». No se escribe el sujeto.',
+    rules:[
+      {t:'Verbos en -are', e:'tu -a · Lei -i · noi -iamo · voi -ate · Loro -ino', x:'parlare → Parla! · Parli! · Parliamo! · Parlate! · Parlino!', model:'parlare'},
+      {t:'Verbos en -ere', e:'tu -i · Lei -a · noi -iamo · voi -ete · Loro -ano', x:'credere → Credi! · Creda! · Crediamo! · Credete! · Credano!', model:'credere'},
+      {t:'Verbos en -ire', e:'tu -i · Lei -a · noi -iamo · voi -ite · Loro -ano', x:'dormire → Dormi! · Dorma! · Dormiamo! · Dormite! · Dormano!', model:'dormire'},
+      {t:'Verbos en -ire con -isc-', e:'tu -isci · Lei -isca · noi -iamo · voi -ite · Loro -iscano', x:'finire → Finisci! · Finisca! · Finiamo! · Finite! · Finiscano!', model:'finire'},
+      {t:'Irregulares frecuentes', e:'essere: sii · sia · siamo · siate · siano  |  avere: abbi · abbia · abbiamo · abbiate · abbiano  |  andare: va’ · vada · andiamo · andate · vadano', x:'Sii paziente! · Abbia pazienza! · Andiamo!', table:'none'}
+    ],
+    examples:[
+      {es:'Escucha la radio.', tgt:'Ascolta la radio!'},
+      {es:'Pague la cuenta, por favor.', tgt:'Paghi il conto, per favore!'},
+      {es:'Comamos en el restaurante.', tgt:'Mangiamo al ristorante!'},
+      {es:'Terminad la tarea.', tgt:'Finite il compito!'}
+    ],
+    tips:[
+      'Las formas de «Lei» y «Loro» son las del <b>congiuntivo presente</b>: las vocales se intercambian, <b>-are → -i</b> y <b>-ere / -ire → -a</b>.',
+      'Para prohibir con «tu» se usa <b>non + infinitivo</b>: <span class="mono">Non parlare!</span> (no <i>non parla</i>); con las demás personas, <span class="mono">Non parli!</span> · <span class="mono">Non parliamo!</span>',
+      'Los pronombres se pegan al final del verbo: <span class="mono">Dimmi!</span> · <span class="mono">Parlagli!</span>',
+      'Varios irregulares tienen una forma corta con apóstrofo: <span class="mono">va’ · fa’ · sta’ · di’</span> (también existen <span class="mono">vai · fai · stai</span>).'
+    ],
+    video:{t:'L’imperativo in italiano', d:'Mejor uno que compare «tu» y «Lei».', q:'imperativo italiano spiegazione tu lei'},
+    note:'En «tu» las vocales son las del presente de indicativo (parli → parla); en «Lei» y «Loro» las del congiuntivo.' }
+);
+
 /* =========================================================
    3. PORTUGUÉS · motor
    ========================================================= */
@@ -1618,6 +1792,20 @@ function ptPart(v){
 function ptCompound(v, i, auxTense){
   return String(ptPart(v)).split('|').map(pp => PT_TER[auxTense][i] + ' ' + pp).join('|');
 }
+/* imperativo (tu, você, nós, vocês = personas 1-4) y presente do conjuntivo de los irregulares; poder, querer y saber no se usan en imperativo */
+const PT_IPV = {
+  ser:['—','sê','seja','sejamos','sejam'], estar:['—','está','esteja','estejamos','estejam'], ter:['—','tem','tenha','tenhamos','tenham'],
+  ir:['—','vai','vá','vamos','vão'], fazer:['—','faz','faça','façamos','façam'], dizer:['—','diz','diga','digamos','digam'],
+  ver:['—','vê','veja','vejamos','vejam'], vir:['—','vem','venha','venhamos','venham'], dar:['—','dá','dê','demos','deem'],
+  'pôr':['—','põe','ponha','ponhamos','ponham']
+};
+const PT_SJP = {
+  ser:['seja','sejas','seja','sejamos','sejam'], estar:['esteja','estejas','esteja','estejamos','estejam'], ter:['tenha','tenhas','tenha','tenhamos','tenham'],
+  ir:['vá','vás','vá','vamos','vão'], fazer:['faça','faças','faça','façamos','façam'], dizer:['diga','digas','diga','digamos','digam'],
+  ver:['veja','vejas','veja','vejamos','vejam'], vir:['venha','venhas','venha','venhamos','venham'], poder:['possa','possas','possa','possamos','possam'],
+  querer:['queira','queiras','queira','queiramos','queiram'], saber:['saiba','saibas','saiba','saibamos','saibam'],
+  dar:['dê','dês','dê','demos','deem'], 'pôr':['ponha','ponhas','ponha','ponhamos','ponham']
+};
 function ptConj(v, slot, i){
   const g = v.irr ? null : ptGroup(v.inf);
   const st = v.irr ? null : ptStem(v.inf);
@@ -1637,6 +1825,15 @@ function ptConj(v, slot, i){
     case 'cond':     return (v.irr ? v.futStem : v.inf) + PT_END.cond[i];
     case 'ptc':      return ptCompound(v, i, 'conj');
     case 'condcomp': return ptCompound(v, i, 'cond');
+    case 'sjp': {      /* presente do conjuntivo: -ar → -e… · -er/-ir → -a… (con -qu-, -gu-, -c- delante de e) */
+      if(v.irr) return (PT_SJP[v.inf] || [])[i] || '—';
+      const e = (g === 'ar' ? ['e','es','e','emos','em'] : ['a','as','a','amos','am'])[i];
+      return ptEuph(st, e) + e;
+    }
+    case 'ipv': {      /* imperativo: «tu» = presente de «ele»; «você», «nós» y «vocês» = conjuntivo */
+      if(v.irr) return (PT_IPV[v.inf] || [])[i] || '—';
+      return i === 1 ? ptConj(v, 'pres', 2) : ptConj(v, 'sjp', i);
+    }
     default: return '';
   }
 }
@@ -1818,6 +2015,58 @@ const PT_TENSES = [
     note:'Aquí el portugués es más simple que el francés y el italiano: siempre <b>ter</b>, nunca <b>ser</b>, y el participio <b>no concuerda nunca</b>. Participios irregulares frecuentes: <b class="mono">feito, dito, visto, posto, aberto, escrito</b>.' }
 ];
 
+PT_TENSES.push(
+  { id:'imperativo', name:'Imperativo', code:'IMPER', cat:'imperativo', imperative:true, persons:[1,2,3,4], has: v => !!PT_IPV[v.inf],
+    slots:[{key:'ipv', label:'Imperativo'}],
+    markers:['Agora,','Depois,','Por favor,'],
+    pool:['falar','trabalhar','comprar','esperar','pagar','comer','beber','vender','partir','decidir'],
+    use:'Sirve para dar órdenes, consejos e invitaciones. Tiene cuatro formas: «tu» (informal), «você» (trato educado), «nós» (la invitación: «Vamos!») y «vocês». No se escribe el sujeto.',
+    rules:[
+      {t:'Verbos em -ar', e:'tu -a · você -e · nós -emos · vocês -em', x:'falar → Fala! · Fale! · Falemos! · Falem!', model:'falar'},
+      {t:'Verbos em -er', e:'tu -e · você -a · nós -amos · vocês -am', x:'comer → Come! · Coma! · Comamos! · Comam!', model:'comer'},
+      {t:'Verbos em -ir', e:'tu -e · você -a · nós -amos · vocês -am', x:'partir → Parte! · Parta! · Partamos! · Partam!', model:'partir'},
+      {t:'Irregulares frecuentes', e:'ser: sê · seja · sejamos · sejam  |  ter: tem · tenha · tenhamos · tenham  |  ir: vai · vá · vamos · vão', x:'Sê paciente! · Tenha calma! · Vamos!', table:'none'}
+    ],
+    examples:[
+      {es:'Habla con los vecinos.', tgt:'Fala com os vizinhos!'},
+      {es:'Espere el autobús.', tgt:'Espere o autocarro!'},
+      {es:'Compremos el pan.', tgt:'Compremos o pão!'},
+      {es:'Dividid la cuenta.', tgt:'Dividam a conta!'}
+    ],
+    tips:[
+      'Solo «tu» sale del presente de indicativo (la forma de «ele»); «você», «nós» y «vocês» toman prestado el <b>presente do conjuntivo</b>.',
+      'Para prohibir se usa siempre el conjuntivo, también con «tu»: <span class="mono">Não fales!</span> (no <i>não fala</i>).',
+      'Los pronombres van detrás del verbo, con guion: <span class="mono">Diz-me!</span> · <span class="mono">Fala-lhe!</span>',
+      'En los verbos en -car, -gar y -çar cambia la ortografía: <span class="mono">pagar → Pague!</span>'
+    ],
+    video:{t:'Imperativo em português', d:'Mejor uno que compare «tu» y «você».', q:'imperativo português europeu explicação'},
+    note:'«Você» pide la forma de conjuntivo, no la de indicativo: «Fale!», no «Fala!».' },
+  { id:'conjuntivo', name:'Presente do conjuntivo', code:'CONJ', cat:'subjuntivo', has: v => !!PT_SJP[v.inf],
+    slots:[{key:'sjp', label:'Presente do conjuntivo'}],
+    markers:['Espero que','É importante que','Quero que'],
+    pool:['falar','trabalhar','estudar','comprar','esperar','pagar','comer','vender','partir','decidir'],
+    use:'El modo de lo que se desea, se duda o se considera necesario pero todavía no es un hecho. Va detrás de «que» con verbos y expresiones como «querer que», «esperar que» o «é importante que».',
+    rules:[
+      {t:'Verbos em -ar', e:'-e · -es · -e · -emos · -em', x:'falar → que eu fale · que nós falemos', model:'falar'},
+      {t:'Verbos em -er', e:'-a · -as · -a · -amos · -am', x:'comer → que eu coma · que nós comamos', model:'comer'},
+      {t:'Verbos em -ir', e:'-a · -as · -a · -amos · -am', x:'partir → que eu parta · que nós partamos', model:'partir'},
+      {t:'Irregulares frecuentes', e:'ser: seja · sejamos  |  ter: tenha · tenhamos  |  ir: vá · vamos  |  fazer: faça · façamos  |  dar: dê · demos', x:'É importante que eu seja pontual.', table:'none'}
+    ],
+    examples:[
+      {es:'Es importante que estudies portugués.', tgt:'É importante que estudes português.'},
+      {es:'Quiero que vengas pronto.', tgt:'Quero que venhas cedo.'},
+      {es:'Espero que comamos en el restaurante.', tgt:'Espero que comamos no restaurante.'},
+      {es:'Es importante que paguen la cuenta.', tgt:'É importante que paguem a conta.'}
+    ],
+    tips:[
+      'Casi siempre parte de la forma «eu» del presente: <span class="mono">falo → fale</span> · <span class="mono">faço → faça</span> · <span class="mono">digo → diga</span>.',
+      'Se invierten las vocales: los verbos en <b>-ar</b> toman <b>-e</b> y los en <b>-er / -ir</b> toman <b>-a</b>.',
+      'En los verbos en -car, -gar y -çar cambia la ortografía: <span class="mono">pagar → pague</span> · <span class="mono">ficar → fique</span>.',
+      'No se usa con verbos de certeza: <span class="mono">Sei que falas</span> (indicativo).'
+    ],
+    video:{t:'Presente do conjuntivo', d:'Busca uno que explique cuándo usarlo y no solo cómo formarlo.', q:'presente do conjuntivo português explicação quando usar'} }
+);
+
 /* =========================================================
    4. INGLÉS · motor
    ========================================================= */
@@ -1851,6 +2100,7 @@ function enConj(v, slot, i){
     /* detrás de «if», be admite were en todas las personas (y was al hablar) */
     case 'pastif': return v.inf === 'be' ? 'were|was' : enConj(v, 'past', i);
     case 'fut':      return 'will ' + v.inf + "|'ll " + v.inf;
+    case 'imper':    return i === 1 ? v.inf : (i === 3 ? "let's " + v.inf + '|let us ' + v.inf : '—');   /* you: verbo base · we: let’s + verbo base */
     default: return '';
   }
 }
@@ -2045,6 +2295,34 @@ const EN_TENSES = [
     note:'Al hablar casi todo se contrae: <b class="mono">If I’d known, I’d have called you</b>. Y <b class="mono">would’ve</b> suena igual que «would of», que es una falta de ortografía muy extendida entre nativos: no la copies.' }
 ];
 
+EN_TENSES.push(
+  { id:'imperative', name:'Imperative', code:'IMPER', cat:'imperativo', imperative:true, persons:[1,3], has: v => v.inf !== 'know',
+    slots:[{key:'imper', label:'Imperative'}],
+    markers:['Now,','Please,','Then,'],
+    pool:['work','listen','wait','open','close','call','help','finish','study','try'],
+    use:'Sirve para dar órdenes, consejos e invitaciones. En inglés es lo más sencillo que hay: el verbo base (sin «to») para «you», y «let’s» + verbo base para proponer algo a «we». No se escribe el sujeto.',
+    rules:[
+      {t:'«You»: el verbo sin «to»', e:'verbo base', x:'work → Work! · listen → Listen!', model:'work'},
+      {t:'«We»: let’s + verbo', e:'let’s + verbo base', x:'wait → Let’s wait! · open → Let’s open the window!', model:'wait'},
+      {t:'El verbo «be»', e:'be (nunca «are» ni «is»)', x:'Be quiet! · Let’s be careful!', model:'be'},
+      {t:'Negativo', e:'don’t + verbo · let’s not + verbo', x:'Don’t wait! · Let’s not wait!', table:'none'}
+    ],
+    examples:[
+      {es:'Escucha la radio.', tgt:'Listen to the radio!'},
+      {es:'Esperemos el autobús.', tgt:'Let’s wait for the bus!'},
+      {es:'Abre la ventana.', tgt:'Open the window!'},
+      {es:'No llegues tarde.', tgt:'Don’t be late!'}
+    ],
+    tips:[
+      'Para prohibir se usa <b>don’t</b> + verbo base: <span class="mono">Don’t open the door!</span> Con «we»: <span class="mono">Let’s not wait.</span>',
+      '«Be» también lleva don’t: <span class="mono">Don’t be late!</span> (no <i>be not late</i>).',
+      'Para suavizar la orden se añade <b>please</b>: <span class="mono">Please wait here.</span>',
+      'Si hablas a alguien concreto, puedes nombrarlo: <span class="mono">John, close the door!</span>'
+    ],
+    video:{t:'The imperative in English', d:'Mejor uno con órdenes de la vida diaria y el «let’s».', q:'imperative English explanation let’s don’t'},
+    note:'El imperativo inglés no cambia con el número: «Wait!» vale para una persona o para cien.' }
+);
+
 /* =========================================================
    5. ALEMÁN · motor
    ========================================================= */
@@ -2085,6 +2363,14 @@ const deFinal = ans => String(ans).split('|').map(x => {
   const t = x.split(' ');
   return t.length === 2 ? t[1] + ' ' + t[0] : x;
 }).join('|');
+/* imperativo (du, wir, ihr, Sie = personas 1, 3, 4, 5); können, müssen y wissen no se usan en imperativo */
+const DE_IMP = {
+  sein:['—','sei','—','seien wir','seid','seien Sie'], haben:['—','hab|habe','—','haben wir','habt','haben Sie'],
+  werden:['—','werde','—','werden wir','werdet','werden Sie'], gehen:['—','geh|gehe','—','gehen wir','geht','gehen Sie'],
+  kommen:['—','komm|komme','—','kommen wir','kommt','kommen Sie'], fahren:['—','fahr|fahre','—','fahren wir','fahrt','fahren Sie'],
+  sehen:['—','sieh|siehe','—','sehen wir','seht','sehen Sie'], geben:['—','gib','—','geben wir','gebt','geben Sie'],
+  nehmen:['—','nimm','—','nehmen wir','nehmt','nehmen Sie'], sprechen:['—','sprich','—','sprechen wir','sprecht','sprechen Sie']
+};
 function deConj(v, slot, i){
   switch(slot){
     case 'pres': return dePres(v, i);
@@ -2097,6 +2383,14 @@ function deConj(v, slot, i){
     case 'k2v':  return deJoin(deAux(v).k2[i], dePart(v));
     case 'k2f':  return deFinal(deConj(v,'k2',i));
     case 'k2vf': return deFinal(deConj(v,'k2v',i));
+    case 'imper': {    /* imperativo: du = raíz (+e), wir y Sie = infinitivo + pronombre, ihr = presente */
+      if(v.irr) return (DE_IMP[v.inf] || [])[i] || '—';
+      if(i === 1) return deStem(v.inf) + (deNeedsE(v) ? 'e' : '(e)');
+      if(i === 4) return dePres(v, 4);
+      if(i === 3) return v.inf + ' wir';
+      if(i === 5) return v.inf + ' Sie';
+      return '—';
+    }
     default: return '';
   }
 }
@@ -2287,6 +2581,35 @@ const DE_TENSES = [
     video:{t:'Irreale Bedingungssätze in der Vergangenheit', d:'Mejor uno con ejemplos de arrepentimiento («ich hätte … sollen»).', q:'irreale Bedingungssätze Vergangenheit deutsch hätte wäre Konjunktiv'},
     note:'Solo hay un tiempo para las dos mitades de la frase: <b>hätte</b> o <b>wäre</b> + participio. El alemán no distingue aquí entre «hubiera» y «habría», así que una forma menos que recordar.' }
 ];
+
+DE_TENSES.push(
+  { id:'imperativ', name:'Imperativ', code:'IMPER', cat:'imperativo', imperative:true, persons:[1,3,4,5], has: v => !!DE_IMP[v.inf],
+    slots:[{key:'imper', label:'Imperativ'}],
+    markers:['Bitte,','Jetzt,','Dann,'],
+    pool:['machen','lernen','kaufen','kochen','hören','suchen','arbeiten','warten','besuchen','bezahlen'],
+    use:'Sirve para dar órdenes, consejos e invitaciones. Tiene cuatro formas: «du», «wir» (la invitación: «Gehen wir!»), «ihr» y «Sie» (trato de usted). Con «wir» y «Sie» el pronombre se escribe detrás del verbo.',
+    rules:[
+      {t:'Verbos regulares', e:'du raíz · wir -en wir · ihr -t · Sie -en Sie', x:'machen → Mach! · Machen wir! · Macht! · Machen Sie!', model:'machen'},
+      {t:'Raíz en -t / -d (e de apoyo)', e:'du raíz + e · ihr -et', x:'arbeiten → Arbeite! · Arbeitet!', model:'arbeiten'},
+      {t:'Verbos fuertes con e → i', e:'du con i / ie y sin -e', x:'sprechen → Sprich! · geben → Gib! · nehmen → Nimm!', model:'sprechen'},
+      {t:'El verbo «sein»', e:'sei · seien wir · seid · seien Sie', x:'Sei geduldig! · Seid leise! · Seien Sie pünktlich!', model:'sein'}
+    ],
+    examples:[
+      {es:'Haz el trabajo.', tgt:'Mach die Arbeit!'},
+      {es:'Aprended alemán.', tgt:'Lernt Deutsch!'},
+      {es:'Esperemos el autobús.', tgt:'Warten wir auf den Bus!'},
+      {es:'Pague la cuenta, por favor.', tgt:'Bezahlen Sie bitte die Rechnung!'}
+    ],
+    tips:[
+      'Con «du» el cambio <b>e → i</b> de los verbos fuertes se mantiene: <span class="mono">du sprichst → Sprich!</span>; el de <b>a → ä</b>, no: <span class="mono">du fährst → Fahr!</span>',
+      'La <b>-e</b> final de «du» es opcional y suena literaria: <span class="mono">Komm! · Komme!</span>; solo es obligatoria si la raíz acaba en -t o -d: <span class="mono">Arbeite!</span>',
+      'Los verbos separables mandan el prefijo al final: <span class="mono">Ruf mich an!</span> (aquí solo se practican verbos sin prefijo separable).',
+      'Para prohibir se usa <b>nicht</b>: <span class="mono">Mach das nicht!</span> · <span class="mono">Warten Sie nicht!</span>'
+    ],
+    video:{t:'Der Imperativ', d:'Mejor uno que compare las cuatro formas con ejemplos.', q:'Imperativ deutsch erklärung du ihr Sie wir'},
+    note:'«Ihr» es idéntico al presente («ihr macht» → «Macht!»); «du» pierde la terminación -st.' }
+);
+
 /* =========================================================
    El alemán trae su propio constructor de frases: el verbo conjugado ocupa
    el segundo lugar y la forma no personal se va al final (Satzklammer), así
@@ -2373,6 +2696,19 @@ function plApplyCond(g, i){
   const suf = {0:'bym',1:'byś',2:'by',3:'byśmy',4:'byście',5:'by'}[i];
   return g.map(x => x + suf);
 }
+/* imperativo (ty, on/ona «niech», my, wy, oni «niech» = personas 1-5): de los verbos regulares se guarda la forma de «ty» y las demás se derivan;
+   chcieć, móc y pójść no se usan en imperativo */
+const PL_ROZK = {
+  'pracować':'pracuj', 'czytać':'czytaj', 'robić':'rób', 'mieszkać':'mieszkaj', 'mówić':'mów',
+  'kupować':'kupuj', 'grać':'graj', 'uczyć':'ucz', 'dzwonić':'dzwoń', 'słuchać':'słuchaj'
+};
+const PL_ROZK_IRR = {
+  'być':['—','bądź','niech będzie','bądźmy','bądźcie','niech będą'], 'mieć':['—','miej','niech ma','miejmy','miejcie','niech mają'],
+  'iść':['—','idź','niech idzie','idźmy','idźcie','niech idą'], 'jeść':['—','jedz','niech je','jedzmy','jedzcie','niech jedzą'],
+  'przyjść':['—','przyjdź','niech przyjdzie','przyjdźmy','przyjdźcie','niech przyjdą'], 'zjeść':['—','zjedz','niech zje','zjedzmy','zjedzcie','niech zjedzą'],
+  'wziąć':['—','weź','niech weźmie','weźmy','weźcie','niech wezmą'], 'powiedzieć':['—','powiedz','niech powie','powiedzmy','powiedzcie','niech powiedzą'],
+  'pomóc':['—','pomóż','niech pomoże','pomóżmy','pomóżcie','niech pomogą']
+};
 function plConj(v, slot, i){
   switch(slot){
     case 'pres':  return plPres(v, i);
@@ -2386,6 +2722,12 @@ function plConj(v, slot, i){
       const withInf = BEDE[i] + ' ' + v.inf;
       const withPart = plGendFor(v, i).map(g => BEDE[i] + ' ' + g);
       return [withInf, ...withPart].join('|');
+    }
+    case 'rozk': {     /* imperativo: «my» y «wy» se pegan a la forma de «ty»; las terceras personas llevan «niech» + presente */
+      if(v.irr) return (PL_ROZK_IRR[v.inf] || [])[i] || '—';
+      const ty = PL_ROZK[v.inf];
+      if(!ty) return '—';
+      return ['—', ty, 'niech ' + plPres(v, 2), ty + 'my', ty + 'cie', 'niech ' + plPres(v, 5)][i];
     }
     default: return '';
   }
@@ -2693,6 +3035,37 @@ const PL_TENSES = [
     note:'El polaco moderno no distingue gramaticalmente entre el 2.º y el 3.er grado: la misma estructura con <b>gdyby</b> sirve para lo hipotético del presente y del pasado. Lo que orienta la frase hacia lo ya irremediable es el contexto (<b>wtedy</b>, una fecha, un adverbio de pasado), no el aspecto: valen verbos imperfectivos (<i>był</i>, <i>wiedział</i>) y perfectivos.' }
 ];
 
+PL_TENSES.push(
+  { id:'rozkazujacy', name:'Tryb rozkazujący', code:'ROZK', cat:'imperativo', imperative:true, persons:[1,2,3,4,5],
+    has: v => !!PL_ROZK_IRR[v.inf],
+    slots:[{key:'rozk', label:'Tryb rozkazujący'}],
+    markers:['Teraz','Proszę,','Potem'],
+    pool:['pracować','czytać','robić','mieszkać','mówić','kupować','grać','uczyć','dzwonić','słuchać'],
+    use:'Sirve para dar órdenes, consejos e invitaciones. «Ty», «my» (la invitación: «Chodźmy!») y «wy» tienen forma propia; con la tercera persona se usa «niech» + presente («Niech czyta!»).',
+    rules:[
+      {t:'Verbos en -ać', e:'ty -j · my -jmy · wy -jcie', x:'czytać → Czytaj! · Czytajmy! · Czytajcie!', model:'czytać'},
+      {t:'Verbos en -ować', e:'ty -uj · my -ujmy · wy -ujcie', x:'pracować → Pracuj! · Pracujmy! · Pracujcie!', model:'pracować'},
+      {t:'Verbos en -ić / -yć', e:'ty raíz (a menudo con cambios) · my -my · wy -cie', x:'uczyć → Ucz! · Uczmy! · Uczcie!  |  robić → Rób!  |  mówić → Mów!', model:'uczyć'},
+      {t:'Tercera persona: niech', e:'niech + presente', x:'niech czyta · niech czytają', table:'none'},
+      {t:'Irregulares frecuentes', e:'być: bądź · bądźmy · bądźcie  |  mieć: miej  |  iść: idź  |  jeść: jedz  |  wziąć: weź', x:'Bądź cierpliwy! · Miej cierpliwość! · Idź do domu!', table:'none'}
+    ],
+    examples:[
+      {es:'Lee el libro.', tgt:'Czytaj książkę!'},
+      {es:'Trabajemos en el banco.', tgt:'Pracujmy w banku!'},
+      {es:'Hablad en polaco.', tgt:'Mówcie po polsku!'},
+      {es:'Que llame a su madre.', tgt:'Niech dzwoni do mamy!'}
+    ],
+    tips:[
+      'Para prohibir se usa <b>nie</b> + el imperativo del verbo imperfectivo: <span class="mono">Nie rób tego!</span> · <span class="mono">Nie mów!</span>',
+      'Muchos verbos acortan la raíz: <span class="mono">robić → rób</span> (con cambio de vocal), <span class="mono">mówić → mów</span>, <span class="mono">dzwonić → dzwoń</span>.',
+      'Con «my» y «wy» la terminación se pega a la forma de «ty»: <span class="mono">idź → idźmy · idźcie</span>.',
+      'Los perfectivos (przyjść, zjeść, wziąć, powiedzieć, pomóc) parten de la raíz del futuro: <span class="mono">przyjdź · zjedz · weź · powiedz · pomóż</span>.'
+    ],
+    video:{t:'Tryb rozkazujący', d:'Mejor uno con las terminaciones -j / -uj y los verbos irregulares.', q:'tryb rozkazujący polski wyjaśnienie'},
+    note:'Solo hay forma propia para «ty», «my» y «wy»; «on/ona» y «oni» se rodean con «niech».' }
+);
+
+
 /* =========================================================
    6b. CATALÁN · motor
    ========================================================= */
@@ -2762,6 +3135,23 @@ function caPart(v){
 function caCompound(v, i, aux){
   return String(caPart(v)).split('|').map(pp => aux[i] + ' ' + pp).join('|');
 }
+/* subjuntivo presente (solo lo necesitan «vostè» y «vostès» del imperativo) e imperativo de los irregulares; poder, voler y saber no se usan en imperativo */
+const CA_IMP = {
+  ser:['—','sigues','sigui','siguem','sigueu','siguin'], estar:['—','estigues','estigui','estiguem','estigueu','estiguin'],
+  tenir:['—','tingues','tingui','tinguem','tingueu','tinguin'], anar:['—','ves','vagi','anem','aneu','vagin'],
+  fer:['—','fes','faci','fem','feu','facin'], dir:['—','digues','digui','diguem','digueu','diguin'],
+  veure:['—','veges','vegi','vegem','vegeu','vegin'], venir:['—','vine','vingui','vinguem','vingueu','vinguin'],
+  viure:['—','viu','visqui','visquem','visqueu','visquin'], dur:['—','du','dugui','duguem','dugueu','duguin'],
+  beure:['—','beu','begui','beguem','begueu','beguin'], prendre:['—','pren','prengui','prenguem','prengueu','prenguin'],
+  escriure:['—','escriu','escrigui','escriguem','escrigueu','escriguin'], obrir:['—','obre','obri','obrim','obriu','obrin']
+};
+/* subjuntivo presente regular: -i -is -i · (nosaltres, vosaltres = presente) · -in */
+function caSjp(v, i){
+  const g = caGroup(v.inf), st = caStem(v.inf);
+  if(i === 3 || i === 4) return caPres(v, i);
+  if(g === 'ir' && v.isc) return st + ['eixi','eixis','eixi','','','eixin'][i];
+  return (g === 'ar' ? caEuph(st, 'e') : st) + ['i','is','i','','','in'][i];
+}
 function caConj(v, slot, i){
   switch(slot){
     case 'pres':     return v.irr ? v.pres[i] : caPres(v, i);
@@ -2772,6 +3162,12 @@ function caConj(v, slot, i){
     case 'subjimp':  return caSjv(v, i);
     case 'plusc':    return caCompound(v, i, CA_HAGUES);
     case 'condperf': return caCompound(v, i, CA_HAURIA);
+    case 'imper': {    /* imperativo: «tu» = presente de «ell»; «nosaltres» y «vosaltres» = presente; «vostè» y «vostès» = subjuntivo */
+      if(v.irr) return (CA_IMP[v.inf] || [])[i] || '—';
+      if(i === 1) return caPres(v, 2);
+      if(i === 3 || i === 4) return caPres(v, i);
+      return (i === 2 || i === 5) ? caSjp(v, i) : '—';
+    }
     default: return '';
   }
 }
@@ -2974,6 +3370,36 @@ const CA_TENSES = [
     note:'Los participios regulares acaban en <b>-at</b> (-ar), <b>-ut</b> (-re) e <b>-it</b> (-ir); algunos verbos tienen uno propio: <b class="mono">prometre → promès</b>, <b class="mono">cometre → comès</b>, <b class="mono">prendre → pres</b>, <b class="mono">escriure → escrit</b>, <b class="mono">obrir → obert</b>.' }
 ];
 
+CA_TENSES.push(
+  { id:'imperatiu', name:'Imperatiu', code:'IMPER', cat:'imperativo', imperative:true, persons:[1,2,3,4,5], has: v => !!CA_IMP[v.inf],
+    slots:[{key:'imper', label:'Imperatiu'}],
+    markers:['Ara,','Si us plau,','Després,'],
+    pool:['parlar','escoltar','comprar','esperar','pagar','buscar','perdre','rebre','dormir','servir'],
+    use:'Sirve para dar órdenes, consejos e invitaciones. Tiene cinco formas: «tu», «vostè» (trato de usted; aquí la fila «ell/ella»), «nosaltres» (la invitación: «Anem!»), «vosaltres» y «vostès». No se escribe el sujeto.',
+    rules:[
+      {t:'Verbos en -ar', e:'tu -a · vostè -i · nosaltres -em · vosaltres -eu · vostès -in', x:'parlar → Parla! · Parli! · Parlem! · Parleu! · Parlin!', model:'parlar'},
+      {t:'Verbos en -re', e:'tu (sin terminación) · vostè -i · nosaltres -em · vosaltres -eu · vostès -in', x:'perdre → Perd! · Perdi! · Perdem! · Perdeu! · Perdin!', model:'perdre'},
+      {t:'Verbos en -ir', e:'tu (sin terminación) · vostè -i · nosaltres -im · vosaltres -iu · vostès -in', x:'dormir → Dorm! · Dormi! · Dormim! · Dormiu! · Dormin!', model:'dormir'},
+      {t:'Verbos en -ir con -eix-', e:'tu -eix · vostè -eixi · nosaltres -im · vosaltres -iu · vostès -eixin', x:'servir → Serveix! · Serveixi! · Servim! · Serviu! · Serveixin!', model:'servir'},
+      {t:'Irregulares frecuentes', e:'ser: sigues · sigui · siguem · sigueu · siguin  |  anar: ves · vagi · anem · aneu · vagin  |  fer: fes · faci · fem · feu · facin', x:'Sigues pacient! · Ves a casa! · Fes-ho!', table:'none'}
+    ],
+    examples:[
+      {es:'Habla con los vecinos.', tgt:'Parla amb els veïns!'},
+      {es:'Espere el autobús.', tgt:'Esperi l’autobús!'},
+      {es:'Pagad la cuenta.', tgt:'Pagueu el compte!'},
+      {es:'Durmamos ocho horas.', tgt:'Dormim vuit hores!'}
+    ],
+    tips:[
+      'Las formas salen de otros tiempos: «tu» = presente de «ell» (canta); «nosaltres» y «vosaltres» = presente (cantem, canteu); «vostè» y «vostès» = <b>subjuntivo presente</b> (canti, cantin).',
+      'Para prohibir se usa el subjuntivo, también con «tu»: <span class="mono">No cantis!</span>',
+      'Los pronombres se unen al final con guion o apóstrofo: <span class="mono">Digues-m’ho!</span> · <span class="mono">Porta’m això!</span>',
+      'En los verbos en -car, -gar, -çar y -jar cambia la ortografía: <span class="mono">buscar → Busqui!</span> · <span class="mono">pagar → Pagui!</span>'
+    ],
+    video:{t:'L’imperatiu en català', d:'Mejor uno que compare «tu» y «vostè».', q:'imperatiu català explicació tu vostè'},
+    note:'«Vostè» y «vostès» usan el subjuntivo presente, no el indicativo: «Canti!», no «Canta!».' }
+);
+
+
 /* =========================================================
    6c. GRIEGO · motor
    ========================================================= */
@@ -3029,6 +3455,15 @@ function elOpt(ans){
   });
   return out.filter((x, k) => out.indexOf(x) === k).join('|');
 }
+/* imperativo (εσύ = persona 1 · εσείς = persona 4): singular y plural/usted; έχω, είμαι, μπορώ y θέλω no se usan en imperativo */
+const EL_PROST = {
+  'γράφω':['γράψε','γράψτε'], 'διαβάζω':['διάβασε','διαβάστε'], 'αγοράζω':['αγόρασε','αγοράστε'], 'ανοίγω':['άνοιξε','ανοίξτε'],
+  'κλείνω':['κλείσε','κλείστε'], 'δουλεύω':['δούλεψε','δουλέψτε'], 'μιλάω':['μίλησε','μιλήστε'], 'ρωτάω':['ρώτησε','ρωτήστε'],
+  'βοηθάω':['βοήθησε','βοηθήστε'], 'τηλεφωνώ':['τηλεφώνησε','τηλεφωνήστε'],
+  'κάνω':['κάνε','κάντε'], 'λέω':['πες','πείτε'], 'βλέπω':['δες','δείτε'], 'τρώω':['φάε','φάτε'], 'πίνω':['πιες','πιείτε'],
+  'παίρνω':['πάρε','πάρτε'], 'δίνω':['δώσε','δώστε'], 'έρχομαι':['έλα','ελάτε'], 'πηγαίνω':['πήγαινε','πηγαίνετε'],
+  'φέρνω':['φέρε','φέρτε'], 'βρίσκω':['βρες','βρείτε']
+};
 function elConj(v, slot, i){
   return elOpt(elConjRaw(v, slot, i));
 }
@@ -3042,6 +3477,7 @@ function elConjRaw(v, slot, i){
     case 'ifimp':   return elImp(v, i);
     case 'ifplu':   return elPluperf(v, i, false);
     case 'condplu': return elPluperf(v, i, true);
+    case 'prost':   return (i === 1 || i === 4) ? ((EL_PROST[v.inf] || [])[i === 1 ? 0 : 1] || '—') : '—';   /* imperativo del aoristo */
     default: return '';
   }
 }
@@ -3349,6 +3785,34 @@ const EL_TENSES = [
     note:'Este tiempo usa el <b>pluscuamperfecto</b> griego (<b class="mono">είχα γράψει</b>) en las dos mitades de la frase. A diferencia del español («hubiera» / «habría»), el griego usa la misma estructura en las dos, con <b class="mono">θα</b> solo en la parte del resultado.' }
 ];
 
+EL_TENSES.push(
+  { id:'prostaktiki', name:'Προστακτική', code:'ΠΡΟΣΤ', cat:'imperativo', imperative:true, persons:[1,4], has: v => !!EL_PROST[v.inf],
+    slots:[{key:'prost', label:'Προστακτική'}],
+    markers:['Τώρα,','Μετά,','Γρήγορα,'],
+    pool:['γράφω','διαβάζω','αγοράζω','ανοίγω','κλείνω','δουλεύω','μιλάω','ρωτάω','βοηθάω','τηλεφωνώ'],
+    use:'Sirve para dar órdenes, consejos e invitaciones. Solo tiene dos formas propias: el singular («εσύ») y el plural, que también es el de usted («εσείς»). Casi siempre se forma sobre la raíz del aoristo: «γράφω → γράψε / γράψτε». No se escribe el sujeto.',
+    rules:[
+      {t:'Singular: raíz del aoristo + -ε', e:'raíz perfectiva + -ε', x:'γράφω → Γράψε! · διαβάζω → Διάβασε! · μιλάω → Μίλησε!', model:'γράφω'},
+      {t:'Plural y usted: raíz + -τε', e:'raíz perfectiva + -τε (la tilde baja una sílaba)', x:'γράφω → Γράψτε! · διαβάζω → Διαβάστε! · μιλάω → Μιλήστε!', model:'μιλάω'},
+      {t:'Irregulares frecuentes', e:'λέω: πες · πείτε  |  βλέπω: δες · δείτε  |  τρώω: φάε · φάτε  |  έρχομαι: έλα · ελάτε', x:'Πες μου! · Δες εδώ! · Έλα εδώ!', table:'none'}
+    ],
+    examples:[
+      {es:'Escribe una carta.', tgt:'Γράψε ένα γράμμα!'},
+      {es:'Lea un libro.', tgt:'Διαβάστε ένα βιβλίο!'},
+      {es:'Habla con los vecinos.', tgt:'Μίλησε με τους γείτονες!'},
+      {es:'Abrid la ventana.', tgt:'Ανοίξτε το παράθυρο!'}
+    ],
+    tips:[
+      'La forma de plural vale también para <b>usted</b>: <span class="mono">Ελάτε μέσα!</span> se dice a varias personas o a una a la que tratas de usted.',
+      'Para prohibir no se usa el imperativo sino <b>μη(ν)</b> + subjuntivo: <span class="mono">Μη γράφεις!</span> · <span class="mono">Μην πας!</span>',
+      'Los verbos de movimiento habituales usan también el imperativo de presente: <span class="mono">πήγαινε · πηγαίνετε</span> («ve», «id»).',
+      'La tilde se desplaza al añadir -τε: <span class="mono">γράψε → γράψτε</span> · <span class="mono">διάβασε → διαβάστε</span>.'
+    ],
+    video:{t:'Η προστακτική', d:'Mejor uno que explique el aoristo y la prohibición con μη.', q:'προστακτική ελληνικά εξήγηση αόριστος'},
+    note:'Si sabes el aoristo, ya sabes el imperativo: «έγραψα → γράψε».' }
+);
+
+
 /* =========================================================
    7. REGISTRO DE IDIOMAS
    ========================================================= */
@@ -3358,6 +3822,8 @@ const LANGS = {
     models:['parler','finir','vendre'],
     mk: inf => ({inf, comp:FR_REG[inf], irr:false, aux:'avoir'}),
     conj: frConj, subj: frSubj,
+    lead: sb => sb === 'j’' ? 'que j’' : (/^i/.test(sb) ? 'qu’' + sb : 'que ' + sb),
+    impComp: (comp, i) => { const m = i === 1 ? ['tes','ta','ton'] : i === 3 ? ['nos','notre','notre'] : ['vos','votre','votre']; return comp.replace(/\bses\b/g, m[0]).replace(/\bsa\b/g, m[1]).replace(/\bson\b/g, m[2]); },
     si:'Si', hasReg: inf => inf in FR_REG
   },
   it:{
@@ -3416,12 +3882,20 @@ const LANGS = {
 const LANG_ORDER = ['fr','it','pt','ca','pl','en','de','el'];
 const L  = () => LANGS[state.lang];
 const NP = () => L().pron.length;   /* personas del idioma activo */
+/* personas que tienen forma en un tiempo (todas, salvo en el imperativo: tú, nosotros, vosotros…) */
+const PS = t => t.persons || Array.from({length:NP()}, (_, i) => i);
+const randPerson = t => { const p = PS(t); return p[Math.floor(Math.random()*p.length)]; };
+/* sujeto que se muestra ante la forma; en los tiempos con «que» (subjuntivo francés) lo lleva delante: «que je», «qu’il» */
+const SUBJ = (t, i, form) => { const sb = L().subj(i, form); return t && t.lead && L().lead ? L().lead(sb) : sb; };
+const BANG = () => state.lang === 'fr' ? ' !' : '!';
+/* complemento de una frase en imperativo (en francés «ses voisins» pasa a «tes / nos / vos voisins» según a quién se habla) */
+const impComp = (v, i) => L().impComp ? L().impComp(v.comp, i) : v.comp;
 const T  = id => L().tenses.find(t => t.id === id);
 const S  = () => state.byLang[state.lang];
 /* =========================================================
    8. ESTADO
    ========================================================= */
-const state = { lang:null, tab:'theory', mode:'table', current:null, includeIrregulars:false, slowAudio:false, byLang:{}, timer:null, testSession:null, examSession:null };
+const state = { lang:null, tab:'theory', mode:'table', current:null, includeIrregulars:true, dictIrregulars:true, slowAudio:false, byLang:{}, timer:null, testSession:null, examSession:null };
 function clearAdvance(){ if(state.timer){ clearTimeout(state.timer); state.timer = null; } }
 function firstUnlockedTense(code){
   const t = LANGS[code].tenses.find(isUnlocked);
@@ -3435,9 +3909,22 @@ function initLangState(code){
     modesDone:{table:false, gap:false, drill:false, dictation:false},
     testDone:false, testBest:null
   });
-  state.byLang[code] = { currentTense:firstUnlockedTense(code), queues:{}, drillQueue:[], stats };
+  state.byLang[code] = { currentTense:firstUnlockedTense(code), queues:{}, drillQueue:[], stats, retry:{}, turn:0 };
 }
 Object.keys(LANGS).forEach(initLangState);
+/* Repetición adaptativa, solo dentro de la sesión (no se guarda nada: al recargar o con «Reiniciar sesión» empieza de cero).
+   Lo que fallas (verbo + persona + tiempo) vuelve a los 3 ejercicios; si lo vuelves a fallar, a los 5, 7, 9…; al acertarlo se olvida. */
+function retryList(tid){ const st = S(); return st.retry[tid] || (st.retry[tid] = []); }
+function noteResult(tid, inf, i, ok){
+  const list = retryList(tid), st = S();
+  let it = list.find(x => x.inf === inf && x.i === i);
+  if(ok){ if(it) list.splice(list.indexOf(it), 1); return; }
+  if(!it){ it = {inf, i, step:0, due:0}; list.push(it); }
+  it.step = Math.min(it.step + 1, 4);
+  it.due = st.turn + 2 * it.step + 1;
+}
+function dueRetry(tid, n){ const st = S(); return retryList(tid).filter(x => x.due <= st.turn).sort((a, b) => a.due - b.due).slice(0, n || 1); }
+function takeRetry(it){ it.due = S().turn + 2 * it.step + 1; }   // si no llega a contestarse, no se repite en bucle
 function shuffle(a){
   const c = a.slice();
   for(let i=c.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [c[i],c[j]]=[c[j],c[i]]; }
@@ -3447,9 +3934,12 @@ function verbByName(name){
   return L().hasReg(name) ? L().mk(name) : L().irr.find(v => v.inf === name);
 }
 /* cola aleatoria sin repetición: recorre el conjunto entero antes de repetir */
+/* Con los irregulares activados no entran todos a la vez (serían más de la mitad de cada tabla): en cada vuelta se mezclan con los
+   regulares como mucho la mitad de los que tiene el tiempo en su lista, elegidos al azar. */
+function mixIrr(t){ return shuffle(irrFor(t).map(v => v.inf)).slice(0, Math.max(1, Math.ceil(t.pool.length / 2))); }
 function poolFor(tid){
   const t = T(tid);
-  return state.includeIrregulars ? t.pool.concat(irrFor(t).map(v => v.inf)) : t.pool;
+  return state.includeIrregulars ? t.pool.concat(mixIrr(t)) : t.pool;
 }
 function nextFromQueue(tid){
   const st = S();
@@ -3470,7 +3960,7 @@ function nextFromQueue(tid){
    los excluye de ese tiempo sin quitarlos de los demás */
 function irrFor(t){
   if(!t) return L().irr;
-  const list = L().irr.filter(v => !(v.regIn && v.regIn.includes(t.id)));
+  const list = L().irr.filter(v => !(v.regIn && v.regIn.includes(t.id)) && !(t.has && !t.has(v)));
   return list.length ? list : L().irr;
 }
 function nextIrregular(t){
@@ -3510,11 +4000,11 @@ function paradigmTable(tense, verbName, plain){
   head.appendChild(el('div','',''));
   defs.forEach(d => head.appendChild(el('div','', esc(d.label))));
   box.appendChild(head);
-  for(let i=0;i<NP();i++){
+  for(const i of PS(tense)){
     const row = el('div','row');
     row.style.gridTemplateColumns = `84px repeat(${cols}, minmax(0,1fr))`;
     const first = L().conj(v, tense.slots[0].key, i);
-    row.appendChild(el('div','pron', esc(tense.slots.length > 1 ? L().pron[i] : L().subj(i, first))));
+    row.appendChild(el('div','pron', esc(tense.slots.length > 1 ? L().pron[i] : SUBJ(tense, i, first))));
     defs.forEach(d => {
       const form = d.get(v, i);
       const wrap = el('div','staticwrap');
@@ -3611,7 +4101,7 @@ function renderTheory(){
     head2.type = 'button';
     head2.innerHTML = '<span><span class="name">'+esc(v.inf)+'</span><span class="comp">'+esc(v.comp || '')+'</span></span><span class="chev">'+ICO.chev+'</span>';
     const body2 = el('div','irrbody'); body2.hidden = true;
-    for(let i=0;i<NP();i++){
+    for(const i of PS(t)){
       const rowEl = el('div','irrrow');
       let form = '';
       t.slots.forEach(s => { form = (form ? form + ' / ' : '') + display(L().conj(v, s.key, i)); });
@@ -3653,35 +4143,46 @@ function newExercise(){
   if(!state.lang) return;               /* el salto automático puede llegar tarde */
   clearAdvance();
   const t = T(S().currentTense);
+  S().turn++;
   if(state.mode === 'drill'){
-    const v = nextIrregular(t);
+    let v, i = randPerson(t), retry = false;
+    const due = dueRetry(t.id, 8).find(x => irrFor(t).some(y => y.inf === x.inf));
+    if(due){ takeRetry(due); v = L().irr.find(y => y.inf === due.inf); i = due.i; retry = true; }
+    else v = nextIrregular(t);
     const slot = t.slots[Math.floor(Math.random()*t.slots.length)];
-    state.current = {kind:'drill', v, slot, i:Math.floor(Math.random()*NP()), tenseId:t.id};
+    state.current = {kind:'drill', v, slot, i, tenseId:t.id, retry};
   } else if(state.mode === 'dictation'){
     /* sigue siempre el tiempo activo en la pestaña, igual que el resto de modos */
     const dt = t;
-    const names = state.dictIrregulars ? dt.pool.concat(irrFor(dt).map(v => v.inf)) : dt.pool;
+    const names = state.dictIrregulars ? dt.pool.concat(mixIrr(dt)) : dt.pool;
     const pick = () => verbByName(names[Math.floor(Math.random()*names.length)]);
-    const i = Math.floor(Math.random()*NP());
+    let i = randPerson(dt), a, retry = false;
+    const due = dueRetry(dt.id, 1)[0];
+    if(due){ takeRetry(due); a = verbByName(due.inf); i = due.i; retry = true; } else a = pick();
     const marker = dt.markers[Math.floor(Math.random()*dt.markers.length)];
-    const a = pick();
     const b = dt.slots.length > 1 ? pick() : null;
     const built = buildDictationSentence(dt, {a, b}, i, marker);
-    state.current = {kind:'dictation', t:dt, a, b, i, marker, full:built.full, ans:built.ans, targetInf:built.targetInf, tenseId:dt.id};
+    state.current = {kind:'dictation', t:dt, a, b, i, marker, full:built.full, ans:built.ans, targetInf:built.targetInf, tenseId:dt.id, retry};
   } else if(state.mode === 'table'){
-    const verbsA = Array.from({length:NP()}, () => nextFromQueue(t.id));
-    const verbsB = t.slots.length > 1 ? Array.from({length:NP()}, () => nextFromQueue(t.id)) : null;
-    state.current = {kind:'table', verbsA, verbsB, tenseId:t.id};
+    const ps = PS(t), verbsA = [], verbsB = t.slots.length > 1 ? [] : null, retryRows = [];
+    ps.forEach(i => { verbsA[i] = nextFromQueue(t.id); if(verbsB) verbsB[i] = nextFromQueue(t.id); });
+    dueRetry(t.id, 2).forEach(it => { if(ps.includes(it.i)){ takeRetry(it); verbsA[it.i] = verbByName(it.inf); retryRows.push(it.i); } });
+    state.current = {kind:'table', verbsA, verbsB, tenseId:t.id, retryRows};
   } else {
-    const a = nextFromQueue(t.id);
+    let a, i = randPerson(t), retry = false;
+    const due = dueRetry(t.id, 1)[0];
+    if(due){ takeRetry(due); a = verbByName(due.inf); i = due.i; retry = true; } else a = nextFromQueue(t.id);
     const b = t.slots.length > 1 ? nextFromQueue(t.id) : a;
-    state.current = {kind:'gap', a, b, i:Math.floor(Math.random()*NP()),
-                     marker:t.markers[Math.floor(Math.random()*t.markers.length)], tenseId:t.id};
+    state.current = {kind:'gap', a, b, i, marker:t.markers[Math.floor(Math.random()*t.markers.length)], tenseId:t.id, retry};
   }
   renderPractice();
 }
 function buildDictationSentence(t, verbs, i, marker){
   const a = verbs.a, b = verbs.b;
+  if(t.imperative){                      /* una orden no lleva sujeto: «marcador + forma + complemento !» */
+    const ans = L().conj(a, t.slots[0].key, i);
+    return { full: marker+' '+display(ans)+' '+impComp(a, i)+BANG(), ans, targetInf:a.inf };
+  }
   if(t.slots.length === 1){
     const ans = L().conj(a, t.slots[0].key, i);
     if(state.lang === 'de'){
@@ -3693,8 +4194,8 @@ function buildDictationSentence(t, verbs, i, marker){
     if(state.lang === 'pl'){
       return { full: marker+' '+speakable(PL_PRON[i])+' '+display(ans)+' '+a.comp+'.', ans, targetInf:a.inf };
     }
-    const sub = speakable(L().subj(i, display(ans)));
-    return { full: marker+' '+sub+(sub==='j’' ? '' : ' ')+display(ans)+' '+a.comp+'.', ans, targetInf:a.inf };
+    const sub = speakable(SUBJ(t, i, display(ans)));
+    return { full: marker+' '+sub+(/’$/.test(sub) ? '' : ' ')+display(ans)+' '+a.comp+'.', ans, targetInf:a.inf };
   }
   /* tiempos de dos huecos (condicionales de 2.º/3.er grado): el dictado toma
      como objetivo siempre la primera forma («si/se/gdyby/wenn» + verbo) */
@@ -3714,6 +4215,10 @@ function buildDictationSentence(t, verbs, i, marker){
   const sA = speakable(L().subj(i, display(ansA))), sB = speakable(L().subj(i, display(ansB)));
   const full = L().si+' '+sA+(sA==='j’'?'':' ')+display(ansA)+' '+a.comp+', '+sB+(sB==='j’'?'':' ')+display(ansB)+' '+b.comp+'.';
   return { full, ans: ansA, targetInf: a.inf };
+}
+function tagGapInputs(sentence, cur, t){ // a qué verbo y persona corresponde cada casilla (para la repetición adaptativa)
+  const ins = Array.from(sentence.querySelectorAll('input.ans')), half = t.slots.length > 1 ? Math.ceil(ins.length / 2) : ins.length;
+  ins.forEach((inp, k) => { inp.dataset.verb = (k < half ? cur.a : cur.b).inf; inp.dataset.person = cur.i; });
 }
 function makeInput(answer, ph){
   const i = el('input','ans');
@@ -3776,6 +4281,7 @@ function renderPractice(){
   card.appendChild(pills);
   const cur = state.current;
   if(!cur){ p.appendChild(card); return; }
+  if(cur.retry || (cur.retryRows && cur.retryRows.length)) pills.appendChild(el('span','pill pale','↻ incluye un fallo anterior'));
   if(cur.kind === 'table'){
     const cols = t.slots.length;
     card.appendChild(el('p','eyebrow','Tabla completa · un verbo distinto por persona'));
@@ -3786,17 +4292,17 @@ function renderPractice(){
     head.appendChild(el('div','',''));
     t.slots.forEach(s => head.appendChild(el('div','', esc(s.label))));
     box.appendChild(head);
-    for(let i=0;i<NP();i++){
+    for(const i of PS(t)){
       const row = el('div','row');
       row.style.gridTemplateColumns = `110px repeat(${cols}, minmax(0,1fr))`;
       const vA = cur.verbsA[i];
       const firstAns = L().conj(vA, t.slots[0].key, i);
-      row.appendChild(el('div','pron', esc(cols > 1 ? L().pron[i] : L().subj(i, firstAns))));
+      row.appendChild(el('div','pron', esc(cols > 1 ? L().pron[i] : SUBJ(t, i, firstAns))));
       t.slots.forEach((s, idx) => {
         const vUsed = idx === 0 ? cur.verbsA[i] : cur.verbsB[i];
         const cell = el('div','cellwrap');
         const inp = makeInput(L().conj(vUsed, s.key, i));
-        inp.dataset.person = i;
+        inp.dataset.person = i; inp.dataset.verb = vUsed.inf;
         cell.appendChild(inp);
         cell.appendChild(el('span','hintchip', esc(vUsed.inf)));
         row.appendChild(cell);
@@ -3811,7 +4317,13 @@ function renderPractice(){
     /* si la respuesta ya incluye el infinitivo como palabra (p. ej. el futuro
        perifrástico portugués «vão dividir»), no repetirlo en la etiqueta */
     const needsHint = (ansText, inf) => !display(ansText).split(/\s+/).includes(inf);
-    if(L().gap){
+    if(t.imperative){
+      const ans = L().conj(cur.a, t.slots[0].key, i);
+      s.appendChild(el('span','', esc(cur.marker) + ' '));
+      const w = el('span','cellwrap'); w.appendChild(makeInput(ans)); s.appendChild(w);
+      s.appendChild(el('span','hintchip', esc(cur.a.inf)));       /* en una orden no hay otra pista que el infinitivo: se muestra siempre */
+      s.appendChild(el('span','', ' ' + esc(impComp(cur.a, i)) + BANG()));
+    } else if(L().gap){
       L().gap(s, t, cur, i, {el, esc, makeInput});
     } else if(t.slots.length > 1){
       const ansA = L().conj(cur.a, t.slots[0].key, i);
@@ -3826,12 +4338,13 @@ function renderPractice(){
       s.appendChild(el('span','', esc(cur.b.comp) + '.'));
     } else {
       const ans = L().conj(cur.a, t.slots[0].key, i);
-      const sub = speakable(L().subj(i, display(ans)));
-      s.appendChild(el('span','', esc(cur.marker) + ' ' + esc(sub) + (sub==='j’' ? '' : ' ')));
+      const sub = speakable(SUBJ(t, i, display(ans)));
+      s.appendChild(el('span','', esc(cur.marker) + ' ' + esc(sub) + (/’$/.test(sub) ? '' : ' ')));
       const w = el('span','cellwrap'); w.appendChild(makeInput(ans)); s.appendChild(w);
       if(needsHint(ans, cur.a.inf)) s.appendChild(el('span','hintchip', esc(cur.a.inf)));
       s.appendChild(el('span','', esc(cur.a.comp) + '.'));
     }
+    tagGapInputs(s, cur, t);
     card.appendChild(s);
     card.appendChild(el('div','note','Persona: <b>'+esc(L().pron[cur.i])+'</b> · Tiempo: <b>'+esc(t.name)+'</b>'));
   } else if(cur.kind === 'drill'){
@@ -3845,9 +4358,9 @@ function renderPractice(){
     pr.appendChild(el('div','sub','Persona: <b>' + esc(L().pron[cur.i]) + '</b>'));
     card.appendChild(pr);
     const line = el('div','sentence');
-    const sub = speakable(L().subj(cur.i, display(ans)));
-    line.appendChild(el('span','', esc(sub) + (sub==='j’' ? '' : ' ')));
-    const w = el('span','cellwrap'); w.appendChild(makeInput(ans, 'escribe la forma…')); line.appendChild(w);
+    const sub = t.imperative ? '' : speakable(SUBJ(t, cur.i, display(ans)));
+    if(sub) line.appendChild(el('span','', esc(sub) + (/’$/.test(sub) ? '' : ' ')));
+    const w = el('span','cellwrap'), dinp = makeInput(ans, 'escribe la forma…'); dinp.dataset.verb = cur.v.inf; dinp.dataset.person = cur.i; w.appendChild(dinp); line.appendChild(w);
     card.appendChild(line);
     card.appendChild(el('div','note','Rápido y sin pensarlo mucho: si aciertas, salta solo al siguiente.'));
   } else if(cur.kind === 'dictation'){
@@ -3969,7 +4482,7 @@ function updateModeTicks(t){
 function buildOptions(t, v, slot, i, correct){
   const seen = new Set([norm(correct)]);
   const options = [correct];
-  const otherPersons = shuffle(Array.from({length:NP()}, (_,x) => x).filter(x => x !== i));
+  const otherPersons = shuffle(PS(t).filter(x => x !== i));
   for(const j of otherPersons){
     if(options.length >= 3) break;
     const cand = display(L().conj(v, slot.key, j));
@@ -3980,7 +4493,7 @@ function buildOptions(t, v, slot, i, correct){
   while(options.length < 3 && guard < 25){
     guard++;
     const otherV = verbByName(pool[Math.floor(Math.random()*pool.length)]);
-    const cand = display(L().conj(otherV, slot.key, Math.floor(Math.random()*NP())));
+    const cand = display(L().conj(otherV, slot.key, randPerson(t)));
     if(!seen.has(norm(cand))){ seen.add(norm(cand)); options.push(cand); }
   }
   return shuffle(options);
@@ -3989,7 +4502,7 @@ function buildOptions(t, v, slot, i, correct){
 /* tipo 1 · Reconocer: la forma correcta, a secas, entre tres opciones */
 function qReconocer(t, v){
   const slot = t.slots[0];
-  const i = Math.floor(Math.random()*NP());
+  const i = randPerson(t);
   const correct = display(L().conj(v, slot.key, i));
   return { type:'reconocer', v, i, slot, correct, options: buildOptions(t, v, slot, i, correct) };
 }
@@ -3997,19 +4510,20 @@ function qReconocer(t, v){
    hueco que hay que rellenar eligiendo entre las tres opciones */
 function qFrase(t, v){
   const slot = t.slots[0];
-  const i = Math.floor(Math.random()*NP());
+  const i = randPerson(t);
   const correct = display(L().conj(v, slot.key, i));
   const marker = t.markers[Math.floor(Math.random()*t.markers.length)];
-  const sub = speakable(L().subj(i, correct));
-  const sentence = esc(marker) + ' ' + esc(sub) + (sub === 'j’' ? '' : ' ')
-    + '<span class="blank">___</span> ' + esc(v.comp) + '.';
+  const sub = speakable(SUBJ(t, i, correct));
+  const sentence = t.imperative
+    ? esc(marker) + ' <span class="blank">___</span> ' + esc(impComp(v, i)) + BANG()
+    : esc(marker) + ' ' + esc(sub) + (/’$/.test(sub) ? '' : ' ') + '<span class="blank">___</span> ' + esc(v.comp) + '.';
   return { type:'frase', v, i, slot, correct, options: buildOptions(t, v, slot, i, correct), sentence };
 }
 /* tipo 3 · Escucha: se reproduce el audio de la forma correcta y hay que
    identificarla por escrito entre tres opciones parecidas */
 function qEscucha(t, v){
   const slot = t.slots[0];
-  const i = Math.floor(Math.random()*NP());
+  const i = randPerson(t);
   const correct = display(L().conj(v, slot.key, i));
   return { type:'escucha', v, i, slot, correct, options: buildOptions(t, v, slot, i, correct) };
 }
@@ -4017,7 +4531,7 @@ function qEscucha(t, v){
    correcta y a veces no, y hay que juzgarla sin opciones que la insinúen */
 function qVerdaderoFalso(t, v){
   const slot = t.slots[0];
-  const i = Math.floor(Math.random()*NP());
+  const i = randPerson(t);
   const correct = display(L().conj(v, slot.key, i));
   const alt = buildOptions(t, v, slot, i, correct).find(o => norm(o) !== norm(correct)) || correct;
   const claimIsTrue = Math.random() < 0.5;
@@ -4200,13 +4714,18 @@ function doCheck(){
   const list = inputs();
   if(!list.length) return;
   const t = T(S().currentTense), st = S().stats[t.id];
-  let allOk = true;
+  let allOk = true, accentMiss = false;
   list.forEach(inp => {
     const old = inp.parentNode.querySelector('.fix'); if(old) old.remove();
     inp.classList.remove('ok','bad');
     const ok = matches(inp.value, inp.dataset.answer);
+    if(inp.dataset.verb && inp._chk !== inp.value){ inp._chk = inp.value; noteResult(t.id, inp.dataset.verb, parseInt(inp.dataset.person, 10), ok); }
     st.total++;
-    if(ok){ inp.classList.add('ok'); st.ok++; }
+    if(ok){
+      inp.classList.add('ok'); st.ok++;
+      const fx = accentFix(inp.value, inp.dataset.answer);
+      if(fx){ accentMiss = true; inp.parentNode.appendChild(el('span','fix soft','con acento: <b>' + esc(display(fx)) + '</b>')); }
+    }
     else{
       inp.classList.add('bad'); allOk = false;
       inp.parentNode.appendChild(el('span','fix','→ <b>' + esc(display(inp.dataset.answer)) + '</b>'));
@@ -4221,6 +4740,7 @@ function doCheck(){
     } else {
       b.innerHTML = 'Correcto.<div class="sub">' + (state.mode === 'drill' ? 'Siguiente verbo en un segundo…' : 'Pulsa «Siguiente verbo» para cambiar de verbo.') + '</div>';
     }
+    if(accentMiss) b.innerHTML += '<div class="sub">Ojo con los acentos: se aceptan sin ellos, pero la forma correcta los lleva (mira debajo de cada hueco).</div>';
     if(state.mode === 'drill') state.timer = setTimeout(newExercise, 750);
   } else {
     b.innerHTML = 'Casi. Revisa las formas en coral.<div class="sub">La forma correcta aparece debajo de cada hueco fallado. Los acentos no cuentan para la corrección.</div>';
@@ -4248,7 +4768,7 @@ function reveal(){
    larga) el texto del usuario contra la frase correcta: cada palabra del
    usuario se marca en verde si forma parte de esa coincidencia y en rojo si no */
 function wordDiff(userText, correctText){
-  const norm = w => w.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[.,;:!?¡¿]/g,'');
+  const norm = wordKey;
   const userWords = userText.trim().split(/\s+/).filter(Boolean);
   const correctWords = correctText.trim().split(/\s+/).filter(Boolean);
   const nu = userWords.map(norm), nc = correctWords.map(norm);
@@ -4290,6 +4810,7 @@ function checkDictation(){
     ok = matches(inp.value, cur.ans);
     inp.classList.add(ok ? 'ok' : 'bad');
     if(!ok) inp.parentNode.appendChild(el('span','fix','→ <b>' + esc(display(cur.ans)) + '</b>'));
+    else { const fx = accentFix(inp.value, cur.ans); if(fx) inp.parentNode.appendChild(el('span','fix soft','con acento: <b>' + esc(display(fx)) + '</b>')); }
     b.className = 'banner show ' + (ok ? 'good' : 'bad');
     b.innerHTML = ok ? 'Correcto.<div class="sub">Pulsa «Otra →» para escuchar otra frase.</div>'
                      : 'Casi. Escucha de nuevo y fíjate en la forma correcta.<div class="sub">La forma correcta aparece debajo del hueco.</div>';
@@ -4306,6 +4827,7 @@ function checkDictation(){
                      : 'Casi. Revisa las palabras en coral.<div class="sub">En verde, lo que coincide con la frase correcta; en coral, lo que no.</div>';
     updateExplainBox(cur.t, !ok);
   }
+  noteResult(cur.t.id, cur.targetInf, cur.i, ok);
   /* cuenta para el test final solo si se ha acertado */
   if(ok){
     S().stats[cur.t.id].modesDone.dictation = true;
