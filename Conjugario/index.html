@@ -684,6 +684,59 @@ body.vcb .subtabs::-webkit-scrollbar{height:6px}
 body.vcb .subtabs::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
 body.vcb .subtabs::-webkit-scrollbar-track{background:transparent}
 body.vcb .chip .done,body.vcb .mode .done{border:0;background:var(--mint);color:#fff}
+
+/* ---------- idioma: lista desplegable sobre el propio botón ---------- */
+.langwrap{position:relative;display:inline-flex}
+.langwrap[hidden]{display:none}
+.langchip::after{content:"";width:5px;height:5px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(45deg);margin:-3px 0 0 2px;opacity:.7}
+.langchip[aria-expanded="true"]{border-color:var(--accent, var(--amber))}
+.langchip[aria-expanded="true"]::after{transform:rotate(-135deg);margin-top:3px}
+.langmenu{position:absolute;top:calc(100% + 8px);right:0;z-index:40;min-width:230px;max-width:calc(100vw - 32px);max-height:min(70vh,480px);overflow:auto;
+  padding:6px;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 50px -20px rgba(0,0,0,.55)}
+.langmenu[hidden]{display:none}
+.langopt{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:0;border-radius:9px;background:transparent;color:var(--ink);
+  font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.langopt:hover,.langopt:focus-visible{background:var(--accent-soft, var(--foam));outline:none}
+.langopt[aria-selected="true"]{color:var(--accent, var(--deep));font-weight:700}
+.langopt .lnat{margin-left:auto;color:var(--ink-soft);font-size:12px;font-weight:400}
+.langopt .flag{width:24px;height:16px;flex:none;margin:0;border:0;border-radius:3px;box-shadow:0 0 0 1px rgba(20,32,46,.14)}
+
+/* ---------- ayuda: cómo funciona (ventana) ---------- */
+.modal-overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(10,16,25,.55)}
+.modal-lg{background:var(--paper);color:var(--ink);border:var(--bd);border-radius:var(--r-card);box-shadow:var(--sh-l);width:100%;max-width:640px;
+  max-height:min(86vh,820px);overflow:auto;overscroll-behavior:contain;padding:22px 26px 26px;font-family:var(--text)}
+.modal-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.modal-title{margin:0;font-family:var(--display);font-weight:700;font-size:20px}
+.modal-x{padding:0 6px;border:0;border-radius:7px;background:transparent;color:var(--ink-soft);font-size:28px;line-height:1;cursor:pointer}
+.modal-x:hover{color:var(--ink)}
+.modal-x:focus-visible{outline:2px solid var(--accent, var(--amber));outline-offset:2px}
+.info-body h3{margin:22px 0 6px;font-family:var(--display);font-size:15px;font-weight:700}
+.info-body p,.info-body li{font-size:14px;line-height:1.55;color:var(--ink)}
+.info-body p{margin:8px 0 0}
+.info-body ul{margin:4px 0 0;padding-left:20px}
+.info-body li{margin:5px 0}
+.info-body .muted-note{color:var(--ink-soft)}
+.info-status{display:flex;gap:10px;align-items:flex-start;margin:4px 0 0;padding:10px 12px;border:1px solid var(--hair-2);border-radius:10px;font-size:14px;line-height:1.5}
+.sdot{flex:none;width:9px;height:9px;margin-top:6px;border-radius:50%;background:var(--coral)}
+.sdot.ok{background:var(--mint)}
+.info-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+body.modal-open{overflow:hidden}
+
+/* ---------- tiempo dominado: test final terminado y guardado → botón dorado ---------- */
+:root{--gold-a:#FCE9A6;--gold-b:#EDBA32;--gold-bd:#A8740A;--gold-fg:#3A2700}
+:root[data-theme="dark"]{--gold-a:#F6D777;--gold-b:#D9A21E;--gold-bd:#FFE08A;--gold-fg:#2A1C00}
+.chip .star{display:none;width:16px;height:16px;flex:none}
+.chip .star svg{width:100%;height:100%;display:block}
+.chip.gold .star{display:inline-flex}
+.chip.gold .done{display:none}
+body .chip.gold,body.vcb .chip.gold,body.vcb .chip.gold[aria-selected="true"]{background:linear-gradient(135deg,var(--gold-a),var(--gold-b));border-color:var(--gold-bd);color:var(--gold-fg)}
+body .chip.gold[aria-selected="true"]{box-shadow:inset 0 0 0 2px var(--gold-fg)}
+body.vcb .chip.gold:hover{border-color:var(--gold-fg)}
+.goldnote{display:flex;gap:10px;align-items:flex-start;max-width:480px;margin:14px auto 0;padding:10px 14px;border:1px solid var(--gold-bd);border-radius:12px;
+  background:linear-gradient(135deg,var(--gold-a),var(--gold-b));color:var(--gold-fg);font-size:14px;line-height:1.45;text-align:left;font-weight:600}
+.goldnote.soft{background:var(--foam);border:1px dashed var(--hair-2);color:var(--ink-soft)}
+.goldnote .gstar{flex:none;width:20px;height:20px;margin-top:1px}
+.goldnote .gstar svg{width:100%;height:100%;display:block}
 body.vcb .mode{border:1px solid var(--line);background:var(--chipbg);box-shadow:none;border-radius:10px;font-family:var(--text);font-weight:600;color:var(--ink)}
 body.vcb .mode:hover{border-color:var(--accent)}
 body.vcb .mode[aria-selected="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
@@ -764,12 +817,16 @@ body.vcb footer{font-family:var(--mono);font-size:11px;letter-spacing:.04em;colo
       <h1><button class="brandbtn" id="brandBtn" type="button" aria-label="Ir al inicio de Conjugario">Conjugario</button></h1>
     </div>
     <div class="themewrap">
-      <button class="langchip" id="langChip" type="button" hidden title="Cambiar de idioma" aria-label="Cambiar de idioma"></button>
+      <div class="langwrap" id="langWrap" hidden>
+        <button class="langchip" id="langChip" type="button" hidden aria-haspopup="listbox" aria-expanded="false" title="Cambiar de idioma" aria-label="Cambiar de idioma"></button>
+        <div class="langmenu" id="langMenu" role="listbox" aria-label="Idioma" hidden></div>
+      </div>
       <a class="sibbtn" id="sibBtn" href="../Vocabulando/Vocabulando.html" hidden title="Cambiar a Vocabulando (vocabulario y frases)" aria-label="Ir a Vocabulando"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg><span class="sibtxt">Vocabulando</span></a>
       <button class="themebtn" id="themeBtn" type="button" aria-pressed="false" aria-label="Modo oscuro" title="Activar el modo oscuro">
         <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
         <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
       </button>
+      <button class="themebtn" id="infoBtn" type="button" aria-haspopup="dialog" aria-label="Cómo funciona" title="Cómo funciona"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r=".7" fill="currentColor" stroke-width="1"/></svg></button>
     </div>
   </div>
   <script>
@@ -844,7 +901,7 @@ body.vcb footer{font-family:var(--mono);font-size:11px;letter-spacing:.04em;colo
   </div>
   <footer>
     <span>Conjugario · sala de conjugación</span>
-    <span id="footRight" hidden><button class="btn small" id="btnReset">Reiniciar sesión</button></span>
+    <span id="footRight" hidden><button class="btn small" id="btnReset" title="Reinicia los aciertos y repasos de esta sesión. Los tiempos dorados se conservan.">Reiniciar sesión</button></span>
   </footer>
 </div>
 <script>
@@ -3901,16 +3958,114 @@ function firstUnlockedTense(code){
   const t = LANGS[code].tenses.find(isUnlocked);
   return (t || LANGS[code].tenses[0]).id;
 }
+/* =========================================================
+   PROGRESO GUARDADO
+   Solo se guarda una cosa: haber superado el test final (el examen) de un tiempo en un idioma. Ese tiempo queda «dominado»:
+   su botón se vuelve dorado y sigue así al recargar y con «Reiniciar sesión». La práctica suelta, y un test no superado, no escriben nada.
+   localStorage «conjugario:progreso» → { v:1, d:{ <idioma>:{ <tiempo>:{ best:0-100, date:'aaaa-mm-dd' } } } }
+   ========================================================= */
+const PROG_KEY = 'conjugario:progreso';
+/* nota con la que un test final deja el tiempo en dorado: la misma con la que la pantalla de resultados da por superado el test.
+   Examen por fases: EX_APROBADO (95 de 100, «Superado»). Test cerrado de 8 preguntas: TEST_APROBADO (80 %, «ya lo controlas»). */
+const TEST_APROBADO = 80;
+const STAR_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.6l2.9 6.1 6.7.8-4.9 4.6 1.3 6.6L12 17.4l-6 3.3 1.3-6.6L2.4 9.5l6.7-.8z"/></svg>';
+const prog = { d:{}, ok:true };   /* d: lo guardado; ok: si el navegador deja guardar */
+function progToday(){ const d = new Date(), p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+function progDate(iso){ const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? (+m[3]) + '/' + (+m[2]) + '/' + m[1] : ''; }
+function progParse(raw){   /* lee con cuidado: lo que no cuadre se ignora */
+  const out = {};
+  try{
+    const o = JSON.parse(raw);
+    if(!o || o.v !== 1 || !o.d || typeof o.d !== 'object') return out;
+    Object.keys(o.d).forEach(code => {
+      const langs = o.d[code];
+      if(!Object.prototype.hasOwnProperty.call(LANGS, code) || !langs || typeof langs !== 'object') return;
+      Object.keys(langs).forEach(tid => {
+        const e = langs[tid];
+        if(!/^[A-Za-z0-9_-]{1,40}$/.test(tid) || !e || typeof e.best !== 'number' || !isFinite(e.best)) return;
+        (out[code] || (out[code] = {}))[tid] = { best:Math.max(0, Math.min(100, Math.round(e.best))), date:/^\d{4}-\d{2}-\d{2}$/.test(e.date) ? e.date : '' };
+      });
+    });
+  }catch(e){ /* ilegible: como si no hubiera nada */ }
+  return out;
+}
+function progMerge(into, from){   /* de cada tiempo se queda la mejor nota */
+  Object.keys(from).forEach(c => Object.keys(from[c]).forEach(t => {
+    const mine = (into[c] || (into[c] = {}))[t], other = from[c][t];
+    if(!mine || other.best > mine.best) into[c][t] = other;
+  }));
+}
+function progLoad(){
+  let raw = null;
+  try{ raw = localStorage.getItem(PROG_KEY); prog.ok = true; }catch(e){ prog.ok = false; }
+  prog.d = raw ? progParse(raw) : {};
+}
+function progSave(){
+  try{ localStorage.setItem(PROG_KEY, JSON.stringify({ v:1, d:prog.d })); prog.ok = true; }catch(e){ prog.ok = false; }
+  return prog.ok;
+}
+function progEntry(code, tid){ return (prog.d[code] && prog.d[code][tid]) || null; }
+function progCount(){   /* tiempos dorados y tiempos que hay en total (de los disponibles) */
+  let n = 0, tot = 0;
+  Object.keys(LANGS).forEach(c => LANGS[c].tenses.forEach(t => { if(!isUnlocked(t)) return; tot++; if(progEntry(c, t.id)) n++; }));
+  return { n, tot };
+}
+/* un test final recién terminado: lo anota (con la mejor nota) y deja el tiempo en dorado */
+function progRecord(t, score, need){
+  if(score < need) return { gold:false, saved:true, need };
+  try{ progMerge(prog.d, progParse(localStorage.getItem(PROG_KEY))); }catch(e){}   /* por si otra pestaña guardó algo mientras tanto */
+  const lg = prog.d[state.lang] || (prog.d[state.lang] = {}), prev = lg[t.id];
+  lg[t.id] = { best:prev ? Math.max(prev.best, score) : score, date:progToday() };
+  S().stats[t.id].gold = true;
+  return { gold:true, saved:progSave(), need };
+}
+/* pasa lo guardado al estado de un idioma: un tiempo dorado tiene su test final desbloqueado y recuerda su mejor nota */
+function progApply(code){
+  const saved = prog.d[code] || {}, stats = state.byLang[code].stats;
+  LANGS[code].tenses.forEach(t => {
+    const e = saved[t.id], st = stats[t.id];
+    if(e){
+      st.gold = true; st.testDone = true;
+      st.testBest = st.testBest === null ? e.best : Math.max(st.testBest, e.best);
+      Object.keys(st.modesDone).forEach(k => { st.modesDone[k] = true; });
+    } else if(st.gold){
+      st.gold = false; st.testDone = false; st.testBest = null;
+    }
+  });
+}
+function progRefreshUI(){
+  if(!state.lang) return;
+  renderSubtabs();
+  if(state.tab === 'practice' && !state.testSession && !state.examSession) updateTestCta(T(S().currentTense));
+}
+/* aviso sobre el dorado en la pantalla de resultados de un test final */
+function goldNote(sess, t){
+  const r = sess.prog; if(!r) return null;
+  const box = el('div', 'goldnote' + (r.gold ? '' : ' soft'));
+  const had = !r.gold && S().stats[t.id].gold;
+  const lim = sess.exam ? r.need + ' de 100' : r.need + ' %';
+  box.innerHTML = '<span class="gstar">' + STAR_SVG + '</span><div>' + (
+    r.gold
+      ? 'Test final superado: «' + esc(t.name) + '» queda en dorado. ' + (r.saved
+          ? 'Se ha guardado en este navegador y seguirá así al recargar la página.'
+          : 'No se ha podido guardar (tu navegador no deja guardar datos): seguirá en dorado solo hasta que recargues o cierres la página.')
+      : had
+        ? 'Esta vez no llegas a la nota necesaria (' + lim + '), pero «' + esc(t.name) + '» sigue en dorado por tu test anterior.'
+        : 'Para dejar «' + esc(t.name) + '» en dorado ★ hay que superar el test final (nota necesaria: ' + lim + ').') + '</div>';
+  return box;
+}
 function initLangState(code){
   const stats = {};
   LANGS[code].tenses.forEach(t => stats[t.id] = {
     ok:0, total:0, mastered:false,
     /* progreso hacia el test final: uno de cada modo, sin importar si salió bien */
     modesDone:{table:false, gap:false, drill:false, dictation:false},
-    testDone:false, testBest:null
+    testDone:false, testBest:null, gold:false
   });
   state.byLang[code] = { currentTense:firstUnlockedTense(code), queues:{}, drillQueue:[], stats, retry:{}, turn:0 };
+  progApply(code);
 }
+progLoad();
 Object.keys(LANGS).forEach(initLangState);
 /* Repetición adaptativa, solo dentro de la sesión (no se guarda nada: al recargar o con «Reiniciar sesión» empieza de cero).
    Lo que fallas (verbo + persona + tiempo) vuelve a los 3 ejercicios; si lo vuelves a fallar, a los 5, 7, 9…; al acertarlo se olvida. */
@@ -4276,7 +4431,7 @@ function renderPractice(){
   pills.appendChild(el('span','pill sky','<span class="code">'+L().code+'</span> '+esc(L().name)));
   if(state.mode !== 'dictation'){
     pills.appendChild(el('span','pill pale','<span class="code">'+esc(t.code)+'</span> '+esc(t.name)));
-    if(S().stats[t.id].mastered) pills.appendChild(el('span','pill mint','✓ Dominado'));
+    if(S().stats[t.id].mastered) pills.appendChild(el('span','pill mint','✓ Tabla perfecta'));
   }
   card.appendChild(pills);
   const cur = state.current;
@@ -4569,6 +4724,8 @@ function finishTest(t){
   const st = S().stats[t.id];
   st.testDone = true;
   st.testBest = st.testBest === null ? pct : Math.max(st.testBest, pct);
+  sess.prog = progRecord(t, pct, TEST_APROBADO);
+  renderSubtabs();
   sess.finished = true;
   sess.pct = pct;
   renderPractice();
@@ -4667,6 +4824,7 @@ function renderTestResult(p, t, sess){
   else if(sess.pct >= 50) msg = 'Vas bien, pero repasa las formas falladas antes de repetir el test.';
   else msg = 'Todavía se te resisten varias formas. Vuelve a la teoría y repite los cuatro modos con calma.';
   card.appendChild(el('p','', esc(msg)));
+  const gn = goldNote(sess, t); if(gn) card.appendChild(gn);
   const fails = sess.questions.map((q,idx) => ({q, a:sess.answers[idx]})).filter(x => x.a && !x.a.ok);
   if(fails.length){
     const rev = el('div','testreview');
@@ -4736,14 +4894,14 @@ function doCheck(){
   if(allOk){
     if(state.current.kind === 'table' && !st.mastered){
       st.mastered = true;
-      b.innerHTML = '¡Tiempo dominado! Tabla completa sin fallos.<div class="sub">' + esc(t.name) + ' queda marcado con ✓ en su pestaña.</div>';
+      b.innerHTML = '¡Tabla perfecta! Todas las formas sin fallos.<div class="sub">' + esc(t.name) + ' queda marcado con ✓ en su pestaña. Para dejarlo en dorado ★, supera su test final.</div>';
     } else {
       b.innerHTML = 'Correcto.<div class="sub">' + (state.mode === 'drill' ? 'Siguiente verbo en un segundo…' : 'Pulsa «Siguiente verbo» para cambiar de verbo.') + '</div>';
     }
     if(accentMiss) b.innerHTML += '<div class="sub">Ojo con los acentos: se aceptan sin ellos, pero la forma correcta los lleva (mira debajo de cada hueco).</div>';
     if(state.mode === 'drill') state.timer = setTimeout(newExercise, 750);
   } else {
-    b.innerHTML = 'Casi. Revisa las formas en coral.<div class="sub">La forma correcta aparece debajo de cada hueco fallado. Los acentos no cuentan para la corrección.</div>';
+    b.innerHTML = 'Casi. Revisa las formas en coral.<div class="sub">La forma correcta aparece debajo de cada hueco fallado. Los acentos no cuentan, salvo donde distinguen dos formas distintas.</div>';
   }
   updateExplainBox(t, !allOk);
   /* cuenta para el test final solo si se ha acertado */
@@ -10851,6 +11009,8 @@ function exFinish(sess, t){
   const total = exTotal(sess);
   st.testDone = true;
   st.testBest = st.testBest === null ? total : Math.max(st.testBest, total);
+  sess.prog = progRecord(t, total, EX_APROBADO);
+  renderSubtabs();
   renderPractice();
 }
 function exTotal(sess){
@@ -11300,6 +11460,7 @@ function exRenderFinal(p, sess){
   const sub = el('p','', superado ? ('Superado · '+total+' de '+EX_APROBADO+' necesarios') : ('No superado · te faltan '+(EX_APROBADO-total)+' puntos'));
   sub.style.cssText = 'margin:12px auto 0;font-size:13px;font-weight:800;color:var(--ink-soft)';
   top.appendChild(sub);
+  const gn = goldNote(sess, T(sess.tenseId)); if(gn) top.appendChild(gn);
   p.appendChild(top);
   const faseCard = el('div','card main'); faseCard.style.marginTop = '16px';
   faseCard.appendChild(el('p','eyebrow','por fase'));
@@ -11457,12 +11618,19 @@ function renderSubtabs(){
   const st = S();
   L().tenses.forEach(t => {
     const unlocked = isUnlocked(t);
-    const c = el('button','chip' + (st.stats[t.id].mastered ? ' mastered' : '') + (unlocked ? '' : ' locked'));
+    const gold = unlocked && !!st.stats[t.id].gold;
+    const c = el('button','chip' + (st.stats[t.id].mastered ? ' mastered' : '') + (gold ? ' gold' : '') + (unlocked ? '' : ' locked'));
     c.setAttribute('role','tab');
     c.setAttribute('aria-selected', t.id === st.currentTense);
     c.appendChild(el('span','', esc(t.name)));
     if(unlocked){
       c.appendChild(el('span','done','✓'));
+      if(gold){
+        const e = progEntry(state.lang, t.id);
+        c.appendChild(el('span','star', STAR_SVG));
+        c.title = 'Dominado: test final superado' + (e ? ' (mejor nota ' + e.best + (e.date ? ', ' + progDate(e.date) : '') + ')' : '');
+        c.setAttribute('aria-label', t.name + ', dominado');
+      }
       c.onclick = () => {
         st.currentTense = t.id;
         if(state.tab === 'theory') renderTheory(); else newExercise();
@@ -11491,14 +11659,17 @@ function setTab(which){
 /* aspecto de Vocabulando en las pantallas de práctica: clase en <body>, pestañas y chip de idioma en la cabecera */
 function vcbSkin(code){
   try{
-    const on = !!code, bar = document.querySelector('.themewrap'), tabs = document.querySelector('.tabs'), chip = $('langChip');
+    const on = !!code, bar = document.querySelector('.themewrap'), tabs = document.querySelector('.tabs'), chip = $('langChip'), wrap = $('langWrap');
+    closeLangMenu();
     document.body.classList.toggle('vcb', on);
     if(on){
       if(tabs && bar && tabs.parentNode !== bar) bar.insertBefore(tabs, bar.firstChild);
       if(chip){ chip.innerHTML = FLAGS[code] + '<span>' + code.toUpperCase() + '</span>'; chip.hidden = false; }
+      if(wrap) wrap.hidden = false;
     } else {
       if(tabs && tabs.parentNode !== $('app')) $('app').insertBefore(tabs, $('app').firstChild);
       if(chip) chip.hidden = true;
+      if(wrap) wrap.hidden = true;
     }
   }catch(e){ /* sin el aspecto nuevo: la práctica sigue funcionando */ }
 }
@@ -11540,7 +11711,151 @@ function backToWelcome(){
 }
 buildWelcome();
 $('brandBtn').onclick = backToWelcome;
-$('langChip').onclick = backToWelcome;
+/* ---- idioma: lista desplegable sobre el propio botón; se elige ahí mismo, sin pasar por la pantalla de inicio ---- */
+function buildLangMenu(){
+  const m = $('langMenu'); if(!m) return;
+  m.innerHTML = '';
+  LANG_ORDER.forEach(code => {
+    const lg = LANGS[code];
+    const b = el('button', 'langopt', FLAGS[code] + '<span>' + esc(lg.name) + '</span><span class="lnat">' + esc(lg.native) + '</span>');
+    b.type = 'button'; b.dataset.lang = code;
+    b.setAttribute('role', 'option'); b.setAttribute('aria-selected', code === state.lang ? 'true' : 'false');
+    m.appendChild(b);
+  });
+}
+function closeLangMenu(refocus){
+  const m = $('langMenu'), b = $('langChip');
+  if(!m || m.hidden) return;
+  m.hidden = true; m.style.transform = '';
+  if(b){ b.setAttribute('aria-expanded', 'false'); if(refocus) b.focus(); }
+}
+function openLangMenu(){
+  const m = $('langMenu'), b = $('langChip'); if(!m || !b) return;
+  buildLangMenu(); m.style.transform = ''; m.hidden = false; b.setAttribute('aria-expanded', 'true');
+  const r = m.getBoundingClientRect(), W = document.documentElement.clientWidth;   /* en pantallas estrechas no se sale por los lados */
+  const dx = r.left < 8 ? 8 - r.left : (r.right > W - 8 ? W - 8 - r.right : 0);
+  if(dx) m.style.transform = 'translateX(' + Math.round(dx) + 'px)';
+  const cur = m.querySelector('[aria-selected="true"]') || m.querySelector('.langopt'); if(cur) cur.focus();
+}
+
+/* ---- ayuda: cómo funciona la web ---- */
+let infoAsk = false;   /* se está pidiendo confirmación para borrar el progreso guardado */
+function infoProgHtml(){
+  let access = true; try{ localStorage.getItem(PROG_KEY); }catch(e){ access = false; }
+  const c = progCount(), ok = access && prog.ok;
+  const status = !ok
+    ? 'Este navegador no deja guardar datos (¿navegación privada o bloqueo del almacenamiento?). Los tiempos que dejes en dorado se verán así solo hasta que recargues o cierres la página.'
+    : c.n ? 'Llevas <b>' + c.n + ' de ' + c.tot + ' tiempos</b> en dorado, guardados en este navegador.'
+    : 'Todavía no hay ningún tiempo en dorado guardado en este navegador.';
+  let html = '<div class="info-status"><i class="sdot' + (ok ? ' ok' : '') + '"></i><span>' + status + '</span></div>';
+  if(c.n){
+    html += infoAsk
+      ? '<p>¿Seguro? Se quitarán los ' + c.n + ' tiempos en dorado de este navegador y no se puede deshacer.</p><div class="info-actions"><button type="button" class="btn small primary" id="progDelYes">Sí, borrar</button><button type="button" class="btn small" id="progDelNo">Cancelar</button></div>'
+      : '<div class="info-actions"><button type="button" class="btn small" id="progDel">Borrar progreso guardado</button></div>';
+  }
+  return html;
+}
+function infoHtml(){
+  const sib = $('sibBtn') && !$('sibBtn').hidden;
+  return '<div class="modal-top"><h2 class="modal-title" id="infoTitle">Cómo funciona Conjugario</h2><button type="button" class="modal-x" id="infoClose" aria-label="Cerrar">×</button></div>' +
+    '<div class="info-body">' +
+    '<p>Conjugario es una sala de práctica de conjugación en 8 idiomas: francés, italiano, portugués, catalán, polaco, inglés, alemán y griego. Eliges un idioma y trabajas tiempo verbal a tiempo verbal, con dos pestañas: Teoría y Prácticas. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Conjugario» vuelves a ella.' + (sib ? ' El botón «Vocabulando» te lleva a la otra web (vocabulario y frases), en el mismo idioma.' : '') + '</p>' +
+    '<h3>Teoría</h3><ul>' +
+    '<li>Cada tiempo tiene su ficha: para qué se usa, cómo se forma (reglas con las terminaciones resaltadas y tablas con verbos modelo), unos trucos y cuatro frases de ejemplo. Los tiempos se eligen en los botones redondeados de debajo de las pestañas.</li>' +
+    '<li>En las frases de ejemplo intentas adivinar el verbo; después pulsas el ojo para ver la frase en el idioma y el altavoz para oírla.</li>' +
+    '<li>Al final están los verbos irregulares más importantes de ese tiempo.</li></ul>' +
+    '<h3>Prácticas</h3><ul>' +
+    '<li><b>Tabla completa:</b> escribes el verbo en todas las personas. Si no fallas ninguna, el tiempo se marca con ✓ (tabla perfecta, solo durante la sesión).</li>' +
+    '<li><b>Rellena el hueco:</b> frases con huecos que completas con la forma verbal correcta.</li>' +
+    '<li><b>Verbos irregulares:</b> una sola forma de un verbo irregular, rápido y sin pensarlo mucho; si aciertas, salta solo al siguiente.</li>' +
+    '<li><b>Transcripción:</b> escuchas una frase y escribes solo el verbo conjugado (modo fácil) o la frase entera (modo difícil). Puedes oírla más despacio con el botón x0.5.</li>' +
+    '<li>El interruptor «Incluir verbos irregulares» mezcla irregulares con regulares (viene activado). Pulsa «Comprobar» (o Intro): si fallas, ves la forma correcta bajo el hueco y la regla que la explica.</li></ul>' +
+    '<h3>Acentos y repetición de fallos</h3>' +
+    '<p>Los acentos no cuentan, salvo donde distinguen dos formas distintas del idioma (en alemán fährt y fahrt, en portugués falámos y falamos). Si aciertas sin un acento que no era obligatorio, se acepta y se te enseña cómo se escribe.</p>' +
+    '<p>Dentro de la sesión, lo que fallas (un verbo, en una persona y un tiempo) vuelve a salir pasados 3 ejercicios; si lo fallas otra vez, a los 5, 7, 9…; al acertarlo se olvida.</p>' +
+    '<h3>Test final y tiempos dorados</h3>' +
+    '<p>Cuando has practicado los cuatro modos de un tiempo se desbloquea su <b>test final</b> (el examen), por fases o con preguntas cerradas según el tiempo. Al terminarlo ves tu nota y tus fallos uno a uno.</p>' +
+    '<p>Si lo <b>superas</b>, el botón del tiempo se vuelve <b>dorado ★</b> (dominado) y queda guardado. Se supera con la nota que marca la propia pantalla de resultados: <b>95 de 100</b> en los exámenes por fases y <b>80 %</b> (7 aciertos de 8) en los tests de preguntas cerradas. Si no llegas, o lo dejas a medias, no se guarda nada y puedes repetirlo. Un tiempo dorado no pierde el dorado por un mal intento posterior; se conserva su mejor nota (la ves al pasar el ratón por el botón).</p>' +
+    '<h3>Dónde se guarda tu progreso</h3>' +
+    '<div id="infoProg">' + infoProgHtml() + '</div>' +
+    '<p>Conjugario solo guarda los tiempos cuyo test final has superado, con tu mejor nota y la fecha. Se guardan en este navegador (no hay ningún servidor), así que siguen ahí al recargar o cerrar la página, pero no pasan solos de un navegador o dispositivo a otro y se pierden si borras los datos del sitio. La práctica suelta (aciertos, tablas perfectas, repetición de fallos) no se guarda: «Reiniciar sesión» la pone a cero, pero no quita los tiempos dorados.</p>' +
+    '<h3>En el iPad o el móvil</h3>' +
+    '<p>Funciona igual en cualquier navegador. Cada navegador guarda sus propios tiempos dorados. Safari puede borrar los datos de una web que lleva tiempo sin visitarse; si la añades a la pantalla de inicio, no lo hace.</p>' +
+    '<h3>Qué sale de tu navegador</h3>' +
+    '<p>Conjugario no usa ningún servidor ni consulta datos de internet: las formas, reglas y frases están dentro de la propia página. Solo se descargan las tipografías de Google Fonts al abrirla. El audio lo genera tu navegador con las voces de tu sistema; si no hay ninguna para el idioma, la web te avisa.</p>' +
+    '<h3>Créditos</h3><p class="muted-note">Tipografías: Fredoka, Nunito, DM Mono, Bricolage Grotesque, Inter e IBM Plex Mono (Google Fonts, licencia OFL). Banderas dibujadas en SVG.</p>' +
+    '</div>';
+}
+function openInfo(){
+  closeInfo(); infoAsk = false;
+  const d = document.createElement('div');
+  d.className = 'modal-overlay'; d.id = 'infoOverlay';
+  d.innerHTML = '<div class="modal-lg" role="dialog" aria-modal="true" aria-labelledby="infoTitle">' + infoHtml() + '</div>';
+  document.body.appendChild(d); document.body.classList.add('modal-open');
+  const b = $('infoBtn'); if(b) b.setAttribute('aria-expanded', 'true');
+  $('infoClose').focus();
+}
+function closeInfo(refocus){
+  const d = $('infoOverlay');
+  if(!d) return;
+  d.remove(); document.body.classList.remove('modal-open'); infoAsk = false;
+  const b = $('infoBtn'); if(b){ b.removeAttribute('aria-expanded'); if(refocus) b.focus(); }
+}
+function infoRefreshProg(focusId){
+  const box = $('infoProg'); if(!box) return;
+  box.innerHTML = infoProgHtml();
+  const f = focusId && $(focusId); if(f) f.focus();
+}
+function progClear(){
+  prog.d = {};
+  try{ localStorage.removeItem(PROG_KEY); }catch(e){}
+  Object.keys(LANGS).forEach(progApply);
+  progRefreshUI();
+}
+document.addEventListener('click', ev => {
+  const t = ev.target; if(!t || !t.closest) return;
+  if(t.closest('#infoBtn')){ closeLangMenu(); openInfo(); return; }
+  if(t.closest('#infoClose') || t.id === 'infoOverlay'){ closeInfo(true); return; }
+  if(t.closest('#progDel')){ infoAsk = true; infoRefreshProg('progDelNo'); return; }
+  if(t.closest('#progDelNo')){ infoAsk = false; infoRefreshProg('progDel'); return; }
+  if(t.closest('#progDelYes')){ infoAsk = false; progClear(); infoRefreshProg(); return; }
+  if(t.closest('#langChip')){ const m = $('langMenu'); if(m && m.hidden) openLangMenu(); else closeLangMenu(); return; }
+  const opt = t.closest('.langopt');
+  if(opt){ const code = opt.dataset.lang; closeLangMenu(true); if(code && code !== state.lang) chooseLang(code); return; }
+  closeLangMenu();
+});
+document.addEventListener('keydown', ev => {
+  const m = $('langMenu');
+  if(m && !m.hidden){
+    if(ev.key === 'Escape'){ ev.preventDefault(); closeLangMenu(true); return; }
+    const opts = Array.from(m.querySelectorAll('.langopt')), i = opts.indexOf(document.activeElement);
+    if(ev.key === 'ArrowDown'){ ev.preventDefault(); opts[(i + 1) % opts.length].focus(); }
+    else if(ev.key === 'ArrowUp'){ ev.preventDefault(); opts[(i - 1 + opts.length) % opts.length].focus(); }
+    else if(ev.key === 'Home'){ ev.preventDefault(); opts[0].focus(); }
+    else if(ev.key === 'End'){ ev.preventDefault(); opts[opts.length - 1].focus(); }
+    else if(ev.key === 'Tab') closeLangMenu();
+    return;
+  }
+  const d = $('infoOverlay');
+  if(!d) return;
+  if(ev.key === 'Escape'){ ev.preventDefault(); closeInfo(true); return; }
+  if(ev.key === 'Tab'){   /* el foco se queda dentro de la ventana */
+    const f = Array.from(d.querySelectorAll('button, a[href]')).filter(x => !x.disabled && x.offsetParent !== null);
+    if(!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if(!d.contains(document.activeElement)){ ev.preventDefault(); first.focus(); }
+    else if(ev.shiftKey && document.activeElement === first){ ev.preventDefault(); last.focus(); }
+    else if(!ev.shiftKey && document.activeElement === last){ ev.preventDefault(); first.focus(); }
+  }
+});
+/* otra pestaña ha cambiado lo guardado (nuevo tiempo dorado, o borrado): se refleja aquí al momento */
+window.addEventListener('storage', ev => {
+  if(ev.key !== PROG_KEY && ev.key !== null) return;
+  try{
+    progLoad(); Object.keys(LANGS).forEach(progApply); progRefreshUI();
+    if($('infoProg')) infoRefreshProg();
+  }catch(e){}
+});
 $('tabTheory').onclick = () => setTab('theory');
 $('tabPractice').onclick = () => setTab('practice');
 $('btnReset').onclick = () => {
