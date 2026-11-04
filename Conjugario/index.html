@@ -501,18 +501,7 @@ footer{margin-top:26px;font-family:var(--mono);font-size:11.5px;color:var(--ink-
 .themebtn .i-sun{display:none}
 :root[data-theme="dark"] .themebtn .i-moon{display:none}
 :root[data-theme="dark"] .themebtn .i-sun{display:block}
-/* ---------- enlace a Vocabulando (junto al botón de tema) ---------- */
 .themewrap{display:flex;align-items:center;gap:10px}
-.sibbtn{height:44px;padding:0 18px 0 14px;border:var(--bd);border-radius:999px;background:var(--paper);color:var(--ink);
-  display:inline-flex;align-items:center;gap:8px;cursor:pointer;text-decoration:none;white-space:nowrap;
-  font-family:var(--display);font-weight:600;font-size:15px;box-shadow:var(--sh-s);
-  transition:transform .12s,box-shadow .12s}
-.sibbtn[hidden]{display:none}
-@media (hover:hover){.sibbtn:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}}
-.sibbtn:active{transform:translate(2px,2px);box-shadow:var(--sh-xs)}
-.sibbtn:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
-.sibbtn svg{width:19px;height:19px;display:block;flex:none}
-@media (max-width:520px){.sibbtn{width:44px;padding:0;justify-content:center}.sibbtn .sibtxt{display:none}}
 /* ---------- modo oscuro ---------- */
 :root[data-theme="dark"]{
   color-scheme:dark;
@@ -627,8 +616,8 @@ body.vcb{
 :root[data-theme] body.vcb .prompt .iconbtn:not(.on){--ink:inherit;--ink-soft:inherit}
 :root[data-theme] body.vcb .switch input:checked + .track::after{background:#fff}
 body.vcb .wrap{padding:0 20px}
-body.vcb :is(.brandbtn,.tab,.chip,.btn,.mode,.iconbtn,.sibbtn,.themebtn,.langchip,.optbtn,.exvbtn,.cghead,.irrhead,.expal):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-body.vcb :is(.tab,.chip,.btn,.mode,.iconbtn,.sibbtn,.themebtn,.langchip,.optbtn,.exvbtn,.playbtn):is(:hover,:active){transform:none}
+body.vcb :is(.brandbtn,.tab,.chip,.btn,.mode,.iconbtn,.themebtn,.langchip,.appchip,.optbtn,.exvbtn,.cghead,.irrhead,.expal):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+body.vcb :is(.tab,.chip,.btn,.mode,.iconbtn,.themebtn,.langchip,.appchip,.optbtn,.exvbtn,.playbtn):is(:hover,:active){transform:none}
 
 /* ---------- cabecera: marca, pestañas, idioma, enlace y tema, como en Vocabulando ---------- */
 body.vcb .topbar{align-items:flex-end;justify-content:space-between;gap:16px;padding:28px 0 0;margin-bottom:22px}
@@ -643,10 +632,9 @@ body.vcb .tab[aria-selected="true"]{background:var(--tab-on);color:var(--ink);bo
 body.vcb .langchip{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 13px 0 11px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-family:var(--mono);font-size:12px;letter-spacing:.08em;cursor:pointer}
 body.vcb .langchip:hover{border-color:var(--accent)}
 body.vcb .langchip .flag{width:19px;height:13px;border:0;border-radius:2px;box-shadow:0 0 0 1px rgba(20,32,46,.14);margin:0}
-body.vcb .themebtn,body.vcb .sibbtn{width:38px;height:38px;padding:0;gap:0;justify-content:center;border:1px solid var(--line);border-radius:999px;background:var(--paper);box-shadow:none}
-body.vcb .themebtn:hover,body.vcb .sibbtn:hover{border-color:var(--accent)}
-body.vcb .themebtn svg,body.vcb .sibbtn svg{width:18px;height:18px}
-body.vcb .sibbtn .sibtxt{display:none}
+body.vcb .themebtn{width:38px;height:38px;padding:0;gap:0;justify-content:center;border:1px solid var(--line);border-radius:999px;background:var(--paper);box-shadow:none}
+body.vcb .themebtn:hover{border-color:var(--accent)}
+body.vcb .themebtn svg{width:18px;height:18px}
 
 /* ---------- etiquetas, tarjetas y textos ---------- */
 body.vcb .eyebrow{font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.14em;color:var(--ink-soft);margin:0 0 6px}
@@ -700,6 +688,32 @@ body.vcb .chip .done,body.vcb .mode .done{border:0;background:var(--mint);color:
 .langopt[aria-selected="true"]{color:var(--accent, var(--deep));font-weight:700}
 .langopt .lnat{margin-left:auto;color:var(--ink-soft);font-size:12px;font-weight:400}
 .langopt .flag{width:24px;height:16px;flex:none;margin:0;border:0;border-radius:3px;box-shadow:0 0 0 1px rgba(20,32,46,.14)}
+/* ---------- cambio de web: desplegable con el logo de cada app ---------- */
+.appwrap{position:relative;display:inline-flex;flex:none;--ap-bg:var(--paper);--ap-line:var(--line);--ap-ink:var(--ink);--ap-soft:var(--ink-soft);--ap-acc:var(--accent,var(--amber));--ap-hover:var(--accent-soft,var(--foam))}
+.appwrap[hidden]{display:none}
+.appchip{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 11px 0 7px;border-radius:999px;border:1px solid var(--ap-line);background:var(--ap-bg);color:var(--ap-ink);cursor:pointer;font:inherit}
+.appchip:hover,.appchip[aria-expanded="true"]{border-color:var(--ap-acc)}
+.appchip:focus-visible{outline:2px solid var(--ap-acc);outline-offset:2px}
+.appchip::after{content:"";width:5px;height:5px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(45deg);margin:-3px 0 0 2px;opacity:.7}
+.appchip[aria-expanded="true"]::after{transform:rotate(-135deg);margin-top:3px}
+.applogo{width:24px;height:24px;flex:none;display:block;border-radius:7px}
+.appmenu{position:absolute;top:calc(100% + 8px);right:0;z-index:40;min-width:268px;max-width:calc(100vw - 32px);padding:6px;background:var(--ap-bg);border:1px solid var(--ap-line);border-radius:14px;box-shadow:0 20px 50px -20px rgba(0,0,0,.55)}
+.appmenu[hidden]{display:none}
+.appopt{display:flex;align-items:center;gap:12px;width:100%;box-sizing:border-box;padding:9px 10px;border:0;border-radius:9px;background:transparent;color:var(--ap-ink);font:inherit;font-size:14px;text-align:left;text-decoration:none;cursor:pointer}
+.appopt:hover,.appopt:focus-visible{background:var(--ap-hover);outline:none}
+.appopt .applogo{width:34px;height:34px;border-radius:10px}
+.appopt .apptx{display:flex;flex-direction:column;gap:1px;line-height:1.25;min-width:0}
+.appopt .appnm{font-weight:700;font-size:15px}
+.appopt .appsb{color:var(--ap-soft);font-size:12px;font-weight:400}
+.appopt[aria-current="page"]{color:var(--ap-acc);cursor:default}
+.appopt[aria-current="page"] .appsb{color:var(--ap-soft)}
+.appopt[aria-current="page"]::after{content:"";margin-left:auto;width:5px;height:10px;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-2px,-2px);flex:none}
+body:not(.vcb) .appchip{height:44px;padding:0 12px 0 9px;border:var(--bd);box-shadow:var(--sh-s);transition:transform .12s,box-shadow .12s}
+body:not(.vcb) .appchip .applogo{width:28px;height:28px;border-radius:8px}
+@media (hover:hover){body:not(.vcb) .appchip:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+body:not(.vcb) .appchip:active{transform:translate(2px,2px);box-shadow:var(--sh-xs)}
+body:not(.vcb) .appchip:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+body:not(.vcb) .appmenu{border:var(--bd);border-radius:16px;box-shadow:var(--sh)}
 
 /* ---------- ayuda: cómo funciona (ventana) ---------- */
 .modal-overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(10,16,25,.55)}
@@ -799,9 +813,12 @@ body.vcb .exfail.sep{border-top:1px solid var(--line)}
 body.vcb .voicetoast{border:1px solid var(--line);box-shadow:0 10px 30px -18px rgba(0,0,0,.5)}
 body.vcb footer{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--ink-soft)}
 @media (max-width:640px){
-  body.vcb .themewrap{width:100%;margin-left:0}
-  body.vcb .tabs{flex:1}
+  body.vcb .themewrap{width:100%;margin-left:0;flex-wrap:wrap;row-gap:8px}   /* si no caben en una fila, las pestañas ocupan la primera y los botones pasan a la siguiente */
+  body.vcb .tabs{flex:1 1 auto}
   body.vcb .tab{flex:1;padding:8px 10px;text-align:center}
+}
+@media (max-width:480px){
+  body.vcb .tabs{flex:1 1 100%}
 }
 @media (prefers-reduced-motion:reduce){
   *{transition:none!important;animation:none!important}
@@ -826,7 +843,10 @@ body.vcb footer{font-family:var(--mono);font-size:11px;letter-spacing:.04em;colo
         <button class="langchip" id="langChip" type="button" hidden aria-haspopup="listbox" aria-expanded="false" title="Cambiar de idioma" aria-label="Cambiar de idioma"></button>
         <div class="langmenu" id="langMenu" role="listbox" aria-label="Idioma" hidden></div>
       </div>
-      <a class="sibbtn" id="sibBtn" href="../Vocabulando/Vocabulando.html" hidden title="Cambiar a Vocabulando (vocabulario y frases)" aria-label="Ir a Vocabulando"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3 4 7l4 4"/><path d="M4 7h16"/><path d="m16 21 4-4-4-4"/><path d="M20 17H4"/></svg><span class="sibtxt">Vocabulando</span></a>
+      <div class="appwrap" id="appWrap" hidden>
+        <button class="appchip" id="appChip" type="button" aria-haspopup="menu" aria-expanded="false" title="Cambiar de web"></button>
+        <div class="appmenu" id="appMenu" role="menu" aria-label="Webs" hidden></div>
+      </div>
       <button class="themebtn" id="themeBtn" type="button" aria-pressed="false" aria-label="Modo oscuro" title="Activar el modo oscuro">
         <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
         <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
@@ -865,22 +885,101 @@ body.vcb footer{font-family:var(--mono);font-size:11px;letter-spacing:.04em;colo
   })();
   </script>
   <script>
-  /* enlace con Vocabulando (la otra web, en la carpeta vecina). Solo se muestra al abrir como archivo local, donde la ruta relativa
-     funciona; si algún día se publican, pon aquí su dirección completa. El idioma abierto viaja en la dirección (#pt). */
   (function(){
-    var URL_VOC = '../Vocabulando/Vocabulando.html';
-    var a = document.getElementById('sibBtn');
-    if(!a) return;
+    /* cambio de web: desplegable con el logo de cada app. Solo aparece al abrir los archivos del disco (donde las rutas relativas
+       funcionan); si algún día se publican, pon aquí las direcciones completas. El idioma abierto (#pt) y el tema viajan con el enlace. */
+    var CUR = 'conjugario';
+    var APPS = [
+      {id:'vocabulando', name:'Vocabulando', sub:'Vocabulario y frases', url:'../Vocabulando/Vocabulando.html'},
+      {id:'conjugario',  name:'Conjugario',  sub:'Conjugaciones',        url:'../Conjugario/index.html'},
+      {id:'declinario',  name:'Declinario',  sub:'Declinaciones y pronombres', url:'../Declinario/index.html'}
+    ];
+    var ST = " fill='none' stroke='#FFFFFF' stroke-width='7.2' stroke-linecap='round' stroke-linejoin='round'";
+    var GLYPH = {
+      vocabulando: "<path d='M14.5 19 L27 45.5 L39.5 19'" + ST + "/>",
+      conjugario:  "<path d='M35.36 22.54 A13 13 0 1 0 35.36 42.46'" + ST + "/>",
+      declinario:  "<path d='M17.5 19 H26 A13.25 13.25 0 0 1 26 45.5 H17.5 Z'" + ST + "/>"
+    };
+    var nLogo = 0;
+    function logo(id){
+      var g = 'sibg' + (++nLogo);
+      return '<svg class="applogo" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><defs><linearGradient id="' + g + '" x1="0" y1="0" x2="1" y2="1">' +
+        '<stop offset="0" stop-color="#5B7BF4"/><stop offset="1" stop-color="#2748D6"/></linearGradient></defs>' +
+        '<rect width="64" height="64" rx="15" fill="url(#' + g + ')"/>' + GLYPH[id] + '<circle cx="49" cy="44.2" r="4.9" fill="#FFB020"/></svg>';
+    }
+    function usable(u){ return /^https?:\/\//i.test(u) || location.protocol === 'file:'; }
+    function theme(){
+      try{ if(window.__sibTheme) return window.__sibTheme(); }catch(e){}
+      return document.documentElement.getAttribute('data-theme');
+    }
+    function sendTheme(){ var t = theme(); if(t === 'dark' || t === 'light'){ try{ localStorage.setItem('idiomas:theme', t); }catch(e){} } }
+    function menuOf(w){ return w.querySelector('.appmenu'); }
+    function chipOf(w){ return w.querySelector('.appchip'); }
+    function build(w){
+      var h = /^#[a-z]{2}$/.test(location.hash) ? location.hash : '';
+      menuOf(w).innerHTML = APPS.map(function(a){
+        var inner = logo(a.id) + '<span class="apptx"><span class="appnm">' + a.name + '</span><span class="appsb">' + a.sub + '</span></span>';
+        return a.id === CUR
+          ? '<span class="appopt" role="menuitem" tabindex="-1" aria-current="page" data-app="' + a.id + '">' + inner + '</span>'
+          : '<a class="appopt" role="menuitem" data-app="' + a.id + '" href="' + a.url + h + '">' + inner + '</a>';
+      }).join('');
+    }
+    function close(w, refocus){
+      var m = menuOf(w), b = chipOf(w);
+      if(!m || m.hidden) return;
+      m.hidden = true; m.style.transform = '';
+      b.setAttribute('aria-expanded', 'false');
+      if(refocus) b.focus();
+    }
+    function closeAll(except){ [].slice.call(document.querySelectorAll('.appwrap')).forEach(function(w){ if(w !== except) close(w); }); }
+    function open(w){
+      closeAll(w);
+      var m = menuOf(w), b = chipOf(w);
+      build(w); m.style.transform = ''; m.hidden = false; b.setAttribute('aria-expanded', 'true');
+      var r = m.getBoundingClientRect(), W = document.documentElement.clientWidth;   /* en pantallas estrechas no se sale por los lados */
+      var dx = r.left < 8 ? 8 - r.left : (r.right > W - 8 ? W - 8 - r.right : 0);
+      if(dx) m.style.transform = 'translateX(' + Math.round(dx) + 'px)';
+      var first = m.querySelector('.appopt:not([aria-current])') || m.querySelector('.appopt'); if(first) first.focus();
+    }
+    function openOne(){ return [].slice.call(document.querySelectorAll('.appwrap')).filter(function(w){ var m = menuOf(w); return m && !m.hidden; })[0]; }
     try{
-      if(!/^https?:\/\//i.test(URL_VOC) && location.protocol !== 'file:') return;
-      var upd = function(){ a.href = URL_VOC + (/^#[a-z]{2}$/.test(location.hash) ? location.hash : ''); };
-      window.__sibUpdate = upd; window.addEventListener('hashchange', upd);
-      var sendTheme = function(){ try{ localStorage.setItem('idiomas:theme', document.documentElement.getAttribute('data-theme')); }catch(e){} };
-      a.addEventListener('click', sendTheme); a.addEventListener('auxclick', sendTheme);
-      upd(); a.hidden = false;
-    }catch(e){ /* sin enlace: el resto de la página no depende de él */ }
+      var wraps = [].slice.call(document.querySelectorAll('.appwrap'));
+      if(!wraps.length || !APPS.some(function(a){ return a.id !== CUR && usable(a.url); })) return;
+      var me = APPS.filter(function(a){ return a.id === CUR; })[0];
+      wraps.forEach(function(w){
+        var b = chipOf(w);
+        b.innerHTML = logo(CUR);
+        b.setAttribute('aria-label', 'Cambiar de web (ahora: ' + me.name + ')');
+        w.hidden = false;
+      });
+      document.addEventListener('click', function(ev){
+        var t = ev.target; if(!t || !t.closest) return;
+        var chip = t.closest('.appchip');
+        if(chip){ var w = chip.closest('.appwrap'), m = menuOf(w); if(m.hidden) open(w); else close(w); return; }
+        var opt = t.closest('.appopt');
+        if(opt){
+          var wo = opt.closest('.appwrap');
+          if(opt.tagName === 'A') sendTheme(); else close(wo, true);   /* la propia web: solo se cierra la lista */
+          return;
+        }
+        closeAll();
+      });
+      document.addEventListener('auxclick', function(ev){ var t = ev.target; if(t && t.closest && t.closest('.appopt')) sendTheme(); });
+      document.addEventListener('keydown', function(ev){
+        var chip = ev.target && ev.target.closest ? ev.target.closest('.appchip') : null;
+        if(chip && (ev.key === 'ArrowDown' || ev.key === 'ArrowUp')){ ev.preventDefault(); var w0 = chip.closest('.appwrap'); if(menuOf(w0).hidden) open(w0); return; }
+        var w = openOne(); if(!w) return;
+        var opts = [].slice.call(menuOf(w).querySelectorAll('.appopt')), i = opts.indexOf(document.activeElement);
+        if(ev.key === 'Escape'){ ev.preventDefault(); close(w, true); }
+        else if(ev.key === 'ArrowDown'){ ev.preventDefault(); opts[(i + 1) % opts.length].focus(); }
+        else if(ev.key === 'ArrowUp'){ ev.preventDefault(); opts[(i - 1 + opts.length) % opts.length].focus(); }
+        else if(ev.key === 'Home'){ ev.preventDefault(); opts[0].focus(); }
+        else if(ev.key === 'End'){ ev.preventDefault(); opts[opts.length - 1].focus(); }
+        else if(ev.key === 'Tab') close(w);
+      });
+    }catch(e){ /* sin desplegable: el resto de la página no depende de él */ }
   })();
-  </script>
+</script>
   <!-- pantalla de bienvenida -->
   <div id="welcome">
     <div class="card main hero">
@@ -11782,7 +11881,6 @@ function vcbSkin(code){
 /* el idioma abierto va en la dirección (#fr, #pt…): así Vocabulando puede abrir Conjugario en el mismo idioma */
 function syncLangHash(code){
   try{ history.replaceState(null, '', code ? '#' + code : location.pathname + location.search); }catch(e){}
-  try{ if(window.__sibUpdate) window.__sibUpdate(); }catch(e){}
 }
 function chooseLang(code){
   clearAdvance();
@@ -11863,10 +11961,10 @@ function infoProgHtml(){
   return html;
 }
 function infoHtml(){
-  const sib = $('sibBtn') && !$('sibBtn').hidden;
+  const sib = $('appWrap') && !$('appWrap').hidden;
   return '<div class="modal-top"><h2 class="modal-title" id="infoTitle">Cómo funciona Conjugario</h2><button type="button" class="modal-x" id="infoClose" aria-label="Cerrar">×</button></div>' +
     '<div class="info-body">' +
-    '<p>Conjugario es una sala de práctica de conjugación en 8 idiomas: francés, italiano, portugués, catalán, polaco, inglés, alemán y griego. Eliges un idioma y trabajas tiempo verbal a tiempo verbal, con dos pestañas: Teoría y Prácticas. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Conjugario» vuelves a ella.' + (sib ? ' El botón «Vocabulando» te lleva a la otra web (vocabulario y frases), en el mismo idioma.' : '') + '</p>' +
+    '<p>Conjugario es una sala de práctica de conjugación en 8 idiomas: francés, italiano, portugués, catalán, polaco, inglés, alemán y griego. Eliges un idioma y trabajas tiempo verbal a tiempo verbal, con dos pestañas: Teoría y Prácticas. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Conjugario» vuelves a ella.' + (sib ? ' El botón con el logo (junto al del tema) te lleva a Vocabulando (vocabulario y frases) o a Declinario (declinaciones y pronombres), en el mismo idioma.' : '') + '</p>' +
     '<h3>Teoría</h3><ul>' +
     '<li>Cada tiempo tiene su ficha: para qué se usa, cómo se forma (reglas con las terminaciones resaltadas y tablas con verbos modelo), unos trucos y cuatro frases de ejemplo. Los tiempos se eligen en los botones redondeados de debajo de las pestañas.</li>' +
     '<li>En las frases de ejemplo intentas adivinar el verbo; después pulsas el ojo para ver la frase en el idioma y el altavoz para oírla.</li>' +
