@@ -292,6 +292,7 @@ test("Racha · cuenta los días en que llegas a la meta sumando todos los idioma
   await p.click('.lang-card[href="#de"]'); await p.waitForSelector(".deck-list"); await p.click('.tab[data-tab="actividad"]');
   const g = await txt(p.locator(".st-grid").first());
   ok(/RACHA 5 días seguidos/i.test(g) && /MEJOR RACHA 5 días/i.test(g) && /HOY 0 \/ 10 10 para la meta/i.test(g), "Actividad lo cuenta igual: " + g);
+  ok((await p.evaluate(() => { const r = document.querySelector(".goal-row").getBoundingClientRect(); return document.querySelector(".goal-row + .act-sub").getBoundingClientRect().top - r.bottom; })) >= 12, "el texto explicativo no va pegado a la meta diaria");
   await p.selectOption("#goalSel", "20");
   eq(await p.evaluate(() => localStorage.getItem("vocabulando:goal")), "20", "la meta se guarda");
   ok(/RACHA 0 días seguidos/i.test(await txt(p.locator(".st-grid").first())), "con meta 20 no llegó ningún día");
