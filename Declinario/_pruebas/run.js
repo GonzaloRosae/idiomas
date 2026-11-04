@@ -207,7 +207,7 @@ test("Frases · las alternancias [singular|plural], el artículo {a} y la valida
     const c = frameText2(mk("Βλέπω {a} {} {n}.", { t: "φίλο", a: "" }, "acc", "m", []));
     const d = frameText2(mk("Βλέπω {a} {} {n}.", { t: "φίλο", a: "τον" }, "acc", "m", []));
     const e = frameText2(mk("{n} [est|sont] à moi : [c'est|ce sont] {}.", { t: "Ces sacs" }, "p1", "mp", ["mp"]));
-    const f = frameText2(mk("Il y a {} {n}.", { t: "ami" }, "pl", "ms", ["pl"]));   // la fila «pl» también cuenta como plural
+    const f = frameText2(mk("C'[est|sont] {} {n}.", { t: "ami" }, "pl", "ms", ["pl"]));   // la fila «pl» también cuenta como plural
     // la validación detecta los fallos de datos
     const t0 = LANGS.de.topics.length, malos = [];
     const base = LANGS.de.topics.find((x) => x.id === "artdef");
@@ -231,7 +231,7 @@ test("Frases · las alternancias [singular|plural], el artículo {a} y la valida
   eq([r.a, r.b], ["Das ist der Mann, {} dort steht.", "Das sind die Kinder, {} dort stehen."], "[ist|sind] y [steht|stehen] siguen el plural de la columna");
   eq([r.c, r.d], ["Βλέπω {} φίλο.", "Βλέπω τον {} φίλο."], "{a} pone el artículo del sustantivo y, si no hay, no deja espacios de más");
   eq(r.e, "Ces sacs sont à moi : ce sont {}.", "la clave del plural puede estar en la fila o en la columna");
-  eq(r.f, "Il y a {} ami.", "…y también cuando la clave de plural es la de una fila (it/dem «pl»)");
+  eq(r.f, "C'sont {} ami.", "…y también cuando la clave de plural es la de una fila (it/dem «pl»)");
   eq(r.malos.map(([n, k]) => [n, k > 0]), r.malos.map(([n]) => [n, true]), "la validación de datos detecta: " + r.malos.map(([n]) => n).join(", "));
   ok(r.t0, "y la prueba no deja temas de más");
   noErrors(p);
@@ -252,6 +252,19 @@ test("Frases · sin etiqueta que delate la respuesta: «noRow» y las pistas de 
   await d.evaluate(() => { const t = curTopic(); const ch = gapChoices(t).find((c) => c.item === t.items[2] && c.row.k === "akk" && c.col.k === "du"); state.current = gapQuestion(t, ch); renderPractice(); });
   eq(await d.locator(".hintchip").count(), 0, "en el reflexivo alemán el sujeto ya está en la frase: no hay etiqueta");
   noErrors(p); noErrors(q); noErrors(d);
+});
+
+test("Reconoce la función · las opciones del italiano no llevan el ejemplo que delata la respuesta", async () => {
+  const p = await open("it"); await topic(p, "art", "recog");
+  const r = await p.evaluate(() => { const t = curTopic(); const cell = recogCells(t).find((c) => c.item === t.items[0] && c.row.k === "vm"); state.current = Object.assign(recogOf(t, cell), { retry: false }); renderPractice(); return null; });
+  const opts = await p.locator("#panelPractice .optbtn").allInnerTexts();
+  ok(opts.length === 8 && opts.every((o) => !/[()]/.test(o)) && opts.includes("masc. sg. + vocal"), "ocho opciones, sin paréntesis: " + opts.slice(0, 3).join(" | ") + "…");
+  await p.click('#panelPractice .optbtn[data-row="vm"]');
+  ok(/quell|l'/.test(await txt(p.locator("#recogfb"))) || /Correcto/.test(await txt(p.locator("#recogfb"))), "tras contestar, el comentario sí enseña el nombre completo: «" + await txt(p.locator("#recogfb")) + "»");
+  // en las demás webs los nombres de fila no se tocan (llevan el poseedor entre paréntesis)
+  const q = await open("fr"); await topic(q, "poss", "recog");
+  ok((await q.locator("#panelPractice .optbtn").allInnerTexts()).some((o) => /\(/.test(o)), "francés: «je (yo)» y compañía se conservan");
+  noErrors(p); noErrors(q);
 });
 
 // =====================================================================================================================
@@ -708,8 +721,12 @@ test("Progreso · otra pestaña abierta se entera al momento y el borrado se hac
   ok(/Guardado en este navegador: 1 de 9 temas/.test(await txt(b.locator("#infoProg"))) || /1 de 39 temas/.test(await txt(b.locator("#infoProg"))), "la ayuda cuenta los temas dorados: «" + (await txt(b.locator("#infoProg"))) + "»");
   await b.click("#progDel"); ok(await b.locator("#progDelYes").isVisible() && await b.locator("#subtabs .chip.gold").count() === 1, "borrar pide confirmación y todavía no borra");
   await b.click("#progDelNo"); ok(await b.locator("#progDel").isVisible() && (await stored(b)) !== null, "«Cancelar» lo deja todo como estaba");
+  await b.click("#infoClose");
+  await topic(b, "adjw", "gap"); await b.fill("#panelPractice input.ans", "zzzz"); await b.click("#panelPractice .controls .btn.primary");
+  ok((await stored(b, KEYF)) !== null, "se anota una forma fallada, para comprobar que el borrado también se la lleva");
+  await b.click("#infoBtn"); ok(/1 casilla fallada/.test(await txt(b.locator("#infoProg"))), "la ayuda cuenta las casillas falladas: «" + (await txt(b.locator("#infoProg"))) + "»");
   await b.click("#progDel"); await b.click("#progDelYes");
-  eq(await stored(b), null, "«Sí, borrar» quita el progreso guardado");
+  eq([await stored(b), await stored(b, KEYF), await b.evaluate(() => fallosCount())], [null, null, 0], "«Sí, borrar» quita el progreso guardado y las formas falladas, en el navegador y en la sesión");
   eq(await b.locator("#subtabs .chip.gold").count(), 0, "y el dorado desaparece al momento");
   ok(/Todavía no hay nada guardado/.test(await txt(b.locator("#infoProg"))), "la ayuda lo refleja");
   await a.waitForFunction(() => document.querySelectorAll("#subtabs .chip.gold").length === 0, null, { timeout: 4000 });
@@ -732,6 +749,10 @@ test("Fallos · lo que fallas se anota una sola vez, vuelve a salir pasados unos
   for (let k = 0; k < 5; k++) { await p.click("#panelPractice .controls .btn.sky"); seen.push(await p.evaluate(() => state.current.retry ? state.current.row.k + "/" + state.current.col.k : null)); }
   eq(seen, [null, null, null, null, cell.r + "/" + cell.c], "la casilla fallada vuelve exactamente a los 5 ejercicios, marcada como repetición");
   ok(await p.locator(".pill", { hasText: "incluye un fallo anterior" }).count() === 1 && /1 forma fallada pendiente/.test(await txt(p.locator("#retrynote"))), "con su etiqueta y el aviso de pendiente");
+  await p.click("#panelPractice .controls .btn.sky");
+  eq(await p.evaluate(() => state.current.retry), false, "si no la contestas, no vuelve a salir al instante (se aplaza otros tantos ejercicios)");
+  await p.click("#panelPractice .controls .btn.sky");
+  await p.evaluate((c) => { const t = curTopic(); const all = gapChoices(t); const ch = all.find((a) => t.items.indexOf(a.item) === c.ii && a.row.k === c.r && a.col.k === c.c); state.current = Object.assign(gapQuestion(t, ch), { retry: true }); renderPractice(); }, cell);
   await p.fill("#panelPractice input.ans", cell.ans); await p.click("#panelPractice .controls .btn.primary");
   eq(await stored(p, KEYF), null, "al acertarla se olvida (y deja de ocupar sitio en el navegador)");
   // de un día para otro: se falla, se recarga y el primer hueco es esa casilla

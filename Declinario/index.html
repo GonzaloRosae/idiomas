@@ -1727,7 +1727,7 @@ topic('it', 'dem', 'Demostrativos', 'Pronombres', 'det',
     frames:{ sg:['Voglio {} {n}.', 'Guarda {} {n}!'], pl:['Voglio {} {n}.', 'Guarda {} {n}!'] } }),
    G('quello (delante de un sustantivo)', ['cm masc. sg. + consonante (quel cane)', 'vm masc. sg. + vocal (quell\'amico)', 'sm masc. sg. + s+cons., z, gn, ps (quello studente)', 'cf fem. sg. + consonante (quella casa)', 'vf fem. sg. + vocal (quell\'amica)', 'pm masc. pl. + consonante (quei cani)', 'pv masc. pl. + vocal, s+cons., z (quegli amici)', 'pf fem. pl. (quelle case)'], ['f Forma'], [
     `quel`, `quell'`, `quello`, `quella`, `quell'`, `quei`, `quegli`, `quelle`], {
-    noRow:true, hint:'none',   // las etiquetas de las filas llevan el ejemplo con la respuesta
+    noRow:true, plainRows:true, hint:'none',   // las etiquetas de las filas llevan el ejemplo con la respuesta
     nouns:IT_CLASES,
     frames:{ cm:['Guarda {} {n}!'], vm:['Guarda {} {n}!'], sm:['Guarda {} {n}!'], cf:['Guarda {} {n}!'], vf:['Guarda {} {n}!'], pm:['Guarda {} {n}!'], pv:['Guarda {} {n}!'], pf:['Guarda {} {n}!'] } })],
   [`quello sigue el modelo del artículo: il → quel, lo → quello, l' → quell', i → quei, gli → quegli, la → quella, le → quelle.`,
@@ -1737,11 +1737,11 @@ topic('it', 'art', 'Artículos y preposiciones articuladas', 'Artículos', 'det'
   'El artículo cambia según el género, el número y el sonido inicial de la palabra siguiente. Con di, a, da, in y su se funde con él.',
   [G('Artículo determinado', ['cm masc. sg. + consonante (il cane)', 'vm masc. sg. + vocal (l\'amico)', 'sm masc. sg. + s+cons., z, gn, ps (lo studente)', 'cf fem. sg. + consonante (la casa)', 'vf fem. sg. + vocal (l\'amica)', 'pm masc. pl. + consonante (i cani)', 'pv masc. pl. + vocal, s+cons., z (gli amici)', 'pf fem. pl. (le case)'], ['f Forma'], [
     `il`, `l'`, `lo`, `la`, `l'`, `i`, `gli`, `le`], {
-    noRow:true, hint:'none',
+    noRow:true, plainRows:true, hint:'none',
     nouns:IT_CLASES,
     frames:{ cm:['Prendo {} {n}.'], vm:['Prendo {} {n}.'], sm:['Prendo {} {n}.'], cf:['Prendo {} {n}.'], vf:['Prendo {} {n}.'], pm:['Prendo {} {n}.'], pv:['Prendo {} {n}.'], pf:['Prendo {} {n}.'] } }),
    G('Artículo indeterminado', ['m masc. + consonante o vocal (un cane)', 'ms masc. + s+cons., z, gn, ps (uno studente)', 'f fem. + consonante (una casa)', 'fv fem. + vocal (un\'amica)'], ['f Forma'], [`un`, `uno`, `una`, `un'`], {
-    noRow:true, hint:'none', nounKey:'row',   // la columna única se llama «f», como la fila de los femeninos: los sustantivos van por fila
+    noRow:true, plainRows:true, hint:'none', nounKey:'row',   // la columna única se llama «f», como la fila de los femeninos: los sustantivos van por fila
     nouns:{ m:['libro', 'giornale'], ms:['zaino', 'studio'], f:['borsa', 'scatola'], fv:['isola', 'agenda'] },
     frames:{ m:['Prendo {} {n}.'], ms:['Prendo {} {n}.'], f:['Prendo {} {n}.'], fv:['Prendo {} {n}.'] } }),
    G('Preposiciones articuladas', ['di di', 'a a', 'da da', 'in in', 'su su'], ['il il', 'lo lo', 'lp l\'', 'i i', 'gli gli', 'la la', 'le le'], [
@@ -2358,6 +2358,8 @@ function hintFor(t, it, col){
   return col.label;
 }
 const rowShown = (t, it) => !(it.noRow || t.noRow);
+/* en «Reconoce la función» las opciones son los nombres de fila; si llevan un ejemplo con la propia forma entre paréntesis (it/art, quello), se quita */
+const optLabel = (it, r) => it.plainRows ? r.label.replace(/\s*\([^)]*\)\s*$/, '') : r.label;
 /* todas las casillas de un tema que se pueden practicar con una frase */
 function gapChoices(t, code){
   code = code || state.lang;
@@ -2666,7 +2668,7 @@ function renderRecogMode(card, cur){
   card.appendChild(box);
   const opts = el('div','testopts');
   cur.item.rows.forEach(r => {
-    const b = el('button','optbtn', esc(r.label));
+    const b = el('button','optbtn', esc(optLabel(cur.item, r)));
     b.type = 'button'; b.dataset.row = r.k;
     b.onclick = () => answerRecog(r.k);
     opts.appendChild(b);
@@ -2813,7 +2815,7 @@ function renderTest(p, t){
     card.appendChild(box);
     const opts = el('div','testopts');
     q.item.rows.forEach(r => {
-      const b = el('button','optbtn', esc(r.label)); b.type = 'button'; b.dataset.row = r.k;
+      const b = el('button','optbtn', esc(optLabel(q.item, r))); b.type = 'button'; b.dataset.row = r.k;
       if(picked){
         b.disabled = true;
         if(q.valid.includes(r.k)) b.classList.add('ok'); else if(r.k === picked.row) b.classList.add('bad');
