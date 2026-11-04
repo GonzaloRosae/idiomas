@@ -3,6 +3,7 @@
 !/.gitignore
 !/Vocabulando/
 !/Conjugario/
+!/index.html
 
 # basura de Windows y temporales de escritura
 desktop.ini
@@ -11,3 +12,6 @@ Thumbs.db
 
 # Los mazos de Vocabulando (un JSON por idioma, con tus palabras y repasos) son datos personales: viven en la carpeta que elige la app y no se suben
 /Vocabulando/*.json
+
+# dependencias de las pruebas (npm install)
+node_modules/

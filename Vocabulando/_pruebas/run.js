@@ -1,0 +1,620 @@
+// Pruebas automáticas de Vocabulando. Uso: node run.js [texto]   (con «texto» solo se ejecutan las pruebas cuyo nombre lo contenga)
+// Abren la app en un Chromium real con mazos sintéticos en el almacenamiento temporal del navegador: no tocan tus archivos
+// (el servidor propio ni siquiera sirve .json) y bloquean internet (Wikcionario, Tatoeba, fuentes).
+const { chromium } = require("playwright");
+const http = require("http"), fs = require("fs"), path = require("path");
+const G = require("./gen.js");
+
+const ROOT = process.env.VOC_ROOT ? path.resolve(process.env.VOC_ROOT) : path.join(__dirname, ".."); // VOC_ROOT: probar otra copia de la carpeta Vocabulando
+const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".webmanifest": "application/manifest+json", ".png": "image/png", ".svg": "image/svg+xml", ".ico": "image/x-icon" };
+let server, PORT = 0, BASE = "", browser;
+
+function startServer() {
+  return new Promise((res) => {
+    server = http.createServer((req, rs) => {
+      const p = decodeURIComponent(req.url.split("?")[0].split("#")[0]);
+      const f = path.normalize(path.join(ROOT, p === "/" ? "Vocabulando.html" : p));
+      if (!f.startsWith(ROOT) || f.includes("_pruebas") || path.extname(f) === ".json" || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { rs.writeHead(404); rs.end("no"); return; }
+      rs.writeHead(200, { "Content-Type": TYPES[path.extname(f)] || "application/octet-stream", "Cache-Control": "no-store" });
+      fs.createReadStream(f).pipe(rs);
+    }).listen(PORT, "127.0.0.1", () => { PORT = server.address().port; BASE = "http://127.0.0.1:" + PORT + "/"; res(); });
+  });
+}
+function stopServer() { return new Promise((res) => { server.closeAllConnections && server.closeAllConnections(); server.close(() => res()); }); }
+
+// ---- ayudantes que se inyectan en la página ----
+// reloj simulado: la hora avanza sola desde el instante que se fije (componentes locales de la zona del navegador)
+const CLOCK = (init) => {
+  const R = Date; let off = 0;
+  class F extends R { constructor(...a) { if (a.length === 0) super(R.now() + off); else super(...a); } static now() { return R.now() + off; } }
+  window.Date = F;
+  window.__at = (y, mo, d, h, mi, s) => { off = new R(y, mo - 1, d, h, mi, s || 0).getTime() - R.now(); };
+  if (init) window.__at(...init);
+};
+// voz simulada: voices = ["de-DE", ...]; lo «pronunciado» queda en window.__spoken
+const SPEECH = (voices) => {
+  const spoken = []; window.__spoken = spoken;
+  const list = voices.map((l) => ({ lang: l, name: "voz " + l, localService: true }));
+  window.SpeechSynthesisUtterance = function (t) { this.text = t; };
+  Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { getVoices: () => list, speak: (u) => spoken.push({ text: u.text, lang: u.lang, voz: u.voice && u.voice.name }), cancel() { }, addEventListener() { }, removeEventListener() { } } });
+};
+
+// ---- infraestructura de pruebas ----
+const T = []; let passes = 0, fails = 0, ctxs = [];
+function test(name, fn) { T.push({ name, fn }); }
+function ok(c, m) { if (c) { passes++; console.log("   OK    " + m); } else { fails++; console.log("   FALLA " + m); } }
+function eq(a, b, m) { const same = JSON.stringify(a) === JSON.stringify(b); ok(same, m + (same ? "" : "   [obtenido " + JSON.stringify(a) + " · esperado " + JSON.stringify(b) + "]")); }
+const noErrors = (p) => ok(p.errs.length === 0, "sin errores de JavaScript" + (p.errs.length ? ": " + p.errs : ""));
+
+// o: { lang, seed: {de: bucket}, prefs: {clave: valor}, now: [a,m,d,h,mi,s], tz, speech: [voces], picker: true, noPicker: true, viewport, html, url: false }
+async function open(o = {}) {
+  const ctx = await browser.newContext({ timezoneId: o.tz || "Europe/Madrid", viewport: o.viewport || { width: 1100, height: 900 } });
+  ctxs.push(ctx);
+  await ctx.route((u) => !u.href.startsWith(BASE), (r) => r.abort());
+  const page = await ctx.newPage(); page.errs = [];
+  page.on("pageerror", (e) => page.errs.push(String(e)));
+  if (o.now) await page.addInitScript(CLOCK, o.now);
+  if (o.speech) await page.addInitScript(SPEECH, o.speech);
+  if (o.picker) await page.addInitScript(() => { window.showDirectoryPicker = async () => navigator.storage.getDirectory(); });
+  if (o.noPicker) await page.addInitScript(() => { try { Object.defineProperty(window, "showDirectoryPicker", { value: undefined, configurable: true }); } catch (e) { window.showDirectoryPicker = undefined; } });
+  await page.addInitScript(([seed, prefs]) => {
+    try {
+      if (localStorage.getItem("__seeded")) return;
+      localStorage.setItem("__seeded", "1");
+      for (const c in seed) localStorage.setItem("vocabulando:data:" + c, JSON.stringify(seed[c]));
+      for (const k in prefs) localStorage.setItem(k, prefs[k]);
+    } catch (e) { }
+  }, [o.seed || {}, o.prefs || {}]);
+  if (o.url !== false) { await page.goto(BASE + (o.html || "Vocabulando.html") + "#" + (o.lang || "de")); await page.waitForSelector("#view"); await page.waitForFunction(() => !document.querySelector("#view .empty") || !/Cargando/.test(document.querySelector("#view").innerText)); }
+  return page;
+}
+const at = (page, str) => { const [d, t] = str.split(" "); const [y, mo, da] = d.split("-").map(Number), [h, mi, s] = t.split(":").map(Number); return page.evaluate((a) => window.__at(...a), [y, mo, da, h, mi, s || 0]); };
+const stored = async (page, code = "de") => JSON.parse(await page.evaluate((c) => localStorage.getItem("vocabulando:data:" + c), code));
+const txt = async (loc) => (await loc.innerText()).replace(/\s+/g, " ").trim();
+async function study(page) { await page.click('.tab[data-tab="estudiar"]'); return { card: (await page.locator("#show").count()) > 0, done: (await page.locator(".done").count()) > 0, stats: await txt(page.locator(".stats")) }; }
+async function rateOnce(page, name) { await page.click("#show"); await page.click('[data-rate="' + name + '"]'); await page.waitForFunction(() => !document.querySelector("[data-rate]")); }
+const newDeck = (code, n, withReview) => ({ [code]: G.deck(code, n, withReview) });
+
+// carpeta de datos simulada con el sistema de archivos privado del navegador (OPFS)
+async function connectFolder(page, files) {
+  await page.evaluate(async (fs) => {
+    const root = await navigator.storage.getDirectory();
+    for await (const k of root.keys()) await root.removeEntry(k);
+    for (const n in fs) { const h = await root.getFileHandle(n, { create: true }); const w = await h.createWritable(); await w.write(fs[n]); await w.close(); }
+  }, files);
+  await page.locator('[data-act="pick-folder"]:visible').first().click();
+}
+const folderFile = (page, name) => page.evaluate(async (n) => (await (await (await navigator.storage.getDirectory()).getFileHandle(n)).getFile()).text(), name);
+const writeFolder = (page, name, text) => page.evaluate(async ([n, t]) => { const h = await (await navigator.storage.getDirectory()).getFileHandle(n); const w = await h.createWritable(); await w.write(t); await w.close(); }, [name, text]);
+const countIs = (page, n) => page.waitForFunction((n) => { const e = document.querySelector(".deck-count"); return e && e.textContent === n + " palabra" + (n === 1 ? "" : "s"); }, n, { timeout: 15000 });
+
+// =====================================================================================================================
+// CREAR: lista por tramos, guardar, editar, borrar
+// =====================================================================================================================
+test("Crear · lista por tramos con 2000 palabras", async () => {
+  const p = await open({ seed: newDeck("de", 2000, false) });
+  await p.waitForSelector(".deck-list");
+  eq(await p.locator("li.row").count(), 100, "se dibujan 100 filas de 2000");
+  ok((await p.locator("li.row").first().innerText()).includes("palabra 1999"), "la primera fila es la más reciente");
+  eq(await p.locator("#deckMoreInfo").innerText(), "Se muestran 100 de 2000", "texto del pie");
+  await p.fill("#esWord", "borrador");
+  await p.click("#deckMore");
+  eq(await p.locator("li.row").count(), 200, "«Mostrar 100 más» → 200 filas");
+  eq(await p.inputValue("#esWord"), "borrador", "el formulario conserva lo escrito");
+  await p.evaluate(() => { document.querySelectorAll("li.row")[5].__m = 1; });
+  await p.locator("li.row").first().locator("[data-frase]").click();
+  eq(await p.locator(".row-frase").count(), 1, "abrir una frase");
+  ok(await p.evaluate(() => document.querySelectorAll("li.row")[5].__m === 1), "las demás filas no se redibujan");
+  eq(await p.inputValue("#esWord"), "borrador", "el formulario sigue intacto al abrir una frase");
+  await p.click("#deckAll");
+  eq(await p.locator("li.row").count(), 2000, "«Mostrar todas» → 2000 filas");
+  eq(await p.locator("#deckMoreBar").count(), 0, "desaparece el pie");
+  noErrors(p);
+});
+
+test("Crear · guardar, editar y borrar", async () => {
+  const p = await open({ seed: newDeck("de", 30, false) });
+  await p.waitForSelector(".deck-list");
+  await p.fill("#esWord", "la prueba"); await p.fill("#deWord", "die Probe");
+  await p.fill("#esSent", "Es una prueba."); await p.fill("#deSent", "Das ist eine Probe.");
+  await p.click("#save"); await countIs(p, 31);
+  const d = await stored(p);
+  eq(d.deck.length, 31, "se guarda en el almacenamiento (31)");
+  eq(d.deck[30].esSent, "Es una prueba", "la frase se guarda sin el punto final");
+  await p.locator("li.row").first().locator("[data-edit]").click();
+  await p.fill("#esWord", "la prueba EDITADA"); await p.click("#save");
+  await p.waitForFunction(() => document.body.innerText.includes("la prueba EDITADA"));
+  ok(true, "editar guarda el cambio");
+  await p.locator("li.row").first().locator("[data-del]").click(); await p.click("#confirmYes"); await countIs(p, 30);
+  eq((await stored(p)).deck.length, 30, "borrar deja 30");
+  noErrors(p);
+});
+
+test("Crear · cambiar de idioma reinicia el tope de la lista", async () => {
+  const p = await open({ seed: { ...newDeck("de", 150, false), ...newDeck("fr", 20, false) } });
+  await p.waitForSelector(".deck-list");
+  await p.click("#deckAll"); eq(await p.locator("li.row").count(), 150, "«todas» en alemán");
+  await p.evaluate(() => { location.hash = "#fr"; }); await countIs(p, 20);
+  await p.evaluate(() => { location.hash = "#de"; }); await countIs(p, 150);
+  eq(await p.locator("li.row").count(), 100, "al volver, el tope es otra vez 100");
+  noErrors(p);
+});
+
+test("Guardado · formato del archivo y reversión si falla", async () => {
+  const p = await open({ seed: { ...newDeck("de", 40, true), ...newDeck("fr", 5, false) } });
+  await p.waitForSelector(".deck-list");
+  await p.fill("#esWord", "x"); await p.fill("#deWord", "y"); await p.click("#save"); await countIs(p, 41);
+  const t = await p.evaluate(() => localStorage.getItem("vocabulando:data:de"));
+  ok(t.startsWith('{\n"app":"vocabulando",\n"version":2,\n"lang":"de",'), "cabecera estable");
+  const d = JSON.parse(t);
+  ok(t.split("\n").includes(JSON.stringify(d.deck[0]) + ","), "una palabra por línea y sin sangrado");
+  ok(t.split("\n").some((l) => l.startsWith('"' + Object.keys(d.review)[0] + '":')), "una tarjeta por línea");
+  const fr0 = await p.evaluate(() => localStorage.getItem("vocabulando:data:fr"));
+  await p.evaluate(() => { const o = Storage.prototype.setItem; window.__o = o; Storage.prototype.setItem = function (k, v) { if (/^vocabulando:data:/.test(k)) throw new Error("cuota"); return o.call(this, k, v); }; });
+  await p.fill("#esWord", "no se guarda"); await p.fill("#deWord", "wird nicht gespeichert"); await p.click("#save");
+  await p.waitForFunction(() => /No se pudo guardar/.test(document.getElementById("toast").textContent));
+  eq(await txt(p.locator(".deck-count")), "41 palabras", "si falla el guardado se deshace el cambio");
+  await p.evaluate(() => { Storage.prototype.setItem = window.__o; });
+  eq(await p.evaluate(() => localStorage.getItem("vocabulando:data:fr")), fr0, "el otro idioma no se toca");
+  await p.click("#save"); await countIs(p, 42);
+  ok(true, "con el almacenamiento recuperado, guardar vuelve a funcionar");
+  noErrors(p);
+});
+
+// =====================================================================================================================
+// CARPETA DE DATOS
+// =====================================================================================================================
+test("Carpeta · lee el archivo con sangría, lo reescribe en formato nuevo y detecta cambios externos", async () => {
+  const orig = G.deck("de", 2000, true), indented = JSON.stringify(orig, null, 1);
+  const p = await open({ picker: true });
+  await connectFolder(p, { "aleman.json": indented });
+  await countIs(p, 2000); ok(true, "lee el archivo antiguo (con sangría): 2000 palabras");
+  await p.fill("#esWord", "el archivo"); await p.fill("#deWord", "die Datei"); await p.click("#save"); await countIs(p, 2001);
+  const t1 = await folderFile(p, "aleman.json"), d1 = JSON.parse(t1);
+  ok(t1.startsWith('{\n"app":"vocabulando"') && d1.deck.length === 2001, "se reescribe en formato nuevo y sigue siendo JSON válido");
+  ok(t1.length < indented.length * 0.85, "pesa menos: " + (indented.length / 1e6).toFixed(2) + " MB → " + (t1.length / 1e6).toFixed(2) + " MB");
+  eq(d1.deck.slice(0, 2000), orig.deck, "las 2000 palabras de antes quedan idénticas");
+  eq(d1.review, orig.review, "las tarjetas quedan idénticas");
+  const ext = JSON.parse(t1); ext.deck.push({ id: "externo1", esWord: "externa", deWord: "extern", esSent: "", deSent: "", createdAt: Date.now() });
+  await new Promise((r) => setTimeout(r, 30)); await writeFolder(p, "aleman.json", JSON.stringify(ext, null, 1));
+  await p.evaluate(() => window.dispatchEvent(new Event("focus"))); await countIs(p, 2002);
+  ok(true, "un cambio hecho a mano en el archivo se recoge (2002)");
+  noErrors(p);
+});
+
+// =====================================================================================================================
+// REPASOS: doble pulsación, nuevas por día, deshacer, fallo de guardado
+// =====================================================================================================================
+async function freshReviewDeck(n) { const g = G.deck("de", n, false); g.review = {}; g.stats = { reviewsTotal: 0, byDay: {} }; return g; }
+
+test("Repaso · una doble pulsación no puntúa dos veces la misma tarjeta (con carpeta)", async () => {
+  for (const how of ["teclado «l» «l»", "doble clic en «Bien»"]) {
+    const p = await open({ picker: true });
+    await connectFolder(p, { "aleman.json": JSON.stringify(await freshReviewDeck(300)) }); await countIs(p, 300);
+    await p.click('.tab[data-tab="estudiar"]'); await p.click("#show");
+    if (how.startsWith("teclado")) { await p.keyboard.press("l"); await p.keyboard.press("l"); } else await p.locator('[data-rate="Good"]').dblclick();
+    await p.waitForTimeout(500);
+    const f = JSON.parse(await folderFile(p, "aleman.json")), keys = Object.keys(f.review);
+    eq([f.stats.reviewsTotal, keys.length, f.review[keys[0]].reps, f.review[keys[0]].state], [1, 1, 1, 1], how + ": 1 repaso, 1 tarjeta, 1 rep, en aprendizaje");
+    noErrors(p);
+  }
+});
+
+test("Repaso · si no se puede guardar, la tarjeta no avanza", async () => {
+  const p = await open({ seed: { de: await freshReviewDeck(10) } });
+  await p.waitForSelector(".deck-list"); await p.click('.tab[data-tab="estudiar"]'); await p.click("#show");
+  const front = await txt(p.locator(".k-front"));
+  await p.evaluate(() => { const o = Storage.prototype.setItem; window.__o = o; Storage.prototype.setItem = function (k, v) { if (/^vocabulando:data:/.test(k)) throw new Error("cuota"); return o.call(this, k, v); }; });
+  await p.click('[data-rate="Good"]');
+  await p.waitForFunction(() => /No se pudo guardar el repaso/.test(document.getElementById("toast").textContent));
+  eq(await txt(p.locator(".k-front")), front, "sigue la misma tarjeta");
+  eq(await p.locator("[data-rate]").count(), 4, "los botones de valorar siguen ahí");
+  eq((await stored(p)).stats.reviewsTotal, 0, "no se contó ningún repaso");
+  await p.evaluate(() => { Storage.prototype.setItem = window.__o; });
+  await p.click('[data-rate="Good"]'); await p.waitForFunction(() => !document.querySelector("[data-rate]"));
+  eq((await stored(p)).stats.reviewsTotal, 1, "al reintentar se guarda");
+  noErrors(p);
+});
+
+test("Nuevas · tope diario, «estudiar más» y reinicio al día siguiente", async () => {
+  const p = await open({ now: [2026, 11, 3, 10, 0, 0], seed: { de: await freshReviewDeck(50) } });
+  await p.waitForSelector(".deck-list");
+  let s = await study(p);
+  eq(s.stats, "0 por repasar 20 nuevas hoy 30 en espera", "contadores separados con el tope por defecto (20)");
+  for (let i = 0; i < 20; i++) await rateOnce(p, "Good");
+  s = await study(p);
+  ok(s.done, "al llegar al tope sale «todo al día»");
+  ok((await txt(p.locator(".done"))).includes("tope diario"), "el aviso explica el tope diario");
+  eq(s.stats, "0 por repasar 0 nuevas hoy 30 en espera ↶ Deshacer", "contadores tras el tope");
+  eq((await stored(p)).stats.newByDay, { "2026-11-03:word": 20 }, "se anotan las nuevas del día");
+  await p.click("#moreNew");
+  eq(await txt(p.locator(".stats")), "0 por repasar 10 nuevas hoy 20 en espera ↶ Deshacer", "«Estudiar 10 nuevas más» suma 10");
+  eq(await p.locator("#show").count(), 1, "y vuelve a ofrecer tarjetas");
+  // el repaso por adelantado no se salta el tope
+  for (let i = 0; i < 10; i++) await rateOnce(p, "Good");
+  await study(p); ok((await p.locator("#ahead").count()) === 1, "hay «Repasar de todos modos» (hay tarjetas ya vistas)");
+  await p.click("#ahead");
+  const n = parseInt((await txt(p.locator(".k-front"))).match(/\d+/)[0], 10);
+  ok(n < 30, "«repasar de todos modos» ofrece una tarjeta ya vista (palabra " + n + "), no una nueva");
+  // al día siguiente se renueva el tope
+  await at(p, "2026-11-04 04:00:00"); s = await study(p);
+  ok(/ 20 nuevas hoy /.test(" " + s.stats + " "), "a las 4:00 del día siguiente vuelven a ofrecerse 20 nuevas (" + s.stats + ")");
+  noErrors(p);
+});
+
+test("Nuevas · se puede cambiar el tope y se recuerda", async () => {
+  const p = await open({ seed: { de: await freshReviewDeck(50) } });
+  await p.waitForSelector(".deck-list"); await p.click('.tab[data-tab="actividad"]');
+  await p.selectOption("#newPerDay", "0");
+  eq(await txt(p.locator("#toast")), "Sin límite de palabras nuevas", "aviso al cambiar");
+  eq((await study(p)).stats, "0 por repasar 50 nuevas", "sin límite: se ofrecen las 50 y no hay «en espera»");
+  await p.reload(); await p.waitForSelector("#view"); await p.click('.tab[data-tab="actividad"]');
+  eq(await p.inputValue("#newPerDay"), "0", "la preferencia se recuerda al recargar");
+  noErrors(p);
+});
+
+test("Nuevas · el contador de nuevas es estable (sin límite)", async () => {
+  const p = await open({ prefs: { "vocabulando:newPerDay": "0" }, seed: { de: await freshReviewDeck(300) } });
+  await p.waitForSelector(".deck-list"); const seen = new Set();
+  for (let i = 0; i < 8; i++) { seen.add((await study(p)).stats); await p.click('.tab[data-tab="crear"]'); }
+  eq([...seen], ["0 por repasar 300 nuevas"], "8 aperturas de «Estudiar» dan siempre el mismo contador");
+  noErrors(p);
+});
+
+test("Deshacer · restaura la tarjeta, las estadísticas y el registro", async () => {
+  const p = await open({ seed: { de: await freshReviewDeck(30) } });
+  await p.waitForSelector(".deck-list"); await study(p);
+  eq(await p.locator("#undoBtn").count(), 0, "sin repasos no hay botón «Deshacer»");
+  await rateOnce(p, "Good"); const s1 = await stored(p);
+  await rateOnce(p, "Hard"); await rateOnce(p, "Easy");
+  eq((await stored(p)).stats.reviewsTotal, 3, "tres repasos hechos");
+  const lastFront = await (async () => { await p.click("#undoBtn"); await p.waitForSelector("[data-rate]"); return txt(p.locator(".k-front")); })();
+  ok((await p.locator(".k-back").count()) === 1, "deshacer muestra la tarjeta con su respuesta para volver a valorarla (" + lastFront + ")");
+  eq((await stored(p)).stats.reviewsTotal, 2, "el total baja a 2");
+  eq((await stored(p)).log.length, 2, "el registro quita la última fila");
+  await p.keyboard.press("z"); await p.waitForSelector("[data-rate]");
+  const s2 = await stored(p);
+  eq([s2.review, s2.stats, s2.log], [s1.review, s1.stats, s1.log], "dos deshacer dejan los datos exactamente como tras el primer repaso");
+  await p.keyboard.press("z"); await p.waitForSelector("[data-rate]");
+  const s0 = await stored(p);
+  eq([s0.review, s0.stats.reviewsTotal, s0.stats.byDay, s0.stats.newByDay, s0.log], [{}, 0, {}, {}, []], "tres deshacer vuelven al principio");
+  await p.click('[data-rate="Good"]'); await p.waitForFunction(() => !document.querySelector("[data-rate]"));   // tras deshacer la tarjeta ya sale con la respuesta
+  await p.keyboard.press("z"); await p.waitForSelector("[data-rate]");
+  ok(true, "se puede volver a valorar y deshacer");
+  await p.click('[data-rate="Again"]'); await p.waitForFunction(() => !document.querySelector("[data-rate]"));
+  eq((await stored(p)).stats.reviewsTotal, 1, "tras deshacer se puede puntuar de nuevo");
+  noErrors(p);
+});
+
+test("Deshacer · la pila es de cada idioma y se niega si la tarjeta cambió (carpeta)", async () => {
+  const p = await open({ picker: true });
+  await connectFolder(p, { "aleman.json": JSON.stringify(await freshReviewDeck(20)) }); await countIs(p, 20);
+  await study(p); await rateOnce(p, "Good");
+  eq(await p.locator("#undoBtn").count(), 1, "hay «Deshacer»");
+  await p.evaluate(() => { location.hash = "#fr"; }); await p.waitForTimeout(300);
+  await p.evaluate(() => { location.hash = "#de"; }); await countIs(p, 20);
+  await study(p); eq(await p.locator("#undoBtn").count(), 0, "al cambiar de idioma y volver, la pila está vacía");
+  await rateOnce(p, "Good");
+  const f = JSON.parse(await folderFile(p, "aleman.json")), key = Object.keys(f.review).pop();
+  f.review[key].last_review = new Date(Date.now() + 86400000).toISOString();            // otro dispositivo repasó esa tarjeta después
+  await new Promise((r) => setTimeout(r, 30)); await writeFolder(p, "aleman.json", JSON.stringify(f, null, 1));
+  await p.evaluate(() => window.dispatchEvent(new Event("focus"))); await p.waitForTimeout(400);
+  await p.keyboard.press("z");
+  await p.waitForFunction(() => /No se puede deshacer/.test(document.getElementById("toast").textContent));
+  ok(true, "si la tarjeta cambió desde entonces, se niega: «" + await txt(p.locator("#toast")) + "»");
+  eq(JSON.parse(await folderFile(p, "aleman.json")).review[key].last_review, f.review[key].last_review, "y no se toca la tarjeta");
+  noErrors(p);
+});
+
+// =====================================================================================================================
+// DÍA DE ESTUDIO: empieza a las 4:00
+// =====================================================================================================================
+for (const tz of ["Europe/Madrid", "America/Los_Angeles", "Asia/Tokyo"]) {
+  test("Día de estudio · vence desde las 4:00 y FSRS cuenta días de estudio (" + tz + ")", async () => {
+    const mk = (now) => open({ tz, now, seed: { de: G.deck("de", 1, false) } });
+    const clean = async (p) => { await p.evaluate(() => { const d = JSON.parse(localStorage.getItem("vocabulando:data:de")); d.review = {}; localStorage.setItem("vocabulando:data:de", JSON.stringify(d)); }); await p.reload(); await p.waitForSelector("#view"); };
+    const card = async (p, k) => { const d = await stored(p); return d.review[d.deck[0].id + ":" + (k || "word")]; };
+    { // A) una tarjeta con plazo de días toca desde las 4:00 de su día, no a la hora exacta del repaso
+      const p = await mk([2026, 11, 3, 22, 0, 0]); await p.waitForSelector(".deck-list"); await clean(p); await at(p, "2026-11-03 22:00:00");
+      await study(p); await rateOnce(p, "Easy"); const c = await card(p);
+      eq([c.scheduled_days, c.state], [8, 2], "A: «Fácil» a las 22:00 → repaso a 8 días");
+      for (const [t, esperado] of [["2026-11-10 23:00:00", false], ["2026-11-11 03:59:59", false], ["2026-11-11 04:00:00", true], ["2026-11-11 09:00:00", true]]) {
+        await at(p, t); eq((await study(p)).card, esperado, "A: " + t.slice(5, 16) + (esperado ? " toca" : " no toca"));
+      }
+      noErrors(p);
+    }
+    { // B) en aprendizaje (minutos): a la hora exacta, cruzando la medianoche sin esperar a las 4:00
+      const p = await mk([2026, 11, 3, 23, 50, 0]); await p.waitForSelector(".deck-list"); await clean(p); await at(p, "2026-11-03 23:50:00");
+      await study(p); await rateOnce(p, "Good"); const c = await card(p);
+      eq([new Date(c.due) - new Date(c.last_review), c.state], [600000, 1], "B: «Bien» en tarjeta nueva → a los 10 min exactos");
+      await at(p, "2026-11-03 23:59:00"); eq((await study(p)).card, false, "B: 23:59 aún no toca");
+      await at(p, "2026-11-04 00:00:30"); eq((await study(p)).card, true, "B: 00:00:30 ya toca");
+    }
+    { // C) los días transcurridos que usa FSRS son días de estudio (no fechas UTC)
+      const p = await mk([2026, 11, 3, 22, 0, 0]); await p.waitForSelector(".deck-list"); await clean(p); await at(p, "2026-11-03 22:00:00");
+      await study(p); await rateOnce(p, "Good"); await at(p, "2026-11-03 22:10:30"); await study(p); await rateOnce(p, "Good");
+      let c = await card(p); eq([c.state, c.scheduled_days], [2, 2], "C: dos «Bien» → repaso a 2 días");
+      await at(p, "2026-11-06 03:30:00"); ok((await study(p)).card, "C: 06/11 03:30 (día de estudio 05/11) toca");
+      await p.click("#show"); const labels = await p.locator(".rate .r em").allInnerTexts();
+      await p.click('[data-rate="Good"]'); await p.waitForFunction(() => !document.querySelector("[data-rate]")); c = await card(p);
+      eq(c.elapsed_days, 2, "C: días transcurridos para FSRS = 2 (del 03/11 al 05/11 de estudio)");
+      eq(labels[2], c.scheduled_days + " d", "C: la etiqueta de «Bien» es el plazo programado");
+      await at(p, "2026-11-06 09:00:00"); ok((await study(p)).done, "C: a las 09:00 aún no toca");
+      await p.click("#ahead"); await rateOnce(p, "Good"); c = await card(p);
+      eq(c.elapsed_days, 1, "C: repaso de las 03:30 y de las 09:00 del mismo día natural = 1 día de estudio");
+      noErrors(p);
+    }
+    { // D) los contadores de «hoy» usan el mismo día
+      const p = await mk([2026, 11, 3, 22, 0, 0]); await p.waitForSelector(".deck-list"); await clean(p);
+      await p.evaluate(() => { const d = JSON.parse(localStorage.getItem("vocabulando:data:de")); d.deck[0].createdAt = new Date(2026, 10, 3, 22, 30).getTime(); localStorage.setItem("vocabulando:data:de", JSON.stringify(d)); });
+      await p.reload(); await p.waitForSelector("#view"); await at(p, "2026-11-03 22:00:00"); await study(p); await rateOnce(p, "Good");
+      const hoy = async () => { await p.click('.tab[data-tab="actividad"]'); const n = (i) => p.locator(".act-card").nth(i).locator(".act-n b").first().innerText().then(Number); return [await n(0), await n(1)]; };
+      eq(await hoy(), [1, 1], "D: 03/11 22:00 → hoy: 1 añadida, 1 repasada");
+      await at(p, "2026-11-04 01:00:00"); eq(await hoy(), [1, 1], "D: 04/11 01:00 (aún día de estudio 03/11)");
+      await at(p, "2026-11-04 04:00:00"); eq(await hoy(), [0, 0], "D: 04/11 04:00 (día nuevo) → 0 y 0");
+    }
+  });
+}
+test("Día de estudio · cambio de hora de primavera (Madrid)", async () => {
+  const p = await open({ now: [2026, 3, 25, 22, 0, 0], seed: { de: G.deck("de", 1, false) } });
+  await p.waitForSelector(".deck-list");
+  await p.evaluate(() => { const d = JSON.parse(localStorage.getItem("vocabulando:data:de")); d.review = {}; localStorage.setItem("vocabulando:data:de", JSON.stringify(d)); }); await p.reload(); await p.waitForSelector("#view");
+  await at(p, "2026-03-25 22:00:00"); await study(p); await rateOnce(p, "Easy");
+  for (const [t, esperado] of [["2026-04-02 03:59:00", false], ["2026-04-02 04:00:00", true]]) { await at(p, t); eq((await study(p)).card, esperado, t.slice(5, 16) + (esperado ? " toca" : " no toca")); }
+  noErrors(p);
+});
+
+// =====================================================================================================================
+// TARJETA INVERSA
+// =====================================================================================================================
+test("Inversa · del idioma al español, con su propio contador y sin dejar restos al borrar", async () => {
+  const p = await open({ prefs: { "vocabulando:rev": "1" }, seed: { de: await freshReviewDeck(30) } });
+  await p.waitForSelector(".deck-list"); await study(p);
+  eq(await p.locator(".seg-btn").allInnerTexts(), ["Palabras", "Frases", "Inversa"], "aparece la pestaña «Inversa»");
+  await p.click('.seg-btn[data-mode="rev"]');
+  eq(await txt(p.locator(".k-front")), "der Wort0", "el anverso es la palabra del idioma");
+  ok(/de\s*→\s*es/i.test(await txt(p.locator(".k-tag"))), "la etiqueta dice idioma → es (" + await txt(p.locator(".k-tag")) + ")");
+  await p.click("#show"); eq(await txt(p.locator(".k-back")), "la palabra 0", "el reverso es la palabra en español");
+  await p.click('[data-rate="Good"]'); await p.waitForFunction(() => !document.querySelector("[data-rate]"));
+  const d = await stored(p); eq(Object.keys(d.review), ["id000000:rev"], "se guarda como tarjeta «inversa» de esa palabra");
+  eq(Object.keys(d.stats.newByDay).map((k) => k.split(":")[1]), ["rev"], "el contador de nuevas es el del modo inversa");
+  await p.click('.seg-btn[data-mode="word"]'); eq(await txt(p.locator(".stats")), "0 por repasar 20 nuevas hoy 10 en espera ↶ Deshacer", "el modo Palabras no se ve afectado");
+  await p.click('.tab[data-tab="crear"]'); await p.click('[data-del="id000000"]'); await p.click("#confirmYes"); await countIs(p, 29);
+  eq(Object.keys((await stored(p)).review).filter((k) => k.startsWith("id000000")), [], "al borrar la palabra desaparece también su tarjeta inversa");
+  await p.click('.tab[data-tab="actividad"]'); await p.click("#revSw"); await study(p);
+  eq(await p.locator(".seg-btn").allInnerTexts(), ["Palabras", "Frases"], "al apagarla desaparece la pestaña");
+  noErrors(p);
+});
+
+// =====================================================================================================================
+// PRONUNCIACIÓN
+// =====================================================================================================================
+test("Pronunciación · botones, atajo P, audio automático y limpieza del texto", async () => {
+  const p = await open({ speech: ["de-DE", "en-US"], seed: { de: await freshReviewDeck(12) } });
+  await p.waitForSelector(".deck-list");
+  ok(await p.evaluate(() => document.body.classList.contains("tts-on")), "hay voz para el alemán: se muestran los botones");
+  ok(await p.locator("li.row").first().locator(".say").isVisible(), "cada fila del mazo tiene su botón de escuchar");
+  await p.locator("li.row").first().locator(".say").click();
+  let sp = await p.evaluate(() => window.__spoken); eq([sp[0].text, sp[0].lang, sp[0].voz], ["das Wort11", "de-DE", "voz de-DE"], "pronuncia la palabra del idioma de la fila");
+  await study(p);
+  eq(await p.locator(".karte .say").count(), 0, "antes de mostrar la respuesta no hay audio (no revelarla)");
+  await p.keyboard.press("p"); eq((await p.evaluate(() => window.__spoken)).length, 1, "y el atajo P tampoco habla antes de mostrarla");
+  await p.click("#show"); ok(await p.locator(".karte .say").isVisible(), "tras mostrarla aparece el botón");
+  await p.click(".karte .say"); sp = await p.evaluate(() => window.__spoken); eq(sp[1].text, "der Wort0", "pronuncia la respuesta");
+  await p.keyboard.press("p"); eq((await p.evaluate(() => window.__spoken)).length, 3, "el atajo P también");
+  await p.click('.tab[data-tab="actividad"]'); await p.click("#autoSpeakSw");
+  await study(p); await p.click("#show"); sp = await p.evaluate(() => window.__spoken);
+  eq([sp.length, sp[3].text], [4, "der Wort0"], "con «Pronunciar al mostrar la respuesta» habla al mostrarla");
+  // texto con alternativas y paréntesis
+  await p.evaluate(() => { const d = JSON.parse(localStorage.getItem("vocabulando:data:de")); d.deck[0].deWord = "die Katze (pl. Katzen) / der Kater"; localStorage.setItem("vocabulando:data:de", JSON.stringify(d)); });
+  await p.reload(); await p.waitForSelector("#view"); await p.locator("li.row").last().locator(".say").click();
+  eq((await p.evaluate(() => window.__spoken)).pop().text, "die Katze, der Kater", "quita los paréntesis y separa las alternativas");
+  noErrors(p);
+});
+
+test("Pronunciación · sin voz para el idioma no se ofrece nada", async () => {
+  const p = await open({ speech: ["de-DE"], lang: "pl", seed: { pl: G.deck("pl", 5, false) } });
+  await p.waitForSelector(".deck-list");
+  ok(!(await p.evaluate(() => document.body.classList.contains("tts-on"))), "no hay voz para el polaco: sin botones");
+  eq(await p.locator("li.row").first().locator(".say").isVisible(), false, "las filas no muestran el botón");
+  await p.click('.tab[data-tab="actividad"]');
+  eq(await p.locator("#autoSpeakSw").count(), 0, "no hay interruptor de audio automático");
+  ok((await txt(p.locator("#view"))).includes("no tiene una voz"), "se explica por qué");
+  noErrors(p);
+});
+
+test("Pronunciación · con la voz inversa también se oye antes de mostrar la respuesta", async () => {
+  const p = await open({ speech: ["de-DE"], prefs: { "vocabulando:rev": "1" }, seed: { de: await freshReviewDeck(5) } });
+  await p.waitForSelector(".deck-list"); await study(p); await p.click('.seg-btn[data-mode="rev"]');
+  ok(await p.locator(".karte .say").isVisible(), "en «Inversa» el botón está desde el principio (oyes la palabra y tienes que traducirla)");
+  await p.keyboard.press("p"); eq((await p.evaluate(() => window.__spoken))[0].text, "der Wort0", "y P la pronuncia");
+  noErrors(p);
+});
+
+// =====================================================================================================================
+// IMPORTAR
+// =====================================================================================================================
+async function importFile(p, name, obj) {
+  await p.click('.tab[data-tab="actividad"]');
+  const [ch] = await Promise.all([p.waitForEvent("filechooser"), p.click("#impBtn")]);
+  await ch.setFiles({ name, mimeType: "application/json", buffer: Buffer.from(typeof obj === "string" ? obj : JSON.stringify(obj)) });
+}
+test("Importar JSON · fusiona: gana el repaso más reciente y se suman estadísticas y registro", async () => {
+  const mkDeck = () => ["A", "B", "C"].map((x, i) => ({ id: "w" + x, esWord: "es " + x, deWord: "de " + x, esSent: "", deSent: "", createdAt: 1000 + i }));
+  const local = { app: "vocabulando", version: 2, lang: "de", deck: mkDeck(), review: { "wA:word": G.card(4, 4, "2026-02-27T12:00:00.000Z"), "wB:word": G.card(4, 7, "2026-03-02T12:00:00.000Z") }, stats: { reviewsTotal: 11, byDay: { "2026-02-27": 4 } }, log: [[1772193600, "wA:word", 3, 2]] };
+  const incoming = { app: "vocabulando", version: 2, lang: "de", deck: [...mkDeck(), { id: "wD", esWord: "es D", deWord: "de D", esSent: "", deSent: "", createdAt: 5000 }],
+    review: { "wA:word": G.card(5, 6, "2026-03-01T12:00:00.000Z"), "wB:word": G.card(2, 2, "2026-02-20T12:00:00.000Z"), "wD:word": G.card(5, 1, "2026-03-01T13:00:00.000Z") },
+    stats: { reviewsTotal: 50, byDay: { "2026-03-01": 5, "2026-02-27": 2 } }, log: [[1772193600, "wA:word", 3, 2], [1772366400, "wA:word", 3, 2]] };
+  const p = await open({ seed: { de: local } }); await p.waitForSelector(".deck-list");
+  await importFile(p, "copia.json", incoming); await p.waitForFunction(() => /añadida/.test(document.getElementById("toast").textContent));
+  eq(await txt(p.locator("#toast")), "1 añadida · 1 repaso actualizado", "mensaje: 1 palabra nueva y 1 repaso actualizado");
+  const d = await stored(p);
+  eq(d.deck.map((e) => e.id), ["wA", "wB", "wC", "wD"], "la palabra nueva se añade y las que había no se duplican");
+  eq([d.review["wA:word"].reps, d.review["wB:word"].reps, d.review["wD:word"].reps], [6, 7, 1], "en cada tarjeta se queda el repaso más reciente (A importada, B local) y se añade la nueva");
+  eq([d.stats.reviewsTotal, d.stats.byDay], [50, { "2026-02-27": 4, "2026-03-01": 5 }], "estadísticas: el máximo de cada una");
+  eq(d.log.length, 2, "el registro se une sin duplicar");
+  await importFile(p, "copia.json", incoming); await p.waitForFunction(() => /No hay nada nuevo/.test(document.getElementById("toast").textContent));
+  ok(true, "importar otra vez lo mismo no cambia nada: «" + await txt(p.locator("#toast")) + "»");
+  noErrors(p);
+});
+
+test("Importar JSON · una palabra con otro id pero la misma pareja se considera repetida", async () => {
+  const p = await open({ seed: { de: await freshReviewDeck(3) } }); await p.waitForSelector(".deck-list");
+  await importFile(p, "otra.json", { app: "vocabulando", version: 2, lang: "de", deck: [{ id: "otro-id", esWord: "la palabra 0", deWord: "der Wort0", createdAt: 1 }, { id: "nuevo", esWord: "la nueva", deWord: "die Neue", createdAt: 2 }], review: {} });
+  await p.waitForFunction(() => /añadida/.test(document.getElementById("toast").textContent));
+  eq(await txt(p.locator("#toast")), "1 añadida · 1 ya estaba", "se añade solo la nueva");
+  eq((await stored(p)).deck.length, 4, "4 palabras");
+  noErrors(p);
+});
+
+test("Importar lista · texto pegado con varios separadores, cabecera, comillas y repetidas", async () => {
+  const p = await open({ seed: { de: await freshReviewDeck(3) } }); await p.waitForSelector(".deck-list");
+  await p.click('.tab[data-tab="actividad"]'); await p.click("#impListBtn");
+  await p.fill("#listText", [
+    "palabra_es;palabra_de;frase_es;frase_de;genero;genero_es",
+    "el gato ; die Katze ; El gato duerme. ; Die Katze schläft.",
+    '"la casa; grande" ; das Haus',
+    "la puerta ; die Tür",
+    "la puerta ; die Tür",
+    "la palabra 0 ; der Wort0",
+    "solo español ;",
+    "el perro ; der Hund ; Una frase sin pareja",
+  ].join("\n"));
+  await p.click("#listCheck");
+  eq(await txt(p.locator(".list-prev p")), "4 palabras nuevas · 2 repetidas (se omiten) · 1 línea sin las dos palabras (se omiten)", "vista previa con los recuentos");
+  await p.click("#listAdd"); await p.waitForFunction(() => /palabras añadidas/.test(document.getElementById("toast").textContent));
+  const d = (await stored(p)).deck.slice(3);
+  eq(d.map((e) => [e.esWord, e.deWord]), [["el gato", "die Katze"], ["la casa; grande", "das Haus"], ["la puerta", "die Tür"], ["el perro", "der Hund"]], "se añaden en orden y respetando las comillas");
+  eq([d[0].esSent, d[0].deSent, d[3].esSent, d[3].deSent], ["El gato duerme", "Die Katze schläft", "", ""], "la frase solo entra si traen las dos versiones (y sin el punto final)");
+  ok(d.every((e, i) => i === 0 || e.createdAt > d[i - 1].createdAt) && new Set((await stored(p)).deck.map((e) => e.id)).size === 7, "orden de creación creciente e ids distintos");
+  // tabulador y barra
+  await p.click("#impListBtn"); await p.fill("#listText", "uno\tein\ndos\tzwei"); await p.click("#listCheck");
+  ok((await txt(p.locator(".list-prev p"))).startsWith("2 palabras nuevas"), "separado por tabuladores");
+  await p.fill("#listText", "tres | drei\ncuatro | vier\n"); await p.click("#listCheck");
+  ok((await txt(p.locator(".list-prev p"))).startsWith("2 palabras nuevas"), "separado por barras");
+  await p.fill("#listText", "el gato ; die Katze"); await p.click("#listCheck");
+  ok((await txt(p.locator(".list-prev p"))).startsWith("0 palabras nuevas"), "lo ya añadido sale como repetido");
+  noErrors(p);
+});
+
+test("Importar lista · desde un archivo CSV exportado por la propia app", async () => {
+  const p = await open({ seed: { de: await freshReviewDeck(4) } }); await p.waitForSelector(".deck-list");
+  await p.click('.tab[data-tab="actividad"]');
+  const [dl] = await Promise.all([p.waitForEvent("download"), p.click("#expCsv")]);
+  const csv = fs.readFileSync(await dl.path(), "utf8");
+  ok(csv.includes("palabra_es;palabra_de"), "el CSV exportado tiene su cabecera");
+  await p.evaluate(async () => { const d = JSON.parse(localStorage.getItem("vocabulando:data:de")); d.deck = d.deck.slice(0, 1); localStorage.setItem("vocabulando:data:de", JSON.stringify(d)); });
+  await p.reload(); await p.waitForSelector("#view"); await p.click('.tab[data-tab="actividad"]'); await p.click("#impListBtn");
+  const [ch] = await Promise.all([p.waitForEvent("filechooser"), p.click("#listFile")]);
+  await ch.setFiles({ name: "mazo.csv", mimeType: "text/csv", buffer: Buffer.from(csv) });
+  await p.waitForSelector(".list-prev p");
+  eq(await txt(p.locator(".list-prev p")), "3 palabras nuevas · 1 repetida (se omiten)", "reconoce la cabecera, el separador y la palabra que ya estaba");
+  await p.click("#listAdd"); await p.waitForFunction(() => /añadidas/.test(document.getElementById("toast").textContent));
+  eq((await stored(p)).deck.length, 4, "el mazo vuelve a tener las 4 palabras");
+  noErrors(p);
+});
+
+test("Exportar JSON · lleva el registro y se puede importar en un mazo vacío", async () => {
+  const p = await open({ seed: { de: await freshReviewDeck(5) } }); await p.waitForSelector(".deck-list");
+  await study(p); await rateOnce(p, "Good"); await rateOnce(p, "Easy");
+  await p.click('.tab[data-tab="actividad"]');
+  const [dl] = await Promise.all([p.waitForEvent("download"), p.click("#expJson")]);
+  const exp = JSON.parse(fs.readFileSync(await dl.path(), "utf8"));
+  eq([exp.deck.length, Object.keys(exp.review).length, exp.log.length, exp.stats.reviewsTotal], [5, 2, 2, 2], "la copia incluye palabras, tarjetas, registro y estadísticas");
+  const q = await open({ seed: { de: { app: "vocabulando", version: 2, lang: "de", deck: [], review: {}, stats: { reviewsTotal: 0, byDay: {} } } } });
+  await importFile(q, "copia.json", exp); await q.waitForFunction(() => /añadida/.test(document.getElementById("toast").textContent));
+  const d = await stored(q); eq([d.deck.length, Object.keys(d.review).length, d.log.length, d.stats.reviewsTotal], [5, 2, 2, 2], "importada en un mazo vacío queda igual");
+  noErrors(p); noErrors(q);
+});
+
+// =====================================================================================================================
+// DATOS Y ESTADÍSTICAS
+// =====================================================================================================================
+const patchLS = async (p, fn) => { await p.evaluate((src) => { const d = JSON.parse(localStorage.getItem("vocabulando:data:de")); (new Function("d", src))(d); localStorage.setItem("vocabulando:data:de", JSON.stringify(d)); }, fn); await p.reload(); await p.waitForSelector("#view"); };
+
+test("Datos · el total de repasos nunca baja de lo que consta en las tarjetas", async () => {
+  const g = G.deck("de", 3, false); g.review = { "id000000:word": G.card(3, 5), "id000001:word": G.card(3, 4), "id000002:word": G.card(3, 3) }; g.stats = { reviewsTotal: 0, byDay: {} };
+  const p = await open({ seed: { de: g } }); await p.waitForSelector(".deck-list"); await p.click('.tab[data-tab="actividad"]');
+  eq(await p.locator(".act-card").nth(1).locator(".act-n b").nth(1).innerText(), "12", "datos con 12 repasos en las tarjetas y total 0 muestran 12");
+  noErrors(p);
+});
+
+test("Datos · el registro anota cada repaso", async () => {
+  const p = await open({ seed: { de: await freshReviewDeck(5) } }); await p.waitForSelector(".deck-list");
+  await study(p); await rateOnce(p, "Good"); await rateOnce(p, "Easy");
+  const d = await stored(p);
+  eq(d.log.map((r) => [r[1], r[2], r[3]]), [["id000000:word", 3, 0], ["id000001:word", 4, 0]], "tarjeta, nota (1-4) y estado anterior (0 = nueva)");
+  ok(Math.abs(d.log[0][0] - Date.now() / 1000) < 60, "con la hora en segundos");
+  noErrors(p);
+});
+
+test("Actividad · racha, retención y previsión de los próximos 7 días", async () => {
+  const now = Date.UTC(2026, 10, 3, 9, 0, 0) / 1000, D = 86400;
+  const g = G.deck("de", 5, false);
+  g.review = { "id000000:word": { ...G.card(1, 4), due: "2026-11-03T08:00:00.000Z" }, "id000001:word": { ...G.card(1, 4), due: "2026-10-20T08:00:00.000Z" },
+    "id000002:word": { ...G.card(1, 4), due: "2026-11-04T10:00:00.000Z" }, "id000003:word": { ...G.card(1, 4), due: "2026-11-06T10:00:00.000Z" } };
+  g.stats = { reviewsTotal: 30, byDay: { "2026-11-03": 2, "2026-11-02": 1, "2026-11-01": 4, "2026-10-30": 1 } };
+  g.log = [];
+  for (let i = 0; i < 25; i++) g.log.push([now - (i + 1) * 3600 * 5, "id000000:word", i < 20 ? 3 : 1, 2]);        // 25 repasos maduros en 30 días: 20 bien
+  for (let i = 0; i < 10; i++) g.log.push([now - (40 + i) * D, "id000000:word", 1, 2]);                              // más antiguos: no cuentan
+  for (let i = 0; i < 5; i++) g.log.push([now - (i + 1) * 3600, "id000001:word", 1, 1]);                              // en aprendizaje: no cuentan
+  const p = await open({ now: [2026, 11, 3, 10, 0, 0], seed: { de: g } }); await p.waitForSelector(".deck-list"); await p.click('.tab[data-tab="actividad"]');
+  const grid = await txt(p.locator(".st-grid"));
+  ok(/RACHA 3 días seguidos/i.test(grid), "racha de 3 días (hoy, ayer y anteayer): " + grid);
+  ok(/RETENCIÓN 80 % de 25 repasos en 30 días/i.test(grid), "retención 80 % sobre los 25 repasos maduros de los últimos 30 días");
+  eq(await p.locator(".fc-n").allInnerTexts(), ["2", "1", "0", "1", "0", "0", "0"], "previsión: 2 hoy (uno atrasado), 1 mañana y 1 dentro de 3 días");
+  eq((await txt(p.locator(".fc-d").first())) + "/" + (await txt(p.locator(".fc-d").nth(1))), "hoy/mañ.", "con sus etiquetas");
+  await patchLS(p, "d.stats.byDay = { '2026-11-02': 1, '2026-11-01': 1 }; d.log = d.log.slice(0, 3);"); await p.click('.tab[data-tab="actividad"]');
+  const g2 = await txt(p.locator(".st-grid"));
+  ok(/RACHA 2 días seguidos/i.test(g2) && /RETENCIÓN — faltan repasos/i.test(g2), "si hoy aún no has repasado pero ayer sí, la racha sigue viva (2); con pocos repasos no se inventa la retención");
+  await patchLS(p, "d.stats.byDay = { '2026-10-30': 1 };"); await p.click('.tab[data-tab="actividad"]');
+  ok(/RACHA 0 días seguidos/i.test(await txt(p.locator(".st-grid"))), "con un hueco de más de un día la racha vuelve a 0");
+  noErrors(p);
+});
+
+// =====================================================================================================================
+// WEB: instalable y sin conexión · AYUDA
+// =====================================================================================================================
+test("Web · manifiesto, service worker y funcionamiento sin conexión", async () => {
+  const p = await open({ seed: newDeck("de", 20, false) }); await p.waitForSelector(".deck-list");
+  const href = await p.evaluate(() => { const l = document.querySelector('link[rel="manifest"]'); return l && l.href; });
+  ok(!!href, "la página enlaza su manifiesto (servida como web)");
+  const m = await p.evaluate(async (h) => (await fetch(h)).json(), href);
+  eq([m.name, m.display, m.start_url], ["Vocabulando", "standalone", "./Vocabulando.html"], "manifiesto: nombre, modo app y página de inicio");
+  for (const ic of m.icons) eq(await p.evaluate(async (u) => (await fetch(new URL(u, location.href))).status, ic.src), 200, "existe el icono " + ic.src);
+  ok(await p.evaluate(() => navigator.serviceWorker.ready.then((r) => !!r.active)), "el service worker queda activo");
+  await p.waitForTimeout(600);
+  const urls = await p.evaluate(async () => { const out = []; for (const k of await caches.keys()) { const c = await caches.open(k); for (const r of await c.keys()) out.push(new URL(r.url).pathname); } return out; });
+  ok(urls.some((u) => u.endsWith("/Vocabulando.html")) && !urls.some((u) => u.endsWith(".json")), "la copia guardada incluye la app y ningún archivo de datos");
+  await stopServer();
+  try {
+    await p.reload(); await p.waitForSelector("#view");
+    eq(await p.title(), "Vocabulando · Alemán", "con el servidor apagado, la app se abre desde la copia");
+    await p.waitForSelector(".deck-list"); eq(await txt(p.locator(".deck-count")), "20 palabras", "y sus datos siguen ahí");
+  } finally { await startServer(); }
+  noErrors(p);
+});
+
+test("Ayuda · explica las novedades y el aviso de iPad", async () => {
+  const p = await open({ noPicker: true, seed: newDeck("de", 3, false) }); await p.waitForSelector(".deck-list");
+  ok((await txt(p.locator(".databar:visible").first())).includes("Añadir a pantalla de inicio"), "sin carpeta (iPad/Safari) el aviso recomienda añadir la web a la pantalla de inicio");
+  await p.locator(".js-info:visible").first().click(); await p.waitForSelector(".info-body");
+  const t = await txt(p.locator(".info-body"));
+  for (const k of ["Palabras nuevas por día", "Z para deshacer", "Pronunciación", "las 4:00", "En el iPad o el móvil", "importar listas"]) ok(t.includes(k), "la ayuda menciona «" + k + "»");
+  noErrors(p);
+});
+
+// =====================================================================================================================
+(async () => {
+  const filter = process.argv[2];
+  await startServer(); browser = await chromium.launch(); const t0 = Date.now();
+  for (const t of T) {
+    if (filter && !t.name.toLowerCase().includes(filter.toLowerCase())) continue;
+    console.log("\n" + t.name);
+    try { await t.fn(); } catch (e) { fails++; console.log("   FALLA la prueba se interrumpió: " + (e && e.message ? e.message.split("\n")[0] : e)); }
+    for (const c of ctxs) await c.close().catch(() => { }); ctxs = [];
+  }
+  await browser.close(); await stopServer();
+  console.log("\n" + (fails ? fails + " FALLOS · " : "TODO OK · ") + passes + " comprobaciones correctas · " + Math.round((Date.now() - t0) / 1000) + " s");
+  process.exit(fails ? 1 : 0);
+})();

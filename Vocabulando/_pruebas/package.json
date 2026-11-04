@@ -1,0 +1,7 @@
+{
+  "name": "vocabulando-pruebas",
+  "private": true,
+  "description": "Pruebas automáticas de Vocabulando (navegador real con Playwright, datos sintéticos)",
+  "scripts": { "test": "node run.js" },
+  "devDependencies": { "playwright": "^1.40.0" }
+}
