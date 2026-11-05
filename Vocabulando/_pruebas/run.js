@@ -102,6 +102,17 @@ const countIs = (page, n) => page.waitForFunction((n) => { const e = document.qu
 // CREAR: lista por tramos, guardar, editar, borrar
 // =====================================================================================================================
 const mazo = async (p) => { await p.click('.tab[data-tab="mazo"]'); await p.waitForSelector("#deckBody"); };
+test("Compatibilidad · el código no usa nada que exija un Safari posterior a 15.4", async () => {
+  // Lo que Safari no entiende no «falla bien»: una expresión regular con lookbehind en un Safari anterior a 16.4 deja la página entera en blanco
+  const src = fs.readFileSync(path.join(ROOT, "Vocabulando.html"), "utf8");
+  const prohibido = [
+    ["lookbehind en expresiones regulares (Safari 16.4)", /\(\?<[=!]/], ["toSorted / toReversed / toSpliced (Safari 16)", /\.(toSorted|toReversed|toSpliced)\(/],
+    ["Object.groupBy / Map.groupBy (Safari 17.4)", /\b(Object|Map)\.groupBy\(/], ["Promise.withResolvers (Safari 17.4)", /Promise\.withResolvers/], ["Array.fromAsync (Safari 16.4)", /Array\.fromAsync/],
+    ["AbortSignal.timeout (Safari 16)", /AbortSignal\.timeout/], ["@container (Safari 16)", /@container\b/], ["color-mix() (Safari 16.2)", /color-mix\(/], ["@property (Safari 16.4)", /@property\b/], ["subgrid (Safari 16)", /\bsubgrid\b/]];
+  const hallados = prohibido.filter(([, re]) => re.test(src)).map(([n]) => n);
+  eq(hallados, [], "ni sintaxis ni funciones posteriores a Safari 15.4");
+});
+
 test("Mazo · lista por tramos con 2000 palabras", async () => {
   const p = await open({ seed: newDeck("de", 2000, false) });
   await p.waitForSelector(".deck-list");
@@ -351,6 +362,59 @@ const lib = (extra = {}) => bucket("de", [
   { esWord: "la calle", deWord: "die Straße" }, { esWord: "la ciudad", deWord: "die Stadt" }, { esWord: "el niño", deWord: "das Kind", esSent: "El niño duerme", deSent: "Das Kind schläft" }], extra);
 const front = (p) => txt(p.locator(".k-front"));
 const typeInto = async (p, v) => { await p.fill("#typedIn", v); await p.click("#typedCheck"); await p.waitForSelector(".typed-res"); };
+
+test("Crear · una traducción automática que llega cuando ya has salido del idioma no rompe nada", async () => {
+  const p = await open({ seed: { de: lib() } });
+  let soltar; const espera = new Promise((r) => { soltar = r; });
+  await p.route(/api\.mymemory\.translated\.net/, async (r) => { await espera; r.fulfill({ contentType: "application/json", body: JSON.stringify({ matches: [{ segment: "x", translation: "Das Haus ist groß", match: 1 }] }) }); });
+  await p.click('.tab[data-tab="crear"]'); await p.fill("#esSent", "La casa es grande");
+  await p.click("#sentTransDe");
+  await p.evaluate(() => { location.hash = ""; }); await p.waitForSelector("#pickStreak .ps-main");
+  soltar(); await p.waitForTimeout(600);
+  eq(await p.locator("#pickStreak .ps-main").count(), 1, "sigues en la pantalla de idiomas");
+  noErrors(p);
+});
+
+test("Crear · el botón de ChatGPT copia el prompt con el método clásico si el portapapeles moderno lo rechaza (Safari, contextos sin permiso)", async () => {
+  const p = await open({ seed: { de: lib() } });
+  await p.click('.tab[data-tab="crear"]'); await p.fill("#esWord", "la casa");
+  await p.evaluate(() => {
+    window.__copied = [];
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: () => Promise.reject(new DOMException("denegado", "NotAllowedError")) } });
+    document.execCommand = (c) => { window.__copied.push(c); return true; };
+    window.open = () => null;
+  });
+  await p.click("#geminiBtn"); await p.waitForTimeout(300);
+  eq(await p.evaluate(() => window.__copied), ["copy"], "rechazado el portapapeles moderno, copia con el método clásico");
+  ok(/Prompt copiado/.test(await txt(p.locator("#toast"))), "y lo dice");
+  noErrors(p);
+});
+
+test("Escribir la respuesta · el apóstrofo tipográfico (Mac, iPad o texto pegado) vale igual que el recto, en palabras y en dictado", async () => {
+  // la puntuación inteligente de macOS y de iOS cambia ' por ’ al escribir; lo guardado puede tener cualquiera de los dos
+  const frDeck = () => bucket("fr", [
+    { esWord: "el amigo", deWord: "l'ami", esSent: "Es mi amigo", deSent: "C'est l'ami d'Anne" },
+    { esWord: "el agua", deWord: "l’eau", esSent: "Quiero agua", deSent: "Je veux de l’eau" }]);
+  const curvo = (s) => s.replace(/'/g, "’"), recto = (s) => s.replace(/[’‘ʼ´`]/g, "'");
+  const p = await open({ lang: "fr", prefs: { "vocabulando:type": "1" }, seed: { fr: frDeck() } }); await study(p);
+  for (let k = 0; k < 2; k++) {
+    const f = await front(p), esc = f === "el amigo" ? curvo("l'ami") : recto("l’eau"); // siempre el contrario de como está guardada
+    await p.fill("#typedIn", esc); await p.click("#typedCheck"); await p.waitForSelector(".typed-res");
+    ok(await p.locator(".typed-res.ok").count() === 1, f + " ← «" + esc + "»: " + await txt(p.locator(".typed-res")));
+    await p.click(".r.suggested"); await p.waitForFunction(() => !document.querySelector("[data-rate]"));
+  }
+  noErrors(p);
+  const q = await open({ lang: "fr", speech: ["fr-FR"], prefs: { "vocabulando:type": "1", "vocabulando:dict": "1" }, seed: { fr: frDeck() } }); await study(q);
+  await q.click('.seg-btn[data-mode="dict"]'); await q.waitForSelector("#typedIn");
+  for (let k = 0; k < 2; k++) {
+    const sent = (await q.evaluate(() => window.__spoken.map((x) => x.text))).pop(), cambiada = /’/.test(sent) ? recto(sent) : curvo(sent);
+    ok(cambiada !== sent, "(se escribe «" + cambiada + "» y suena «" + sent + "»)");
+    await q.fill("#typedIn", cambiada); await q.keyboard.press("Enter"); await q.waitForSelector(".typed-res");
+    ok(await q.locator(".typed-res.ok").count() === 1, "dictado con el otro apóstrofo: " + await txt(q.locator(".typed-res")));
+    await q.click(".r.suggested"); await q.waitForFunction(() => !document.querySelector("[data-rate]"));
+  }
+  noErrors(q);
+});
 
 test("Escribir la respuesta · corrige con tolerancia, sugiere la nota y no confunde las teclas", async () => {
   const p = await open({ prefs: { "vocabulando:type": "1" }, seed: { de: lib() } }); await study(p);
@@ -612,6 +676,21 @@ test("Repaso · una doble pulsación no puntúa dos veces la misma tarjeta (con 
     eq([f.stats.reviewsTotal, keys.length, f.review[keys[0]].reps, f.review[keys[0]].state], [1, 1, 1, 1], how + ": 1 repaso, 1 tarjeta, 1 rep, en aprendizaje");
     noErrors(p);
   }
+});
+
+test("Repaso · los atajos del navegador (Cmd o Ctrl con 0-3, J, K, L, punto) no giran ni puntúan la tarjeta", async () => {
+  // en Mac: Cmd+0 restablece el zoom, Cmd+1…3 cambian de pestaña, Cmd+L va a la barra de direcciones… y no deben tocar el repaso
+  const p = await open({ seed: { de: await freshReviewDeck(10) } });
+  await p.waitForSelector(".deck-list"); await p.click('.tab[data-tab="estudiar"]');
+  for (const k of ["Meta+.", "Control+.", "Alt+."]) await p.keyboard.press(k);
+  eq(await p.locator("#show").count(), 1, "con Cmd, Ctrl o Alt el punto no da la vuelta a la tarjeta");
+  await p.click("#show"); const front = await txt(p.locator(".k-front"));
+  for (const k of ["Meta+0", "Meta+1", "Meta+2", "Meta+3", "Control+0", "Control+1", "Meta+j", "Meta+k", "Meta+l", "Control+l", "Alt+j"]) await p.keyboard.press(k);
+  await p.waitForTimeout(300);
+  eq([await p.locator("[data-rate]").count(), await txt(p.locator(".k-front")), await p.evaluate(() => { const d = JSON.parse(localStorage.getItem("vocabulando:data:de") || "{}"); return d.stats ? d.stats.reviewsTotal : 0; })], [4, front, 0], "con la tarjeta vuelta, ninguna de esas combinaciones valora (siguen los 4 botones, la misma tarjeta y 0 repasos)");
+  await p.keyboard.press("l"); await p.waitForFunction((f) => !document.querySelector(".k-front") || document.querySelector(".k-front").textContent.trim() !== f, front);
+  ok(true, "y la «l» sola sí valora");
+  noErrors(p);
 });
 
 test("Repaso · si no se puede guardar, la tarjeta no avanza", async () => {
@@ -876,7 +955,7 @@ test("Pronunciación · sin voz europea se puede permitir cualquier otra; Activi
   ok(/✓/.test(await fila("Francés")) && /voz fr-FR/.test(await fila("Francés")), "francés: «" + await fila("Francés") + "»");
   ok(/solo hay: en-US/.test(await fila("Inglés")), "inglés: «" + await fila("Inglés") + "»");
   ok(/sin voz europea/.test(await fila("Italiano")) && !/solo hay/.test(await fila("Italiano")), "italiano: sin ninguna voz");
-  ok(/no hay botones de pronunciación/.test(await txt(p.locator(".panel", { hasText: "Estudio" }).first())) && /Agregar voces/.test(await txt(p.locator(".panel", { hasText: "Voces" }).first())), "explica por qué no hay botones y cómo instalar una voz");
+  ok(/no hay botones de pronunciación/.test(await txt(p.locator(".panel", { hasText: "Estudio" }).first())) && /Agregar voces/.test(await txt(p.locator(".panel", { hasText: "Voces" }).first())) && /Mac: Ajustes del Sistema › Accesibilidad › Contenido leído/.test(await txt(p.locator(".panel", { hasText: "Voces" }).first())), "explica por qué no hay botones y cómo instalar una voz");
   eq(await p.locator("#anyVoiceSw").getAttribute("aria-checked"), "false", "el interruptor «usar la que haya» viene apagado");
   await p.click("#anyVoiceSw");
   ok(/⚠/.test(await fila("Portugués")) && /no es europea/.test(await fila("Portugués")), "al permitirlo, el portugués usa la de Brasil y lo dice: «" + await fila("Portugués") + "»");
@@ -1099,7 +1178,7 @@ test("Ayuda · explica las novedades y el aviso de iPad", async () => {
   ok((await txt(p.locator(".databar:visible").first())).includes("Añadir a pantalla de inicio"), "sin carpeta (iPad/Safari) el aviso recomienda añadir la web a la pantalla de inicio");
   await p.locator(".js-info:visible").first().click(); await p.waitForSelector(".info-body");
   const t = await txt(p.locator(".info-body"));
-  for (const k of ["Palabras y frases nuevas por día", "Z para deshacer", "Pronunciación", "las 4:00", "En el iPad o el móvil", "importar listas"]) ok(t.includes(k), "la ayuda menciona «" + k + "»");
+  for (const k of ["Palabras y frases nuevas por día", "Z para deshacer", "Pronunciación", "las 4:00", "En Safari (Mac, iPad) y en el móvil", "Añadir al Dock", "importar listas"]) ok(t.includes(k), "la ayuda menciona «" + k + "»");
   noErrors(p);
 });
 

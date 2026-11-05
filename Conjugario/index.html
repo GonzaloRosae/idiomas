@@ -990,7 +990,7 @@ body.vcb footer{font-family:var(--mono);font-size:11px;letter-spacing:.04em;colo
       <div class="choices" id="choices"></div>
       <div class="nojs" role="alert">
         <p class="nojsTitle">Conjugario necesita JavaScript y ahora no se está ejecutando.</p>
-        <p>Suele pasar al abrir el archivo desde la vista previa de Archivos (iPad o iPhone), de un mensaje o de un correo: esas vistas previas no ejecutan JavaScript.</p>
+        <p>Suele pasar al abrir el archivo desde la vista previa de Archivos (iPad o iPhone) o del Finder (Mac, con la barra espaciadora), de un mensaje o de un correo: esas vistas previas no ejecutan JavaScript.</p>
         <p>Ábrelo en un navegador (Safari, Chrome, Edge…) desde la dirección web donde esté publicado, o con una aplicación capaz de ejecutar páginas HTML.</p>
       </div>
     </div>
@@ -1093,7 +1093,7 @@ function showVoiceToast(code, text){
   const others = VOICES_CACHE.map(v => v.lang).filter((l, i, a) => voiceLang({lang:l}).split('-')[0] === pre && a.indexOf(l) === i);
   box.innerHTML = '';
   const msg = el('div','msg','Tu navegador no tiene una voz con acento europeo en <b>' + esc(lang.name) + '</b>' + (others.length ? ' (solo hay: ' + esc(others.join(', ')) + ')' : '') +
-    ', así que no se reproduce el audio. Instala una en los ajustes de voz de tu sistema (Windows: Configuración › Hora e idioma › Voz; iPad: Ajustes › Accesibilidad › Contenido leído › Voces) o prueba con Microsoft Edge.');
+    ', así que no se reproduce el audio. Instala una en los ajustes de voz de tu sistema (Windows: Configuración › Hora e idioma › Voz; Mac: Ajustes del Sistema › Accesibilidad › Contenido leído › Voz del sistema › Gestionar voces; iPad: Ajustes › Accesibilidad › Contenido leído › Voces) o, en Windows, prueba con Microsoft Edge.');
   if(others.length){
     const any = el('button','voiceany','Usar la que haya');
     any.type = 'button';
@@ -12009,8 +12009,8 @@ function infoHtml(){
     '<h3>Dónde se guarda tu progreso</h3>' +
     '<div id="infoProg">' + infoProgHtml() + '</div>' +
     '<p>Conjugario guarda dos cosas, solo en este navegador (no hay ningún servidor): los tiempos cuyo test final has superado, con tu mejor nota y la fecha, y las formas que has fallado (verbo, persona y tiempo) para que vuelvan a salir. Siguen ahí al recargar o cerrar la página, pero no pasan solos de un navegador o dispositivo a otro y se pierden si borras los datos del sitio. Lo demás de la práctica (aciertos, tablas perfectas) no se guarda: «Reiniciar sesión» lo pone a cero, pero no quita los tiempos dorados ni las formas falladas.</p>' +
-    '<h3>En el iPad o el móvil</h3>' +
-    '<p>Funciona igual en cualquier navegador. Cada navegador guarda sus propios tiempos dorados. Safari puede borrar los datos de una web que lleva tiempo sin visitarse; si la añades a la pantalla de inicio, no lo hace.</p>' +
+    '<h3>En Mac, iPad o móvil</h3>' +
+    '<p>Funciona igual en cualquier navegador. Cada navegador guarda sus propios tiempos dorados. Safari (en Mac y en iPad) puede borrar los datos de una web que lleva tiempo sin visitarse; si la añades a la pantalla de inicio (iPad, iPhone) o al Dock (Mac, desde Safari 17), no debería hacerlo.</p>' +
     '<h3>Qué sale de tu navegador</h3>' +
     '<p>Conjugario no usa ningún servidor ni consulta datos de internet: las formas, reglas y frases están dentro de la propia página. Solo se descargan las tipografías de Google Fonts al abrirla. El audio lo genera tu navegador con las voces de tu sistema; si no hay ninguna para el idioma, la web te avisa.</p>' +
     '<h3>Créditos</h3><p class="muted-note">Tipografías: Fredoka, Nunito, DM Mono, Bricolage Grotesque, Inter e IBM Plex Mono (Google Fonts, licencia OFL). Banderas dibujadas en SVG.</p>' +
