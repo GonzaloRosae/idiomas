@@ -647,6 +647,56 @@
     background: var(--accent-soft);
   }
 
+  /* voces disponibles (Actividad) */
+  .voice-list {
+    list-style: none;
+    margin: 8px 0 0;
+    padding: 0;
+    font-size: 13px;
+  }
+
+  .voice-list li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 8px;
+    padding: 3px 0;
+    color: var(--muted);
+  }
+
+  .voice-list li.cur .vg {
+    font-weight: 700;
+  }
+
+  .voice-list .vk {
+    width: 1.2em;
+    text-align: center;
+    font-weight: 700;
+  }
+
+  .voice-list .ok .vk {
+    color: var(--good, #1f9d55);
+  }
+
+  .voice-list .warn .vk,
+  .voice-list .no .vk {
+    color: var(--again);
+  }
+
+  .voice-list .vg {
+    min-width: 5.5em;
+    color: var(--ink);
+  }
+
+  .voice-list .vn {
+    color: var(--ink);
+  }
+
+  .voice-list .vl {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+  }
+
   /* IPA: transcripción fonética de la palabra (Wiktionary) */
   .ipa {
     border: 0;
@@ -5167,7 +5217,7 @@
     });
 
     // ---- almacenamiento local (solo una copia espejo por idioma; la fuente de verdad son los archivos de la carpeta) ----
-    var K_DATA = "vocabulando:data:", K_DIRTY = "vocabulando:dirty:", K_THEME = "vocabulando:theme", K_SHARED_THEME = "idiomas:theme", K_AUTO = "vocabulando:autoSent", K_AUTOGEN = "vocabulando:autoGender", K_AUTOSUGG = "vocabulando:autoSuggest", K_NEWDAY = "vocabulando:newPerDay", K_NEWWORDS = "vocabulando:newWords", K_NEWSENTS = "vocabulando:newSents", K_REV = "vocabulando:rev", K_SPEAK = "vocabulando:autoSpeak";
+    var K_DATA = "vocabulando:data:", K_DIRTY = "vocabulando:dirty:", K_THEME = "vocabulando:theme", K_SHARED_THEME = "idiomas:theme", K_ANYVOICE = "idiomas:anyVoice", K_AUTO = "vocabulando:autoSent", K_AUTOGEN = "vocabulando:autoGender", K_AUTOSUGG = "vocabulando:autoSuggest", K_NEWDAY = "vocabulando:newPerDay", K_NEWWORDS = "vocabulando:newWords", K_NEWSENTS = "vocabulando:newSents", K_REV = "vocabulando:rev", K_SPEAK = "vocabulando:autoSpeak";
     var LS = null;
     try { LS = window.localStorage; LS.setItem("vocabulando:probe", "1"); LS.removeItem("vocabulando:probe"); } catch (e) { LS = null; }
     function lsGet(k) { try { return LS ? LS.getItem(k) : null; } catch (e) { return null; } }
@@ -5286,7 +5336,7 @@
     var DECK_PAGE = 100; // filas de la lista del mazo que se dibujan de una vez (el resto, con «Mostrar más»)
     var S = {
       lang: null, tab: "crear", deckDir: "es-it", autoSentence: false, theme: "dark",
-      editing: null, confirmDelete: null, expanded: {}, deckShown: DECK_PAGE, q: "", fState: "all", fSent: "all", fGender: "all", fSort: "new", qSent: true, goal: 10, typeOn: false, typed: null, clozeOn: false, dictOn: false, xlOpen: {}, nextTab: null, dictPlayed: "", editFrom: null, editY: 0, restoreY: null, imp: null, restore: null, ipaOpen: {}, undo: [], newExtra: {}, newWords: 20, newSents: 10, revOn: false, autoSpeak: false, mode: "word",
+      editing: null, confirmDelete: null, expanded: {}, deckShown: DECK_PAGE, q: "", fState: "all", fSent: "all", fGender: "all", fSort: "new", qSent: true, goal: 10, typeOn: false, typed: null, clozeOn: false, dictOn: false, xlOpen: {}, nextTab: null, dictPlayed: "", editFrom: null, editY: 0, restoreY: null, imp: null, restore: null, ipaOpen: {}, anyVoice: false, undo: [], newExtra: {}, newWords: 20, newSents: 10, revOn: false, autoSpeak: false, mode: "word",
       current: null, flipped: false, showSentence: false, studyAhead: false, bannerOff: false,
       formGender: "", formEsGender: "", formWikt: null, formBusy: false, suggErr: null, autoGen: true, detecting: false, autoSugg: true, sugg: null, suggBusy: false, sents: null, sentsBusy: false, sentsSlow: false, transBusy: false, tatDownAt: 0,
       deck: [], review: {}, stats: { reviewsTotal: 0, byDay: {} }
@@ -6849,7 +6899,7 @@
         "<ul>" +
         "<li><b>Palabras y frases nuevas por día:</b> en la propia pestaña Estudiar eliges cuántas palabras nuevas y cuántas frases nuevas se te ofrecen cada día (por defecto 20 y 10, o sin límite); el resto espera su turno. «Inversa» usa el límite de palabras. Si te quedas con ganas, el botón «Estudiar nuevas más» añade 10. Los repasos que toquen salen siempre.</li>" +
         "<li><b>Deshacer</b> (Z o el botón «Deshacer») anula los últimos repasos de esta sesión, de uno en uno, mientras sigas en este idioma.</li>" +
-        "<li><b>Pronunciación:</b> usa la voz que tenga tu navegador para el idioma. Si no hay ninguna, no aparecen los botones de audio.</li>" +
+        "<li><b>Pronunciación:</b> usa una voz de tu navegador o de tu sistema <b>con acento europeo</b> (francés de Francia y no de Canadá, portugués de Portugal y no de Brasil, inglés británico y no americano…). Si no hay ninguna para el idioma, no aparecen los botones de audio: en Actividad, en «Voces», ves qué voz se usa en cada idioma, qué falta y cómo instalarla. Con el interruptor «usar la que haya» puedes permitir también voces de otros acentos.</li>" +
         "<li><b>Escribir la respuesta:</b> en Actividad puedes activar que, en Palabras, teclees la traducción en vez de mostrarla. Se corrige sin que importen las mayúsculas ni los acentos (te dice «casi» si fallan) y se acepta cualquiera de las alternativas separadas por «/». Te sugiere la valoración (Bien si acierta, Difícil si casi, Otra vez si no), pero la eliges tú. «No lo sé» la muestra sin corregir.</li>" +
         "<li><b>Hueco:</b> en Actividad puedes activar «frases con hueco»: se muestra tu frase en " + "el idioma con la palabra de la ficha tapada (y su traducción como pista) y escribes la palabra que falta, con la forma que lleva en la frase. Solo salen las frases en las que se localiza la palabra. Es recordar la palabra en contexto, que se retiene mejor que la tarjeta suelta. Se corrige como «escribir la respuesta» y sugiere la valoración.</li>" +
         "<li><b>Dictado:</b> también en Actividad (si tu navegador tiene voz para el idioma): suena una de tus frases y la escribes entera. Se compara palabra por palabra, sin que importen la puntuación ni la mayúscula inicial; las palabras que fallas se subrayan. «Más despacio» la repite más lenta y la tecla P la repite.</li>" +
@@ -7750,7 +7800,14 @@
     }
 
     // ---- pronunciación: voces del propio navegador (la app no envía nada a internet para esto) ----
-    var TTS_TAGS = { fr: ["fr-FR", "fr"], it: ["it-IT", "it"], pt: ["pt-PT", "pt-BR", "pt"], ca: ["ca-ES", "ca"], pl: ["pl-PL", "pl"], en: ["en-GB", "en-US", "en"], de: ["de-DE", "de"], el: ["el-GR", "el"] };
+    // Solo se aceptan voces con acento EUROPEO: francés de Francia (no de Canadá), portugués de Portugal (no de Brasil), inglés británico (no
+    // americano)… Si el dispositivo no tiene ninguna, no se ofrece el audio (mejor nada que con otro acento), salvo que en Actividad se permita
+    // «usar la que haya». Una voz «xx-YY-zzz» cuenta como «xx-YY»; una etiqueta sin región («fr») solo se acepta donde la región por defecto es europea.
+    var VOICE_EU = {
+      fr: ["fr-FR", "fr-BE", "fr-CH", "fr-LU", "fr-MC", "fr"], it: ["it-IT", "it-CH", "it-SM", "it"], pt: ["pt-PT"], ca: ["ca-ES", "ca-AD", "ca-FR", "ca-IT", "ca"],
+      pl: ["pl-PL", "pl"], en: ["en-GB", "en-IE", "en-scotland"], de: ["de-DE", "de-AT", "de-CH", "de-LI", "de"], el: ["el-GR", "el-CY", "el"]
+    };
+    var TTS_TAGS = { fr: ["fr-FR", "fr"], it: ["it-IT", "it"], pt: ["pt-PT", "pt-BR", "pt"], ca: ["ca-ES", "ca"], pl: ["pl-PL", "pl"], en: ["en-GB", "en-US", "en"], de: ["de-DE", "de"], el: ["el-GR", "el"] }; // si se permite cualquier voz
     var ttsVoices = [];
     function ttsLoad() {
       try { ttsVoices = (window.speechSynthesis && typeof SpeechSynthesisUtterance !== "undefined") ? (window.speechSynthesis.getVoices() || []) : []; } catch (e) { ttsVoices = []; }
@@ -7761,15 +7818,22 @@
       ttsLoad();
       try { if (window.speechSynthesis.addEventListener) window.speechSynthesis.addEventListener("voiceschanged", ttsLoad); else window.speechSynthesis.onvoiceschanged = ttsLoad; } catch (e) { }
     }
-    function ttsVoice(code) { // la mejor voz para el idioma, o null: sin voz de ese idioma no se muestran los botones (mejor nada que mal pronunciado)
-      var tags = TTS_TAGS[code] || [code], best = null;
-      for (var i = 0; i < tags.length && !best; i++) {
-        var t = tags[i].toLowerCase(), pre = t.split("-")[0], regional = t.indexOf("-") > 0;
-        var m = ttsVoices.filter(function (v) { var l = String(v.lang || "").replace("_", "-").toLowerCase(); return regional ? l === t : (l === pre || l.indexOf(pre + "-") === 0); });
-        if (m.length) best = m.filter(function (v) { return v.localService; })[0] || m[0];
+    function voiceLang(v) { return String(v.lang || "").replace(/_/g, "-").toLowerCase(); }
+    function voicesFor(tags, loose) { // la primera etiqueta con voces manda; dentro de ella, mejor una instalada en el sistema
+      for (var i = 0; i < tags.length; i++) {
+        var t = tags[i].toLowerCase(), regional = t.indexOf("-") > 0, pre = t.split("-")[0];
+        var m = ttsVoices.filter(function (v) { var l = voiceLang(v); return regional ? (l === t || l.indexOf(t + "-") === 0) : (loose ? (l === pre || l.indexOf(pre + "-") === 0) : l === t); });
+        if (m.length) return m.filter(function (v) { return v.localService; })[0] || m[0];
       }
-      return best;
+      return null;
     }
+    function voiceInfo(code) { // { v: la voz (o null), eu: ¿es europea? }
+      var eu = voicesFor(VOICE_EU[code] || [code], false);
+      if (eu) return { v: eu, eu: true };
+      var any = S.anyVoice ? voicesFor(TTS_TAGS[code] || [code], true) : null;
+      return { v: any, eu: false };
+    }
+    function ttsVoice(code) { return voiceInfo(code).v; } // la voz para el idioma, o null: sin ella no se muestran los botones
     function updateTtsClass() { document.body.classList.toggle("tts-on", !!(S.lang && ttsVoice(S.lang))); }
     function speakClean(t) { return String(t || "").replace(/\([^)]*\)/g, " ").replace(/\s*\/\s*/g, ", ").replace(/\s+/g, " ").trim(); }
     function speak(text, slow) {
@@ -7942,8 +8006,28 @@
         (hasVoice ? '<div class="sw-row">' + switchBtn("dictSw", S.dictOn, "Practicar también dictado de frases (escuchar y escribir)") + "</div>"
           : "") +
         (hasVoice ? '<div class="sw-row">' + switchBtn("autoSpeakSw", S.autoSpeak, "Pronunciar al mostrar la respuesta") + "</div>"
-          : '<p class="act-sub" style="margin:14px 0 0">Este navegador no tiene una voz para ' + langName() + ', así que no hay botones de pronunciación.</p>') +
-        "</section>";
+          : '<p class="act-sub" style="margin:14px 0 0">Este navegador no tiene una voz con acento europeo para ' + langName() + ', así que no hay botones de pronunciación (ver «Voces» más abajo).</p>') +
+        voicesHtml() + "</section>";
+    }
+    // qué voz se usa en cada idioma: solo con acento europeo (francés de Francia, portugués de Portugal, inglés británico…)
+    function voicesHtml() {
+      var missing = false;
+      var rows = LANGS.map(function (l) {
+        var inf = voiceInfo(l.code), cls = inf.v ? (inf.eu ? "ok" : "warn") : "no", txt;
+        if (inf.v && inf.eu) txt = '<span class="vn">' + esc(inf.v.name) + "</span> <span class=\"vl\">" + esc(inf.v.lang) + "</span>";
+        else if (inf.v) txt = '<span class="vn">' + esc(inf.v.name) + '</span> <span class="vl">' + esc(inf.v.lang) + " · no es europea</span>";
+        else {
+          missing = true;
+          var others = ttsVoices.filter(function (v) { var x = voiceLang(v); return x === l.code || x.indexOf(l.code + "-") === 0; }).map(function (v) { return v.lang; });
+          txt = "sin voz europea" + (others.length ? ' <span class="vl">(solo hay: ' + esc(others.filter(function (x, i) { return others.indexOf(x) === i; }).join(", ")) + ")</span>" : "");
+        }
+        return '<li class="' + cls + (l.code === S.lang ? " cur" : "") + '"><span class="vk">' + (inf.v ? (inf.eu ? "✓" : "⚠") : "✗") + "</span>" + flag(l.code) + '<span class="vg">' + esc(l.name) + "</span>" + txt + "</li>";
+      }).join("");
+      return '<h3 class="act-label" style="margin:22px 0 4px">Voces</h3>' +
+        '<p class="act-sub" style="margin:0">El audio solo usa voces con acento <b>europeo</b> (francés de Francia y no de Canadá, portugués de Portugal y no de Brasil, inglés británico y no americano…). Las voces son las de tu navegador y tu sistema.</p>' +
+        '<ul class="voice-list">' + rows + "</ul>" +
+        (missing ? '<p class="act-sub" style="margin:8px 0 0">Para tener una voz que falta, instálala en los ajustes de voz del sistema (Windows: Configuración › Hora e idioma › Voz › Agregar voces, p. ej. «Portugués (Portugal)»; iPad o iPhone: Ajustes › Accesibilidad › Contenido leído › Voces). Chrome suele traer solo algunas variantes; Microsoft Edge trae más voces.</p>' : "") +
+        '<div class="sw-row">' + switchBtn("anyVoiceSw", S.anyVoice, "Si no hay voz europea, usar la que haya (puede tener acento de Brasil, EE. UU., Canadá…)") + "</div>";
     }
     // ---- «Hoy» (en Actividad): qué toca en cada idioma y cómo va Conjugario ----
     function conjSummary() { // lo que Conjugario ha guardado en este navegador (si es la misma dirección, se ve)
@@ -8192,6 +8276,7 @@
       var sy = t.closest("[data-say]");
       if (sy) { var sid = sy.getAttribute("data-say"), se = sid === "card" ? (S.current && (findEntry(S.current.entry.id) || S.current.entry)) : findEntry(sid); if (se) speak(sid === "card" ? cardTarget(se, S.mode) : se.deWord); return; }
       if (t.closest("#revSw")) { S.revOn = !S.revOn; lsSet(K_REV, S.revOn ? "1" : "0"); if (!S.revOn && S.mode === "rev") { S.mode = "word"; S.current = null; } render(); return; }
+      if (t.closest("#anyVoiceSw")) { S.anyVoice = !S.anyVoice; lsSet(K_ANYVOICE, S.anyVoice ? "1" : "0"); updateTtsClass(); render(); return; }
       if (t.closest("#autoSpeakSw")) { S.autoSpeak = !S.autoSpeak; lsSet(K_SPEAK, S.autoSpeak ? "1" : "0"); render(); return; }
       var hr = t.closest(".hoy-row");
       if (hr) {
@@ -8307,7 +8392,7 @@
       var capPref = function (key, def) { var v = lsGet(key); if (v === null) v = legacyCap; return v === null ? def : Math.max(0, parseInt(v, 10) || 0); }; // 0 = sin límite
       S.newWords = capPref(K_NEWWORDS, 20); S.newSents = capPref(K_NEWSENTS, 10);
       S.revOn = lsGet(K_REV) === "1";
-      S.autoSpeak = lsGet(K_SPEAK) === "1";
+      S.autoSpeak = lsGet(K_SPEAK) === "1"; S.anyVoice = lsGet(K_ANYVOICE) === "1";
       S.goal = Math.max(1, Math.min(500, parseInt(lsGet(K_GOAL), 10) || 10));
       S.typeOn = lsGet(K_TYPE) === "1"; S.clozeOn = lsGet(K_CLOZE) === "1"; S.dictOn = lsGet(K_DICT) === "1";
       ttsInit();

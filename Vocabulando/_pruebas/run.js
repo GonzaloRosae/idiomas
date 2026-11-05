@@ -34,7 +34,7 @@ const CLOCK = (init) => {
 // voz simulada: voices = ["de-DE", ...]; lo «pronunciado» queda en window.__spoken
 const SPEECH = (voices) => {
   const spoken = []; window.__spoken = spoken;
-  const list = voices.map((l) => ({ lang: l, name: "voz " + l, localService: true }));
+  const list = voices.map((l) => typeof l === "string" ? { lang: l, name: "voz " + l, localService: true } : l); // texto = voz del sistema «voz xx-YY»; o un objeto {lang, name, localService}
   window.SpeechSynthesisUtterance = function (t) { this.text = t; };
   Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { getVoices: () => list, speak: (u) => spoken.push({ text: u.text, lang: u.lang, voz: u.voice && u.voice.name }), cancel() { }, addEventListener() { }, removeEventListener() { } } });
 };
@@ -836,6 +836,58 @@ test("Inversa · del idioma al español, con su propio contador y sin dejar rest
 // =====================================================================================================================
 // PRONUNCIACIÓN
 // =====================================================================================================================
+test("Pronunciación · solo voces con acento europeo: portugués de Portugal, inglés británico, francés de Francia…", async () => {
+  // [idioma, voces del dispositivo, la que debe sonar (o null: sin voz europea, sin botones)]
+  const casos = [
+    ["pt", ["pt-BR"], null], ["pt", ["pt-BR", "pt-PT"], "voz pt-PT"], ["pt", ["pt-PT", "pt-BR"], "voz pt-PT"], ["pt", ["pt_PT"], "voz pt_PT"], ["pt", ["pt"], null],
+    ["pt", ["pt-PT-x-lusitano"], "voz pt-PT-x-lusitano"], ["pt", ["pt-BR-x-paulista"], null],
+    ["fr", ["fr-CA"], null], ["fr", ["fr-CA", "fr-FR"], "voz fr-FR"], ["fr", ["fr-CA", "fr-BE", "fr-FR"], "voz fr-FR"], ["fr", ["fr-CA", "fr-BE"], "voz fr-BE"], ["fr", ["fr"], "voz fr"],
+    ["en", ["en-US"], null], ["en", ["en-US", "en-GB"], "voz en-GB"], ["en", ["en-AU", "en-IE"], "voz en-IE"], ["en", ["en-US", "en-AU", "en-IN"], null],
+    ["de", ["de-AT"], "voz de-AT"], ["de", ["de-AT", "de-DE"], "voz de-DE"], ["it", ["it-IT"], "voz it-IT"], ["ca", ["ca-ES"], "voz ca-ES"], ["pl", ["pl-PL"], "voz pl-PL"], ["el", ["el-GR"], "voz el-GR"]];
+  for (const [code, voces, quiero] of casos) {
+    const p = await open({ lang: code, speech: voces, seed: { [code]: bucket(code, [{ esWord: "la casa", deWord: "x" + code }]) } }); await mazo(p);
+    const on = await p.evaluate(() => document.body.classList.contains("tts-on"));
+    let suena = null;
+    if (on) { await p.locator("li.row .say").first().click(); const s = await p.evaluate(() => window.__spoken); suena = s.length ? s[s.length - 1].voz : null; }
+    ok(on === (quiero !== null) && suena === quiero, code + " con " + JSON.stringify(voces) + ": " + (suena || (on ? "(no habló)" : "sin botones")) + (quiero ? "" : " (esperado: sin botones)"));
+    noErrors(p);
+  }
+});
+
+test("Pronunciación · entre dos voces europeas con el mismo acento, la instalada en el sistema (no la de red)", async () => {
+  const red = { lang: "fr-FR", name: "Google français", localService: false }, sis = { lang: "fr-FR", name: "Microsoft Hortense", localService: true };
+  for (const voces of [[red, sis], [sis, red]]) {
+    const p = await open({ lang: "fr", speech: voces, seed: { fr: bucket("fr", [{ esWord: "la casa", deWord: "la maison" }]) } }); await mazo(p);
+    await p.locator("li.row .say").first().click();
+    eq((await p.evaluate(() => window.__spoken)).map((s) => s.voz), ["Microsoft Hortense"], "con la de red " + (voces[0] === red ? "primero" : "después") + " en la lista, suena la del sistema");
+    noErrors(p);
+  }
+});
+
+test("Pronunciación · sin voz europea se puede permitir cualquier otra; Actividad dice qué voz usa cada idioma y qué falta", async () => {
+  const voces = ["fr-FR", "pt-BR", "en-US", "de-DE"];
+  const p = await open({ lang: "pt", speech: voces, seed: { pt: bucket("pt", [{ esWord: "la casa", deWord: "a casa", esSent: "La casa es grande", deSent: "A casa é grande" }]) }, prefs: { "vocabulando:dict": "1" } });
+  await mazo(p); eq(await p.evaluate(() => document.body.classList.contains("tts-on")), false, "con solo una voz de Brasil, el portugués no ofrece audio");
+  await study(p); eq(await p.locator(".seg-btn").allInnerTexts(), ["Palabras", "Frases"], "ni el dictado, aunque esté activado");
+  await p.click('.tab[data-tab="actividad"]');
+  const fila = (n) => ipaTxt(p.locator(".voice-list li", { hasText: n }));
+  const portugues = await fila("Portugués");
+  ok(/✗/.test(portugues) && /sin voz europea/.test(portugues) && /solo hay: pt-BR/.test(portugues), "Actividad: portugués «" + portugues + "»");
+  ok(/✓/.test(await fila("Francés")) && /voz fr-FR/.test(await fila("Francés")), "francés: «" + await fila("Francés") + "»");
+  ok(/solo hay: en-US/.test(await fila("Inglés")), "inglés: «" + await fila("Inglés") + "»");
+  ok(/sin voz europea/.test(await fila("Italiano")) && !/solo hay/.test(await fila("Italiano")), "italiano: sin ninguna voz");
+  ok(/no hay botones de pronunciación/.test(await txt(p.locator(".panel", { hasText: "Estudio" }).first())) && /Agregar voces/.test(await txt(p.locator(".panel", { hasText: "Voces" }).first())), "explica por qué no hay botones y cómo instalar una voz");
+  eq(await p.locator("#anyVoiceSw").getAttribute("aria-checked"), "false", "el interruptor «usar la que haya» viene apagado");
+  await p.click("#anyVoiceSw");
+  ok(/⚠/.test(await fila("Portugués")) && /no es europea/.test(await fila("Portugués")), "al permitirlo, el portugués usa la de Brasil y lo dice: «" + await fila("Portugués") + "»");
+  eq(await p.evaluate(() => [localStorage.getItem("idiomas:anyVoice"), document.body.classList.contains("tts-on")]), ["1", true], "se guarda (con el mismo nombre que podrá leer Conjugario) y vuelven los botones");
+  await mazo(p); await p.locator("li.row .say").first().click();
+  eq((await p.evaluate(() => window.__spoken)).map((s) => s.voz), ["voz pt-BR"], "y suena la voz que haya");
+  await p.reload(); await p.waitForSelector("#view"); await p.waitForFunction(() => document.body.classList.contains("tts-on"));
+  ok(true, "tras recargar sigue permitido");
+  noErrors(p);
+});
+
 test("Pronunciación · botones, atajo P, audio automático y limpieza del texto", async () => {
   const p = await open({ speech: ["de-DE", "en-US"], seed: { de: await freshReviewDeck(12) } });
   await p.waitForSelector(".deck-list");
