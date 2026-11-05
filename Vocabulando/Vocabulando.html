@@ -647,6 +647,94 @@
     background: var(--accent-soft);
   }
 
+  /* IPA: transcripción fonética de la palabra (Wiktionary) */
+  .ipa {
+    border: 0;
+    background: transparent;
+    color: #AEB8C5;
+    cursor: pointer;
+    padding: 3px 5px;
+    border-radius: 7px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    line-height: 1.4;
+  }
+
+  .ipa:hover,
+  .ipa.on {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .k-ipa {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 7px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .04em;
+  }
+
+  .k-ipa:hover,
+  .k-ipa.on {
+    color: var(--accent);
+  }
+
+  .ipa-box {
+    margin: 8px 0 2px;
+    padding: 9px 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--paper);
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: left;
+  }
+
+  .ipa-form + .ipa-form {
+    margin-top: 4px;
+  }
+
+  .ipa-w {
+    margin-right: 4px;
+  }
+
+  .ipa-sym {
+    font-family: "Noto Sans", "Segoe UI", "DejaVu Sans", "Charis SIL", system-ui, sans-serif;
+    font-size: 16px;
+    color: var(--ink);
+  }
+
+  .ipa-it {
+    margin-right: 8px;
+  }
+
+  .ipa-lab,
+  .ipa-note,
+  .ipa-warn {
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .ipa-warn {
+    color: var(--again);
+  }
+
+  .ipa-err {
+    color: var(--again);
+  }
+
+  .ipa-src {
+    margin-left: 4px;
+    font-size: 12px;
+  }
+
   /* «+»: añadir la entrada a otro idioma */
   .imp {
     border: 0;
@@ -5198,7 +5286,7 @@
     var DECK_PAGE = 100; // filas de la lista del mazo que se dibujan de una vez (el resto, con «Mostrar más»)
     var S = {
       lang: null, tab: "crear", deckDir: "es-it", autoSentence: false, theme: "dark",
-      editing: null, confirmDelete: null, expanded: {}, deckShown: DECK_PAGE, q: "", fState: "all", fSent: "all", fGender: "all", fSort: "new", qSent: true, goal: 10, typeOn: false, typed: null, clozeOn: false, dictOn: false, xlOpen: {}, nextTab: null, dictPlayed: "", editFrom: null, editY: 0, restoreY: null, imp: null, restore: null, undo: [], newExtra: {}, newWords: 20, newSents: 10, revOn: false, autoSpeak: false, mode: "word",
+      editing: null, confirmDelete: null, expanded: {}, deckShown: DECK_PAGE, q: "", fState: "all", fSent: "all", fGender: "all", fSort: "new", qSent: true, goal: 10, typeOn: false, typed: null, clozeOn: false, dictOn: false, xlOpen: {}, nextTab: null, dictPlayed: "", editFrom: null, editY: 0, restoreY: null, imp: null, restore: null, ipaOpen: {}, undo: [], newExtra: {}, newWords: 20, newSents: 10, revOn: false, autoSpeak: false, mode: "word",
       current: null, flipped: false, showSentence: false, studyAhead: false, bannerOff: false,
       formGender: "", formEsGender: "", formWikt: null, formBusy: false, suggErr: null, autoGen: true, detecting: false, autoSugg: true, sugg: null, suggBusy: false, sents: null, sentsBusy: false, sentsSlow: false, transBusy: false, tatDownAt: 0,
       deck: [], review: {}, stats: { reviewsTotal: 0, byDay: {} }
@@ -6126,7 +6214,7 @@
     function route() {
       var code = location.hash.replace(/^#/, ""), lang = LANG_BY[code] ? code : null;
       if (lang !== S.lang) {
-        S.lang = lang; S.tab = S.nextTab || "crear"; S.nextTab = null; S.editing = null; S.formGender = ""; S.formEsGender = ""; S.suggErr = null; S.formWikt = null; S.sugg = null; S.sents = null; S.suggBusy = false; S.confirmDelete = null; S.expanded = {}; S.xlOpen = {}; S.deckShown = DECK_PAGE; resetDeckView(); S.editFrom = null; S.undo = [];
+        S.lang = lang; S.tab = S.nextTab || "crear"; S.nextTab = null; S.editing = null; S.formGender = ""; S.formEsGender = ""; S.suggErr = null; S.formWikt = null; S.sugg = null; S.sents = null; S.suggBusy = false; S.confirmDelete = null; S.expanded = {}; S.xlOpen = {}; S.ipaOpen = {}; S.deckShown = DECK_PAGE; resetDeckView(); S.editFrom = null; S.undo = [];
         S.current = null; S.flipped = false; S.studyAhead = false; S.mode = "word";
         if (S.imp && S.imp.to !== lang) S.imp = null;                                  // otra importación o salir del idioma: el borrador se descarta
         if (S.imp) S.formEsGender = S.imp.draft.esGender || "";                         // el género en español viaja con la entrada
@@ -6754,7 +6842,8 @@
         "<h3>Mazo</h3><ul>" +
         "<li>Aquí está la lista completa de tus palabras y frases. El buscador no distingue mayúsculas ni acentos (escribir «uber» encuentra «über») y, si lo dejas marcado, mira también dentro de las frases. Puedes escribir varias palabras: salen las entradas que las llevan todas.</li>" +
         "<li>Filtros: por estado (nuevas, en aprendizaje, en repaso o que ya toca repasar), por tener o no frase y por género. Orden: más recientes o antiguas, alfabético (sin contar el artículo, así «der Apfel» va en la A), por próximo repaso o por las que más fallas.</li>" +
-        "<li>El lápiz lleva a Crear con la entrada cargada; al guardar o cancelar vuelves a la lista, en el mismo punto. La × borra (pide confirmación), «frase» abre la oración y el altavoz la pronuncia. El <b>+</b> añade esa entrada a otro idioma: eliges uno en el que todavía no esté y se abre Crear en él con la palabra española, su frase y su género ya puestos y, si hay conexión, la traducción de la palabra (Wikcionario) y de la frase (MyMemory) como propuesta. No se guarda nada hasta que pulses «Guardar»: lo revisas, lo cambias y, al guardar o cancelar, vuelves al idioma, la pestaña y el punto en que estabas (la lista con sus filtros y su posición, o Estudiar con el mismo modo). Está también en la tarjeta de Estudiar. En Crear, bajo el formulario, quedan las últimas 5 añadidas para comprobar lo que acabas de guardar.</li></ul>" +
+        "<li>El lápiz lleva a Crear con la entrada cargada; al guardar o cancelar vuelves a la lista, en el mismo punto. La × borra (pide confirmación), «frase» abre la oración y el altavoz la pronuncia. El <b>+</b> añade esa entrada a otro idioma: eliges uno en el que todavía no esté y se abre Crear en él con la palabra española, su frase y su género ya puestos y, si hay conexión, la traducción de la palabra (Wikcionario) y de la frase (MyMemory) como propuesta. No se guarda nada hasta que pulses «Guardar»: lo revisas, lo cambias y, al guardar o cancelar, vuelves al idioma, la pestaña y el punto en que estabas (la lista con sus filtros y su posición, o Estudiar con el mismo modo). Está también en la tarjeta de Estudiar. En Crear, bajo el formulario, quedan las últimas 5 añadidas para comprobar lo que acabas de guardar.</li>" +
+        "<li>El botón <b>IPA</b> (en cada fila de Mazo y en la tarjeta de Estudiar, cuando ya ves la respuesta) consulta <b>en ese momento</b> en el Wiktionary la transcripción fonética de la palabra del idioma: fonémica entre barras /…/ y fonética entre corchetes […]. Enseña la pronunciación <b>europea</b> (francés de Francia y no de Quebec, portugués de Portugal y no de Brasil, inglés británico y no americano…) y dice qué variantes ha dejado fuera. Si el Wiktionary solo trae una no europea, la muestra avisando. Si la palabra lleva varias formas («der Mann / der Kerl»), salen todas. No se guarda: se pide de nuevo al volver a abrir la página.</li></ul>" +
         "<h3>Estudiar</h3>" +
         "<p>Se muestra la palabra (o la frase) en español, pulsas «Mostrar respuesta» y la valoras con <i>Otra vez, Difícil, Bien</i> o <i>Fácil</i>. La app programa el siguiente repaso con el algoritmo FSRS: cuanto mejor la sabes, más tarde vuelve. Las tarjetas con plazo de días tocan desde las 4:00 de su día, y el día nuevo (también para los contadores de Actividad) empieza a las 4:00: lo que repases de madrugada cuenta como el día anterior. Hay dos modos, Palabras y Frases (y, si lo activas, Inversa: del idioma al español). Atajos: punto o espacio para mostrar la respuesta; J, K, L, Ñ (o 0, 1, 2, 3) para valorar; Z para deshacer el último repaso; P para oír la pronunciación.</p>" +
         "<ul>" +
@@ -6775,7 +6864,7 @@
         "<h3>En el iPad o el móvil</h3>" +
         "<p>Safari no puede guardar en una carpeta. Abre la web publicada y usa «Añadir a pantalla de inicio»: funciona sin conexión y Safari no borra sus datos por falta de uso. Para pasar tu progreso entre dispositivos usa Exportar JSON e Importar JSON en Actividad: al importar se fusiona (se quedan los repasos más recientes), no se pierde nada. También puedes importar listas de palabras pegando texto o un CSV.</p>" +
         "<h3>Qué sale de tu navegador</h3>" +
-        "<p>Vocabulando no usa ningún servidor propio. Solo se consulta internet para ayudarte: el <b>Wikcionario</b> (la palabra en español que escribes, y la palabra del idioma para el género) y, únicamente cuando pulsas sus botones (o importas una entrada con el <b>+</b>, que traduce su frase), <b>Tatoeba</b> y <b>MyMemory</b> (frases; si Tatoeba falla, ejemplos del Wikcionario). Las consultas automáticas se pueden apagar en Actividad.</p>" +
+        "<p>Vocabulando no usa ningún servidor propio. Solo se consulta internet para ayudarte: el <b>Wikcionario</b> (la palabra en español que escribes, y la palabra del idioma para el género y, al pulsar «IPA», para su transcripción) y, únicamente cuando pulsas sus botones (o importas una entrada con el <b>+</b>, que traduce su frase), <b>Tatoeba</b> y <b>MyMemory</b> (frases; si Tatoeba falla, ejemplos del Wikcionario). Las consultas automáticas se pueden apagar en Actividad.</p>" +
         '<div class="diag"><button type="button" class="btn btn-ghost btn-sm" id="diagBtn">Probar conexión</button><div id="diagOut" class="diag-out" aria-live="polite"></div></div>' +
         '<h3>Créditos</h3><p class="muted-note">Traducciones y géneros: <a href="https://es.wiktionary.org" target="_blank" rel="noopener">Wikcionario</a> (CC BY-SA). Frases: <a href="https://tatoeba.org" target="_blank" rel="noopener">Tatoeba</a> (CC BY 2.0 FR) y, de respaldo, ejemplos del <a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wikcionario</a> (CC BY-SA). Traducción de frases: <a href="https://mymemory.translated.net" target="_blank" rel="noopener">MyMemory</a>. Repaso espaciado: FSRS.</p>' +
         "</div>";
@@ -6984,10 +7073,11 @@
         (hasS ? '<button class="chip-btn' + (open ? " on" : "") + '" data-frase="' + esc(e.id) + '">frase</button>' : "") +
         (canImp ? '<button class="imp" data-imp="' + esc(e.id) + '" aria-haspopup="menu" aria-expanded="false" aria-label="Añadir a otro idioma" title="Añadir esta entrada a otro idioma">' + ICON_IMP + "</button>" : "") +
         '<button class="say" data-say="' + esc(e.id) + '" aria-label="Escuchar" title="Escuchar">' + ICON_SPEAK + "</button>" +
+        '<button class="ipa' + (S.ipaOpen[e.id] ? " on" : "") + '" data-ipa="' + esc(e.id) + '" aria-expanded="' + (S.ipaOpen[e.id] ? "true" : "false") + '" aria-label="Transcripción fonética" title="Transcripción fonética (Wiktionary)">IPA</button>' +
         '<button class="pause" data-pause="' + esc(e.id) + '" aria-label="' + (e.paused ? "Reanudar" : "Pausar") + '" title="' + (e.paused ? "Reanudar: vuelve a salir al estudiar" : "Pausar: no saldrá al estudiar hasta que la reanudes") + '">' + (e.paused ? ICON_PLAY : ICON_PAUSE) + "</button>" +
         '<button class="edit" data-edit="' + esc(e.id) + '" aria-label="Editar">✎</button>' +
         '<button class="del" data-del="' + esc(e.id) + '" aria-label="Eliminar">×</button></div></div>' +
-        frase + (xs.length && xo ? '<div class="row-xl">' + xlItems(xs) + "</div>" : "") + "</li>";
+        frase + (xs.length && xo ? '<div class="row-xl">' + xlItems(xs) + "</div>" : "") + ipaPanel(e) + "</li>";
     }
     function rowsHtml(from, to) { // filas from..to-1 de la lista que se muestra (curList)
       var out = [];
@@ -7365,6 +7455,166 @@
     }
 
 
+
+    // ---- transcripción fonética (IPA) de la palabra, consultada en el Wiktionary en el momento ----
+    // Se pide la página de la palabra (en.wiktionary.org, la misma API de siempre), se busca la sección del idioma estudiado y, dentro, las
+    // transcripciones de «Pronunciation» (<span class="IPA">: fonémicas entre barras /…/ y fonéticas entre corchetes […]), cada una con la
+    // etiqueta de acento que le pone el Wiktionary (France, Quebec, Portugal, Brazil, UK, US…). Se muestra el acento europeo y se dice qué
+    // variantes se han dejado fuera. No se guarda nada: solo se recuerda mientras la página está abierta.
+    var IPA_LANG = { fr: "French", it: "Italian", pt: "Portuguese", ca: "Catalan", pl: "Polish", en: "English", de: "German", el: "Greek" };
+    var IPA_NONEU = /\b(US|U\.S\.|USA|American|General American|GenAm|Canad\w*|Qu[eé]b[eé]c\w*|Louisiana|Acadian|Cajun|Australia\w*|New Zealand|NZ|South Africa\w*|India\w*|Brazil\w*|Brasil\w*|Rio de Janeiro|S[aã]o Paulo|Angola\w*|Mozambi\w*|Cape Verd\w*|Africa\w*|Caribbean|Latin America\w*|Mexic\w*|Argentin\w*|Chile\w*|Colombia\w*|Venezuel\w*|Puerto Ric\w*|Philippin\w*|Hong Kong|Singapore|Jamaic\w*|Nigeria\w*|Kenya\w*|Cuba\w*|Peru\w*)\b/i;
+    var IPA_OTHEREU = /\b(Austria\w*|Switzerland|Swiss|Belgi\w*|Scotland|Scottish|Ireland|Irish|Wales|Welsh|Northern England|Yorkshire|Cockney|Estuary|Valencia\w*|Balearic|Majorc\w*|Minorc\w*|North-?Western|Alguer\w*|Northern|Southern Germany|Bavaria\w*)\b/i;
+    var IPA_PREF = {
+      en: /\b(UK|RP|Received Pronunciation|British|England|Southern England|Standard Southern British)\b/i,
+      fr: /\b(France|Paris|Parisian|Metropolitan)\b/i,
+      pt: /\b(Portugal|European|Lisbon|Lisboa|Continental)\b/i,
+      de: /\b(Germany|German|Standard|Hochdeutsch)\b/i,
+      ca: /\b(Central|Barcelona)\b/i
+    };
+    var ipaCache = {};
+    function ipaRank(code, label) { // 0 preferida · 1 sin etiqueta o neutra · 2 otra variante europea · 3 no europea
+      if (!label) return 1;
+      if (IPA_NONEU.test(label)) return 3;
+      if (IPA_PREF[code] && IPA_PREF[code].test(label)) return 0;
+      if (IPA_OTHEREU.test(label)) return 2;
+      return 1;
+    }
+    function ipaChoose(code, groups) { // de todas las transcripciones de la página, las del acento europeo (o, si no hay, las que haya, avisando)
+      var rk = groups.map(function (g) { return { g: g, r: ipaRank(code, g.label) }; });
+      if (!rk.length) return { items: [], omitted: [], nonEu: false };
+      var best = Math.min.apply(null, rk.map(function (x) { return x.r; }));
+      var shown = rk.filter(function (x) { return best <= 1 ? x.r <= 1 : x.r === best; });
+      shown = shown.map(function (x, i) { return { x: x, i: i }; }).sort(function (a, b) { return (a.x.r - b.x.r) || (a.i - b.i); }).map(function (o) { return o.x; }).slice(0, 4); // el acento preferido primero
+      var om = [];
+      rk.forEach(function (x) { if (shown.indexOf(x) < 0 && x.g.label && om.indexOf(x.g.label) < 0) om.push(x.g.label); });
+      return { items: shown.map(function (x) { return x.g; }), omitted: om.slice(0, 6), nonEu: best === 3 };
+    }
+    // lee el HTML que devuelve action=parse: { lang: ¿existe la sección del idioma?, groups: [{ label, ipas }] }
+    function ipaParse(html, langName) {
+      var doc = new DOMParser().parseFromString(String(html || ""), "text/html");
+      var root = doc.querySelector(".mw-parser-output") || doc.body, kids = Array.prototype.slice.call(root.children);
+      function level(el) {
+        if (/^H[1-6]$/.test(el.tagName)) return +el.tagName.charAt(1);
+        var m = /\bmw-heading(\d)\b/.exec(el.className || ""); if (m) return +m[1];
+        var h = el.querySelector && el.querySelector(":scope > h1, :scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6");
+        return h ? +h.tagName.charAt(1) : 0;
+      }
+      function heading(el) { var h = /^H[1-6]$/.test(el.tagName) ? el : el.querySelector("h1, h2, h3, h4, h5, h6"); return ((h || el).textContent || "").replace(/\[\s*edit\s*\]/i, "").trim(); }
+      // la sección del idioma: el encabezado con id="French"… y lo que le sigue (hermanos) hasta el siguiente encabezado de idioma
+      var anchor = doc.getElementById(langName), hd = anchor && (anchor.closest(".mw-heading") || anchor.closest("h1, h2, h3, h4, h5, h6")), start = -1, end, i; // (el envoltorio .mw-heading, si lo hay)
+      if (hd && level(hd) === 2 && hd.parentElement) { kids = Array.prototype.slice.call(hd.parentElement.children); start = kids.indexOf(hd); }
+      else { // sin ese id, se busca el encabezado por su texto
+        for (i = 0; i < kids.length; i++) { if (level(kids[i]) === 2 && heading(kids[i]) === langName) { start = i; break; } }
+      }
+      end = kids.length;
+      for (i = start + 1; start >= 0 && i < kids.length; i++) { if (level(kids[i]) && level(kids[i]) <= 2) { end = i; break; } }
+      if (start < 0) return { lang: false, groups: [] };
+      var inPron = false, found = [];
+      for (i = start + 1; i < end; i++) {
+        var k = kids[i], l = level(k);
+        if (l) { inPron = l >= 3 && /^pronunciation/i.test(heading(k)); continue; }
+        if (inPron) ipaCollect(k, found); // solo lo que cuelga de un encabezado «Pronunciation» (no lo que haya en la etimología u otras secciones)
+      }
+      return { lang: true, groups: ipaGroups(found) };
+    }
+    function ipaCollect(node, out) { // los <span class="IPA"> de un bloque, con el elemento de lista que los contiene
+      var list = Array.prototype.slice.call(node.querySelectorAll ? node.querySelectorAll(".IPA") : []);
+      if (node.classList && node.classList.contains("IPA")) list.unshift(node);
+      list.forEach(function (sp) {
+        var t = (sp.textContent || "").replace(/\s+/g, " ").trim();
+        if (!/^[\/\[]/.test(t) || !/[\/\]]$/.test(t)) return; // solo transcripciones entre / / o [ ] (no rimas ni guiones)
+        out.push({ sp: sp, t: t });
+      });
+    }
+    function ipaQual(li) { // etiquetas de acento de un elemento de lista, sin contar las de sus sublistas
+      var out = [];
+      Array.prototype.slice.call(li.querySelectorAll(".ib-content, .qualifier-content, .usage-label-accent")).forEach(function (q) {
+        if (q.closest("li") !== li || q.parentElement.closest(".ib-content, .qualifier-content")) return;
+        var t = (q.textContent || "").replace(/^\s*\(|\)\s*$/g, "").replace(/\s+/g, " ").trim();
+        if (t && out.indexOf(t) < 0) out.push(t);
+      });
+      if (!out.length) { var m = /^\s*\(([^)]{1,60})\)/.exec((li.firstChild && li.textContent) || ""); if (m) out.push(m[1].trim()); }
+      return out;
+    }
+    function ipaGroups(found) { // agrupa por etiqueta, en el orden de la página
+      var groups = [], seen = [];
+      found.forEach(function (f) {
+        var li = f.sp.closest("li"), labs = [];
+        for (var n = li, d = 0; n && d < 3; n = n.parentElement && n.parentElement.closest("li"), d++) labs = ipaQual(n).concat(labs);
+        var label = labs.filter(function (x, i) { return labs.indexOf(x) === i; }).join(" · "), g = null;
+        for (var j = 0; j < groups.length; j++) if (groups[j].label === label) g = groups[j];
+        if (!g) { g = { label: label, ipas: [] }; groups.push(g); }
+        if (g.ipas.indexOf(f.t) < 0) g.ipas.push(f.t);
+      });
+      return groups;
+    }
+    async function ipaPage(title, langName) { // null si la página no existe; si existe, { lang, groups }
+      var r = await fetchT(WIKT + "?action=parse&page=" + encodeURIComponent(title) + "&prop=text&redirects=1&format=json&formatversion=2&origin=*&disableeditsection=1&disablelimitreport=1&disabletoc=1");
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      var j = await r.json();
+      if (j.error) { if (j.error.code === "missingtitle") return null; throw new Error("la API respondió «" + (j.error.code || "error") + "»"); }
+      return ipaParse(j.parse && j.parse.text, langName);
+    }
+    function ipaKey(e) { return S.lang + "\u0001" + e.deWord; }
+    async function ipaLookup(e) { // rellena ipaCache para la palabra y avisa a la pantalla
+      var code = S.lang, key = ipaKey(e), langName = IPA_LANG[code], forms = sentForms(e.deWord, code).slice(0, 3), id = e.id;
+      if (!langName || !forms.length) { ipaCache[key] = { res: [] }; ipaRefresh(id); return; }
+      ipaCache[key] = { busy: true };
+      try {
+        var res = [];
+        for (var i = 0; i < forms.length; i++) {
+          var vs = wiktVariants(forms[i], code), hit = null, used = vs[0], exists = false;
+          for (var k = 0; k < vs.length && !hit; k++) {
+            var pg = await ipaPage(vs[k], langName);
+            if (pg) { exists = true; if (pg.lang) { hit = pg; used = vs[k]; } }
+          }
+          var ch = hit ? ipaChoose(code, hit.groups) : { items: [], omitted: [], nonEu: false };
+          res.push({ form: forms[i], title: used, found: !!hit, exists: exists, items: ch.items, omitted: ch.omitted, nonEu: ch.nonEu });
+        }
+        ipaCache[key] = { res: res };
+      } catch (err) { ipaCache[key] = { err: err }; }
+      ipaRefresh(id);
+    }
+    function ipaPanel(e) {
+      if (!S.ipaOpen[e.id]) return "";
+      var c = ipaCache[ipaKey(e)];
+      if (!c || c.busy) return '<div class="ipa-box" aria-live="polite"><span class="ipa-lab">Consultando el Wiktionary…</span></div>';
+      if (c.err) return '<div class="ipa-box" aria-live="polite"><span class="ipa-lab ipa-err">⚠ No se pudo consultar: ' + esc(netWhy("el Wiktionary", c.err)) + '.</span> <button type="button" class="link-btn" data-ipa-retry="' + esc(e.id) + '">Reintentar</button></div>';
+      var name = LANG_BY[S.lang].name.toLowerCase();
+      var body = c.res.map(function (f) {
+        var url = "https://en.wiktionary.org/wiki/" + encodeURIComponent(f.title) + (f.found ? "#" + IPA_LANG[S.lang] : "");
+        var src = ' <a class="ipa-src" href="' + url + '" target="_blank" rel="noopener" title="Abrir la entrada en el Wiktionary">Wiktionary</a>';
+        if (!f.items.length) {
+          return '<div class="ipa-form"><b class="ipa-w">' + esc(f.form) + '</b> <span class="ipa-lab">' + (!f.exists ? "el Wiktionary no tiene esta palabra" : !f.found ? "el Wiktionary no la tiene en " + esc(name) : "el Wiktionary no trae su transcripción") + "</span>" + src + "</div>";
+        }
+        return '<div class="ipa-form"><b class="ipa-w">' + esc(f.form) + "</b> " +
+          (f.nonEu ? '<span class="ipa-warn">sin acento europeo en el Wiktionary; solo hay:</span> ' : "") +
+          f.items.map(function (g) {
+            return '<span class="ipa-it">' + (g.label ? '<span class="ipa-lab">' + esc(g.label) + "</span> " : "") +
+              g.ipas.map(function (p) { return '<span class="ipa-sym" title="' + (p.charAt(0) === "/" ? "transcripción fonémica" : "transcripción fonética") + '">' + esc(p) + "</span>"; }).join(" ") + "</span>";
+          }).join(" ") +
+          (f.omitted.length ? ' <span class="ipa-note">(se omiten: ' + esc(f.omitted.join(", ")) + ")</span>" : "") + src + "</div>";
+      }).join("");
+      return '<div class="ipa-box" aria-live="polite">' + (body || '<span class="ipa-lab">No hay nada que transcribir.</span>') + "</div>";
+    }
+    function ipaRefresh(id) { // repinta lo que muestre esa entrada: sus filas (Mazo, últimas añadidas) y la tarjeta de Estudiar
+      var e = findEntry(id);
+      if (e) document.querySelectorAll('li.row[data-id="' + id + '"]').forEach(function (li) { li.insertAdjacentHTML("afterend", rowHtml(e)); li.remove(); });
+      if (S.tab === "estudiar" && S.current && S.current.entry.id === id) render();
+    }
+    function toggleIpa(btn, retry) {
+      var id = btn.getAttribute(retry ? "data-ipa-retry" : "data-ipa"), e = id === "card" ? (S.current && (findEntry(S.current.entry.id) || S.current.entry)) : findEntry(id);
+      if (!e) return;
+      if (retry) { delete ipaCache[ipaKey(e)]; S.ipaOpen[e.id] = true; }
+      else S.ipaOpen[e.id] = !S.ipaOpen[e.id];
+      if (S.ipaOpen[e.id] && !ipaCache[ipaKey(e)]) ipaLookup(e);
+      var li = btn.closest(".row");
+      if (!li) { render(); var nb = document.querySelector('[data-ipa="card"]'); if (nb) nb.focus({ preventScroll: true }); return; }
+      li.insertAdjacentHTML("afterend", rowHtml(e));
+      var nli = li.nextElementSibling; li.remove();
+      var nb2 = nli && nli.querySelector("[data-ipa]"); if (nb2) nb2.focus({ preventScroll: true });
+    }
+
     // ---- importar una entrada a otro idioma («+»): abre Crear en ese idioma con la entrada ya rellena, sin guardarla ----
     // Se copia lo que no depende del idioma (la palabra española, su frase y su género); la palabra y la frase del idioma nuevo se
     // proponen con las consultas de siempre (Wikcionario y MyMemory) y todo queda en el formulario para revisarlo. Al guardar, o al
@@ -7588,13 +7838,14 @@
       var front = isSent ? e.esSent : isRev ? e.deWord : e.esWord;
       var back = isSent ? e.deSent : isRev ? e.esWord : e.deWord;
       var say = (isRev || isDict || S.flipped) ? '<button class="say k-say" data-say="card" aria-label="Escuchar" title="Escuchar (P)">' + ICON_SPEAK + "</button>" : "";
+      var ipaB = (isRev || S.flipped) ? '<button class="k-ipa' + (S.ipaOpen[e.id] ? " on" : "") + '" data-ipa="card" aria-expanded="' + (S.ipaOpen[e.id] ? "true" : "false") + '" aria-label="Transcripción fonética" title="Transcripción fonética (Wiktionary)">IPA</button>' : "";
       var imp = impTargets(e).length ? '<button class="k-imp" data-imp="card" aria-haspopup="menu" aria-expanded="false" aria-label="Añadir a otro idioma" title="Añadir esta entrada a otro idioma">' + ICON_IMP + "</button>" : "";
       var pause = '<button class="k-pause" data-pause="card" aria-label="Pausar esta entrada" title="Pausar: no volverá a salir hasta que la reanudes en Mazo">' + ICON_PAUSE + "</button>";
       var sw = !sentLike
         ? '<button class="switch' + (S.autoSentence ? " on" : "") + '" id="autoSent" role="switch" aria-checked="' + (S.autoSentence ? "true" : "false") + '"><span class="switch-label">Frase</span><span class="switch-track"><span class="switch-thumb"></span></span></button>'
         : "";
       var tag = (isDict ? "dictado" : isCloze ? "hueco" : isSent ? "frase" : "palabra") + " · " + (isRev ? S.lang + " → es" : isDict ? S.lang : "es → " + S.lang);
-      var inner = '<div class="k-head"><div class="k-tag">' + tag + '</div><div class="k-tools">' + say + sw + imp + pause + "</div></div>";
+      var inner = '<div class="k-head"><div class="k-tag">' + tag + '</div><div class="k-tools">' + say + ipaB + sw + imp + pause + "</div></div>";
       if (isDict) {
         inner += '<div class="k-front k-dict-front">Escucha la frase y escríbela</div>' +
           '<div class="k-dict"><button class="btn btn-ghost" data-say="card">▶ Escuchar</button><button class="btn btn-ghost" data-say-slow="card">Más despacio</button></div>';
@@ -7604,6 +7855,7 @@
           '<div class="k-trans">' + esc(e.esSent) + '</div><div class="k-trans">Pista: <b>' + esc(e.esWord) + "</b></div>";
       } else {
         inner += '<div class="k-front"' + (isSent ? ">" + hlHTML(front, e.esWord, esGenderInfo(e).g, "es") : (isRev ? genderStyle(e) : esGenderStyle(e)) + ">" + esc(front)) + "</div>";
+        if (isRev) inner += ipaPanel(e);
       }
       if (!S.flipped) {
         inner += typing ? typedHtml() : '<button class="btn btn-primary reveal" id="show">Mostrar respuesta</button>';
@@ -7617,6 +7869,7 @@
             : '<div class="k-back"' + (isRev ? esGenderStyle(e) : genderStyle(e)) + ">" + esc(back) + "</div>";
         }
         if (typing && S.typed) inner += typedResHtml(S.typed);
+        if (!isRev) inner += ipaPanel(e);
         if (!sentLike && e.esSent && e.deSent) {
           inner += '<button class="link-btn" id="seeSent">' + (S.showSentence ? "Ocultar frase" : "Ver frase") + "</button>";
           if (S.showSentence) {
@@ -7911,6 +8164,10 @@
       if (fr) { toggleFrase(fr); return; }
       var xb = t.closest("[data-xl]");
       if (xb) { toggleXl(xb); return; }
+      var ipb = t.closest("[data-ipa]");
+      if (ipb) { toggleIpa(ipb, false); return; }
+      var ipr = t.closest("[data-ipa-retry]");
+      if (ipr) { toggleIpa(ipr, true); return; }
       var ib = t.closest("[data-imp]");
       if (ib) { if (document.getElementById("impMenu") && impBtn === ib) closeImpMenu(); else openImpMenu(ib); return; }
       if (t.closest("#impCancel")) { cancelImport(); return; }
