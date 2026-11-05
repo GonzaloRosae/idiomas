@@ -5341,7 +5341,7 @@
       formGender: "", formEsGender: "", formWikt: null, formBusy: false, suggErr: null, autoGen: true, detecting: false, autoSugg: true, sugg: null, suggBusy: false, sents: null, sentsBusy: false, sentsSlow: false, transBusy: false, tatDownAt: 0,
       deck: [], review: {}, stats: { reviewsTotal: 0, byDay: {} }
     };
-    function langName() { return LANG_BY[S.lang].name.toLowerCase(); }
+    function langName() { var L = LANG_BY[S.lang]; return L ? L.name.toLowerCase() : ""; } // sin idioma (has vuelto a la pantalla de idiomas con algo en marcha): vacío, no error
 
     // ---- datos: un archivo por idioma (italiano.json, frances.json…) dentro de la carpeta que elige el usuario ----
     // DATA.languages[code] = { deck, review, stats } de los idiomas ya abiertos en esta sesión
@@ -5754,7 +5754,8 @@
         var a = document.createElement("a");
         a.href = url; a.download = filename;
         document.body.appendChild(a); a.click();
-        setTimeout(function () { document.body.removeChild(a); URL.revokeObjectURL(url); }, 120);
+        setTimeout(function () { document.body.removeChild(a); }, 120);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 30000); // Safari puede tardar en empezar a descargar: soltar el enlace enseguida cancelaba copias grandes
         return true;
       } catch (e) { return false; }
     }
@@ -6156,13 +6157,22 @@
       document.body.classList.toggle("theme-dark", S.theme === "dark");
       document.querySelectorAll(".js-theme").forEach(function (b) { b.innerHTML = S.theme === "dark" ? ICON_SUN : ICON_MOON; });
     }
-    function copyText(text) {
-      try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text); return true; } } catch (e) { }
+    function legacyCopy(text) { // método clásico: vale cuando el portapapeles moderno no está o lo rechaza
       try {
         var ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
         document.body.appendChild(ta); ta.focus(); ta.select();
         var ok = document.execCommand("copy"); document.body.removeChild(ta); return ok;
       } catch (e) { return false; }
+    }
+    function copyText(text) {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          var pr = navigator.clipboard.writeText(text); // Safari y otros lo rechazan si no ven un gesto del usuario: sin esto quedaba un error sin gestionar y nada copiado
+          if (pr && pr.catch) pr.catch(function () { legacyCopy(text); });
+          return true;
+        }
+      } catch (e) { }
+      return legacyCopy(text);
     }
 
     // ---- botón ✨: abre ChatGPT con una petición que depende de lo que esté relleno ----
@@ -6337,7 +6347,7 @@
         txt = "<b>No se pudo escribir en la carpeta " + nm + ".</b> Mientras tanto tus cambios solo se guardan en este navegador.";
         acts = b("reconnect", "Reconectar", true) + b("pick-folder", "Elegir otra");
       } else {
-        txt = "<b>Este navegador no puede guardar en una carpeta.</b> Usa Chrome o Edge de escritorio, o descarga copias de seguridad desde Actividad. En el iPad, abre la web desde «Añadir a pantalla de inicio» para que Safari no borre los datos por falta de uso.";
+        txt = "<b>Este navegador no puede guardar en una carpeta.</b> Usa Chrome o Edge de escritorio (Mac o Windows), o descarga copias de seguridad desde Actividad. Safari guarda los datos en el propio navegador y puede borrarlos si pasas mucho tiempo sin visitar la web: en el iPad usa «Añadir a pantalla de inicio»; en el Mac, «Añadir al Dock».";
         acts = '<button class="databar-x" data-act="bar-off" aria-label="Cerrar aviso">×</button>';
       }
       return '<div class="databar"><div class="databar-txt">' + txt + '</div><div class="databar-act">' + acts + "</div></div>";
@@ -6521,8 +6531,9 @@
     var TAT = "https://api.tatoeba.org/unstable/sentences";
     var TAT_LANG = { es: "spa", fr: "fra", it: "ita", pt: "por", ca: "cat", pl: "pol", en: "eng", de: "deu", el: "ell" };
     var MM_CODE = { es: "es", fr: "fr", it: "it", pt: "pt-PT", ca: "ca", pl: "pl", en: "en", de: "de", el: "el" };
-    var BR_WORDS = new RegExp("(?<![\\p{L}])(?:você|ônibus|celular|geladeira|banheiro|café da manhã|trem|xícara|garota|moleque|abacaxi|suco|cadê|pra)s?(?![\\p{L}])", "iu");
-    var BR_GERUND = new RegExp("(?<![\\p{L}])(?:estou|está|estamos|estão|estava|estavam|estive|fico|fica|ficamos|ficam|continuo|continua|continuamos|continuam)\\s+\\p{L}+(?:ando|endo|indo)(?![\\p{L}])", "iu");
+    // nada de lookbehind en estas expresiones: Safari anterior a 16.4 lo rechaza al crearlas y dejaría toda la app en blanco
+    var BR_WORDS = new RegExp("(?:^|[^\\p{L}])(?:você|ônibus|celular|geladeira|banheiro|café da manhã|trem|xícara|garota|moleque|abacaxi|suco|cadê|pra)s?(?![\\p{L}])", "iu");
+    var BR_GERUND = new RegExp("(?:^|[^\\p{L}])(?:estou|está|estamos|estão|estava|estavam|estive|fico|fica|ficamos|ficam|continuo|continua|continuamos|continuam)\\s+\\p{L}+(?:ando|endo|indo)(?![\\p{L}])", "iu");
     function looksBrazilian(t) { return BR_WORDS.test(t) || BR_GERUND.test(t); } // "estou a comer" es de Portugal; "estou comendo", de Brasil
     function plain(x) { return String(x || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, ""); }
     // la palabra que se busca en las frases: sin artículo, paréntesis ni variantes ("der Spiegel" → "Spiegel")
@@ -6911,8 +6922,8 @@
         '<div class="info-status"><i class="sdot' + (ok ? " ok" : "") + '"></i><span>' + status + "</span></div>" +
         "<p>Tus palabras, frases y el estado de cada repaso se guardan en una <b>carpeta de tu disco que eliges tú</b>, con un archivo por idioma: " + esc(files) + ". Cada palabra nueva o repaso se escribe al instante. Son archivos de texto (JSON): puedes copiarlos como copia de seguridad o guardarlos en una carpeta de OneDrive.</p>" +
         "<p>El navegador solo conserva una copia de apoyo, de modo que <b>borrar la caché no pierde nada</b>: vuelves a elegir la carpeta y todo reaparece. Esto funciona en Chrome y Edge de escritorio; el permiso sobre la carpeta puede pedirse de nuevo al abrir una sesión nueva. En Actividad puedes cambiar de carpeta, exportar e importar copias.</p>" +
-        "<h3>En el iPad o el móvil</h3>" +
-        "<p>Safari no puede guardar en una carpeta. Abre la web publicada y usa «Añadir a pantalla de inicio»: funciona sin conexión y Safari no borra sus datos por falta de uso. Para pasar tu progreso entre dispositivos usa Exportar JSON e Importar JSON en Actividad: al importar se fusiona (se quedan los repasos más recientes), no se pierde nada. También puedes importar listas de palabras pegando texto o un CSV.</p>" +
+        "<h3>En Safari (Mac, iPad) y en el móvil</h3>" +
+        "<p>Safari no puede guardar en una carpeta: tus datos se quedan en el propio navegador y Safari puede borrarlos si no visitas la web en mucho tiempo. En el iPad o el móvil, abre la web publicada y usa «Añadir a pantalla de inicio»: funciona sin conexión y Safari no borra sus datos por falta de uso. En el Mac, lo más cómodo es usar Chrome o Edge (guardan en una carpeta); con Safari, añade la web al Dock (Archivo › Añadir al Dock, desde Safari 17) y haz copias con Exportar JSON de vez en cuando. Para pasar tu progreso entre dispositivos usa Exportar JSON e Importar JSON en Actividad: al importar se fusiona (se quedan los repasos más recientes), no se pierde nada. También puedes importar listas de palabras pegando texto o un CSV.</p>" +
         "<h3>Qué sale de tu navegador</h3>" +
         "<p>Vocabulando no usa ningún servidor propio. Solo se consulta internet para ayudarte: el <b>Wikcionario</b> (la palabra en español que escribes, y la palabra del idioma para el género y, al pulsar «IPA», para su transcripción) y, únicamente cuando pulsas sus botones (o importas una entrada con el <b>+</b>, que traduce su frase), <b>Tatoeba</b> y <b>MyMemory</b> (frases; si Tatoeba falla, ejemplos del Wikcionario). Las consultas automáticas se pueden apagar en Actividad.</p>" +
         '<div class="diag"><button type="button" class="btn btn-ghost btn-sm" id="diagBtn">Probar conexión</button><div id="diagOut" class="diag-out" aria-live="polite"></div></div>' +
@@ -7177,8 +7188,9 @@
     var RECENT = 5;      // entradas que Crear enseña bajo el formulario
     var curList = [];    // lo que Mazo muestra ahora: ya filtrado y ordenado
     var deckQT = null;   // pausa corta mientras se escribe en el buscador
+    function apos(x) { return String(x || "").replace(/[’‘ʼ´`]/g, "'"); } // la puntuación inteligente de macOS/iOS cambia ' por ’: para comparar son lo mismo
     function fold(x) { // minúsculas y sin acentos, para comparar y buscar sin que importen
-      return String(x || "").toLowerCase().replace(/ß/g, "ss").replace(/ł/g, "l").replace(/ø/g, "o").replace(/œ/g, "oe").replace(/æ/g, "ae").replace(/ς/g, "σ")
+      return apos(x).toLowerCase().replace(/ß/g, "ss").replace(/ł/g, "l").replace(/ø/g, "o").replace(/œ/g, "oe").replace(/æ/g, "ae").replace(/ς/g, "σ")
         .normalize("NFD").replace(/[̀-ͯ]/g, "");
     }
     var ART_RE = { // artículos que no cuentan al ordenar alfabéticamente (sobre el texto ya sin acentos)
@@ -7380,7 +7392,7 @@
     }
 
     // escribir la respuesta (solo en Palabras): se teclea la traducción en vez de mostrarla
-    function tidy(x) { return String(x || "").replace(/\s+/g, " ").replace(/^[\s¡¿]+/, "").replace(/[\s.!?…]+$/, "").trim(); }
+    function tidy(x) { return apos(x).replace(/\s+/g, " ").replace(/^[\s¡¿]+/, "").replace(/[\s.!?…]+$/, "").trim(); }
     function answerVariants(t) { // «die Katze (pl. Katzen) / der Kater» → die Katze, der Kater
       var whole = String(t || "").replace(/\([^)]*\)/g, " ").replace(/\s+/g, " ").trim();
       var out = whole.split(/\s*[\/;]\s*/).map(tidy).filter(Boolean), all = tidy(whole);
@@ -7398,7 +7410,7 @@
 
     // hueco: se escribe la palabra tal como va en la frase
     function clozeVerdict(typed, e) {
-      var c = clozeInfo(e), t = tidy(typed), ans = c.answer, re = ART_RE[S.lang];
+      var c = clozeInfo(e), t = tidy(typed), ans = apos(c.answer), re = ART_RE[S.lang];
       if (!t) return { v: "bad" };
       if (t === ans) return { v: "ok" };
       if (fold(t) === fold(ans)) return { v: "near", why: "revisa mayúsculas y acentos", fix: ans };
@@ -7407,7 +7419,7 @@
       return { v: "bad" };
     }
     // dictado: palabra por palabra, sin que importen los signos de puntuación (ni la mayúscula de la primera palabra)
-    function dictTokens(x) { return String(x || "").replace(/[.,;:!?¡¿…"«»“”„()\[\]]/g, " ").replace(/\s+/g, " ").trim().split(" ").filter(Boolean); }
+    function dictTokens(x) { return apos(x).replace(/[.,;:!?¡¿…"«»“”„()\[\]]/g, " ").replace(/\s+/g, " ").trim().split(" ").filter(Boolean); }
     function dictVerdict(typed, e) {
       var exp = dictTokens(e.deSent), got = dictTokens(typed);
       if (!got.length) return { v: "bad" };
@@ -8026,7 +8038,7 @@
       return '<h3 class="act-label" style="margin:22px 0 4px">Voces</h3>' +
         '<p class="act-sub" style="margin:0">El audio solo usa voces con acento <b>europeo</b> (francés de Francia y no de Canadá, portugués de Portugal y no de Brasil, inglés británico y no americano…). Las voces son las de tu navegador y tu sistema.</p>' +
         '<ul class="voice-list">' + rows + "</ul>" +
-        (missing ? '<p class="act-sub" style="margin:8px 0 0">Para tener una voz que falta, instálala en los ajustes de voz del sistema (Windows: Configuración › Hora e idioma › Voz › Agregar voces, p. ej. «Portugués (Portugal)»; iPad o iPhone: Ajustes › Accesibilidad › Contenido leído › Voces). Chrome suele traer solo algunas variantes; Microsoft Edge trae más voces.</p>' : "") +
+        (missing ? '<p class="act-sub" style="margin:8px 0 0">Para tener una voz que falta, instálala en los ajustes de voz del sistema (Windows: Configuración › Hora e idioma › Voz › Agregar voces, p. ej. «Portugués (Portugal)»; Mac: Ajustes del Sistema › Accesibilidad › Contenido leído › Voz del sistema › Gestionar voces; iPad o iPhone: Ajustes › Accesibilidad › Contenido leído › Voces). En Windows, Chrome suele traer solo algunas variantes y Microsoft Edge trae más voces.</p>' : "") +
         '<div class="sw-row">' + switchBtn("anyVoiceSw", S.anyVoice, "Si no hay voz europea, usar la que haya (puede tener acento de Brasil, EE. UU., Canadá…)") + "</div>";
     }
     // ---- «Hoy» (en Actividad): qué toca en cada idioma y cómo va Conjugario ----
@@ -8353,6 +8365,7 @@
       if (ev.key === "Enter" && ev.target && ev.target.id === "typedIn") { ev.preventDefault(); checkTyped(false); return; }
       if (!S.lang || S.tab !== "estudiar" || !S.current) return;
       if (ev.target && /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
+      if (ev.ctrlKey || ev.metaKey || ev.altKey) return; // son atajos del navegador (Cmd+0 zoom, Cmd+1…3 pestañas, Cmd+L barra de direcciones…), no del repaso
       if ((ev.key === "p" || ev.key === "P") && !ev.ctrlKey && !ev.metaKey && !ev.altKey && (S.flipped || S.mode === "rev" || S.mode === "dict")) { speak(cardTarget(findEntry(S.current.entry.id) || S.current.entry, S.mode)); return; }
       if (!S.flipped) {
         if (ev.key === "." || ev.key === " ") { ev.preventDefault(); flipCard(); }

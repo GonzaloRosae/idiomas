@@ -46,6 +46,17 @@ const same = (a, b) => JSON.stringify([...new Set(a)].sort()) === JSON.stringify
 // =====================================================================================================================
 // DATOS
 // =====================================================================================================================
+test("Compatibilidad · el código no usa nada que exija un Safari posterior a 15.4", async () => {
+  // Lo que Safari no entiende no «falla bien»: una expresión regular con lookbehind en un Safari anterior a 16.4 deja la página entera en blanco
+  const src = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+  const prohibido = [
+    ["lookbehind en expresiones regulares (Safari 16.4)", /\(\?<[=!]/], ["toSorted / toReversed / toSpliced (Safari 16)", /\.(toSorted|toReversed|toSpliced)\(/],
+    ["Object.groupBy / Map.groupBy (Safari 17.4)", /\b(Object|Map)\.groupBy\(/], ["Promise.withResolvers (Safari 17.4)", /Promise\.withResolvers/], ["Array.fromAsync (Safari 16.4)", /Array\.fromAsync/],
+    ["AbortSignal.timeout (Safari 16)", /AbortSignal\.timeout/], ["@container (Safari 16)", /@container\b/], ["color-mix() (Safari 16.2)", /color-mix\(/], ["@property (Safari 16.4)", /@property\b/], ["subgrid (Safari 16)", /\bsubgrid\b/]];
+  const hallados = prohibido.filter(([, re]) => re.test(src)).map(([n]) => n);
+  eq(hallados, [], "ni sintaxis ni funciones posteriores a Safari 15.4");
+});
+
 test("Datos · las tablas son coherentes y no falta ningún idioma", async () => {
   const p = await open();
   eq(await p.evaluate(() => validateData()), [], "sin ningún problema de estructura (filas, columnas, celdas, frases y sustantivos)");

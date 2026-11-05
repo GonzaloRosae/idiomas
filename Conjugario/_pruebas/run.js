@@ -80,6 +80,17 @@ for (const code of ["fr", "it", "pt", "en", "de", "pl", "ca", "el"]) {
 // =====================================================================================================================
 // ACENTOS: se exigen solo donde distinguen dos formas reales
 // =====================================================================================================================
+test("Compatibilidad · el código no usa nada que exija un Safari posterior a 15.4", async () => {
+  // Lo que Safari no entiende no «falla bien»: una expresión regular con lookbehind en un Safari anterior a 16.4 deja la página entera en blanco
+  const src = fs.readFileSync(path.join(ROOT, "index.html"), "utf8");
+  const prohibido = [
+    ["lookbehind en expresiones regulares (Safari 16.4)", /\(\?<[=!]/], ["toSorted / toReversed / toSpliced (Safari 16)", /\.(toSorted|toReversed|toSpliced)\(/],
+    ["Object.groupBy / Map.groupBy (Safari 17.4)", /\b(Object|Map)\.groupBy\(/], ["Promise.withResolvers (Safari 17.4)", /Promise\.withResolvers/], ["Array.fromAsync (Safari 16.4)", /Array\.fromAsync/],
+    ["AbortSignal.timeout (Safari 16)", /AbortSignal\.timeout/], ["@container (Safari 16)", /@container\b/], ["color-mix() (Safari 16.2)", /color-mix\(/], ["@property (Safari 16.4)", /@property\b/], ["subgrid (Safari 16)", /\bsubgrid\b/]];
+  const hallados = prohibido.filter(([, re]) => re.test(src)).map(([n]) => n);
+  eq(hallados, [], "ni sintaxis ni funciones posteriores a Safari 15.4");
+});
+
 test("Acentos · obligatorios donde distinguen formas, opcionales en el resto", async () => {
   const p = await open();
   const casos = [
@@ -256,7 +267,7 @@ test("Ayuda · botón «Cómo funciona» junto al del tema, con el mismo conteni
   eq(await p.evaluate(() => { const b = document.getElementById("infoBtn"); return [b.previousElementSibling.id, b.nextElementSibling]; }), ["themeBtn", null], "es el último botón de la cabecera, tras el del tema");
   await p.click("#infoBtn"); ok(await p.locator("#infoOverlay").isVisible(), "se abre también desde la pantalla de inicio");
   const cuerpo = await txt(p.locator("#infoOverlay"));
-  for (const h of ["Cómo funciona Conjugario", "Teoría", "Prácticas", "Acentos y repetición de fallos", "Test final y tiempos dorados", "Dónde se guarda tu progreso", "En el iPad o el móvil", "Qué sale de tu navegador", "Créditos"])
+  for (const h of ["Cómo funciona Conjugario", "Teoría", "Prácticas", "Acentos y repetición de fallos", "Test final y tiempos dorados", "Dónde se guarda tu progreso", "En Mac, iPad o móvil", "Qué sale de tu navegador", "Créditos"])
     ok(cuerpo.includes(h), "tiene la sección «" + h + "»");
   ok(/95 de 100/.test(cuerpo) && /80 %/.test(cuerpo), "dice con qué nota se consigue el dorado");
   ok(/Todavía no hay nada guardado/.test(cuerpo), "y el estado de lo guardado");
@@ -597,7 +608,7 @@ test("Voz · el aviso dice qué voces hay y permite «usar la que haya» (se rec
   const p = await open("pt", { speech: ["pt-BR", "fr-FR"] });
   eq(await habla(p, "pt"), [], "con solo pt-BR no se habla");
   const t = await txt(p.locator("#voiceToast"));
-  ok(/no tiene una voz con acento europeo en Portugués/.test(t) && /solo hay: pt-BR/.test(t) && /Agregar|Configuración › Hora e idioma › Voz/.test(t) && !/fr-FR/.test(t), "avisa de lo que falta y de lo que hay: «" + t + "»");
+  ok(/no tiene una voz con acento europeo en Portugués/.test(t) && /solo hay: pt-BR/.test(t) && /Configuración › Hora e idioma › Voz/.test(t) && /Mac: Ajustes del Sistema › Accesibilidad › Contenido leído/.test(t) && !/fr-FR/.test(t), "avisa de lo que falta y de lo que hay: «" + t + "»");
   await p.click("#voiceToast .voiceany");
   eq([await p.evaluate(() => localStorage.getItem("idiomas:anyVoice")), (await p.evaluate(() => window.__spoken)).map((s) => s.voz)], ["1", ["voz pt-BR"]], "«Usar la que haya» lo guarda y reproduce el audio con la voz disponible");
   eq(await p.locator("#voiceToast.show").count(), 0, "y el aviso se cierra");

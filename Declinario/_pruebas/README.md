@@ -8,7 +8,7 @@ Cubren: la coherencia de los datos (filas, columnas, celdas, frases y sustantivo
 acepte a sí misma con sus alternativas y sin acentos donde no son obligatorios, la política de acentos (polaco ta / tą, ł, ß, griego…), las frases con
 elisión (francés, italiano, catalán), las frases de hueco de los 39 temas con cada uno de sus sustantivos (más de 2.500 combinaciones) y una **lista de
 oraciones completas de referencia** (`frases.js`, escrita aparte), que los sustantivos estén equilibrados por género, la pantalla de inicio, el selector de
-idioma, el desplegable de webs (solo se ve al abrir los archivos del disco), la ayuda, la teoría de los 39 temas, los tres modos de práctica, el **progreso
+idioma, que el código no use nada posterior a Safari 15.4 (**no se prueba en un Safari real**), el desplegable de webs (solo se ve al abrir los archivos del disco), la ayuda, la teoría de los 39 temas, los tres modos de práctica, el **progreso
 guardado** (test final de 10 preguntas, tema dorado con el 80 %, formas falladas que se recuerdan, guardados ilegibles, navegador sin almacenamiento,
 sincronización entre pestañas y borrado con confirmación), un barrido de todos los temas y que no se desborde en el móvil.
 
