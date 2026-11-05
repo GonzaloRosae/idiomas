@@ -1147,6 +1147,140 @@ test("Cambio de web · en el móvil la pantalla de idiomas y la cabecera no desb
 });
 
 
+
+// =====================================================================================================================
+// IMPORTAR UNA ENTRADA A OTRO IDIOMA: el «+» de Mazo y de la tarjeta de Estudiar
+// =====================================================================================================================
+// servicios simulados: wik = { «título»: contenido de la página del Wikcionario }, mm = { «frase»: traducción }; cuenta las consultas de cada uno
+async function mockNet(page, o = {}) {
+  page.net = { wik: 0, mm: 0 };
+  await page.route(/es\.wiktionary\.org\/w\/api\.php/, (r) => { page.net.wik++; r.fulfill({ contentType: "application/json", body: JSON.stringify({ query: { pages: Object.entries(o.wik || {}).map(([title, content]) => ({ title, revisions: [{ slots: { main: { content } } }] })) } }) }); });
+  await page.route(/api\.mymemory\.translated\.net/, (r) => { page.net.mm++; const q = new URL(r.request().url()).searchParams.get("q"), tr = (o.mm || {})[q]; r.fulfill({ contentType: "application/json", body: JSON.stringify({ matches: tr ? [{ segment: q, translation: tr, match: 1 }] : [] }) }); });
+}
+const wikEstacion = "== {{lengua|es}} ==\n=== {{sustantivo femenino|es}} ===\n{{trad-arriba|lugar de llegada de los trenes}}\n* {{t+|fr|t1=gare}}\n* {{t+|fr|t1=station}}\n* {{t+|it|t1=stazione}}\n* {{t+|pt|t1=estação}}\n* {{t+|pt|t1=paragem}}\n{{trad-abajo}}\n";
+const impSeed = () => {   // «la estación» y «la calle» son las más antiguas: en Mazo salen al final de la lista, que así se puede desplazar
+  const de = [{ esWord: "la estación", deWord: "der Bahnhof", esSent: "La estación está cerca", deSent: "Der Bahnhof ist nah", esGender: "f" }, { esWord: "la calle", deWord: "die Straße" }];
+  for (let i = 0; i < 30; i++) de.push({ esWord: "palabra " + i, deWord: "Wort" + i });
+  return { de: bucket("de", de), fr: bucket("fr", [{ esWord: "la calle", deWord: "la rue" }]), it: bucket("it", [{ esWord: "manzana", deWord: "la mela" }]) };
+};
+const imp = (p, id) => p.locator('li.row[data-id="' + id + '"] [data-imp]');
+const opciones = (p) => p.locator("#impMenu .imp-opt").evaluateAll((l) => l.map((b) => b.dataset.impto));
+
+test("Importar · el «+» sale en Mazo y en Estudiar, a la izquierda de los botones fijos, y solo si queda algún idioma sin la palabra", async () => {
+  const p = await open({ seed: impSeed() }); await mazo(p);
+  eq(await p.locator("li.row [data-imp]").count(), await p.locator("li.row").count(), "todas las filas llevan el «+» (ninguna palabra está ya en los 7 idiomas)");
+  const orden = await p.locator("li.row").evaluateAll((rs) => rs.slice(0, 3).map((x) => [...x.querySelectorAll(".row-meta > *")].map((e) => e.dataset.imp !== undefined ? "importar" : e.dataset.say !== undefined ? "escuchar" : e.dataset.pause !== undefined ? "pausar" : e.dataset.edit !== undefined ? "editar" : e.dataset.del !== undefined ? "eliminar" : "otro")));
+  ok(orden.every((o) => o.includes("importar") && o.indexOf("importar") < o.indexOf("escuchar") && o.indexOf("importar") < o.indexOf("pausar") && o.indexOf("pausar") < o.indexOf("editar") && o.indexOf("editar") < o.indexOf("eliminar")), "va antes de escuchar, pausar, editar y eliminar: " + JSON.stringify(orden[0]));
+  eq([await p.locator('li.row [data-imp]').first().getAttribute("aria-label"), await p.locator('li.row [data-imp]').first().getAttribute("aria-haspopup")], ["Añadir a otro idioma", "menu"], "con su nombre accesible");
+  // una palabra que ya está en los otros 7 idiomas no lleva «+»
+  const todos = {}; for (const c of ["de", "fr", "it", "pt", "ca", "pl", "en", "el"]) todos[c] = bucket(c, [{ esWord: "el libro", deWord: "x" + c }, { esWord: "la mesa", deWord: "y" + c }].slice(0, c === "el" ? 1 : 2));
+  const q = await open({ seed: todos }); await mazo(q);
+  eq(await q.locator("li.row").evaluateAll((rs) => rs.map((x) => [x.querySelector(".row-es").innerText, !!x.querySelector("[data-imp]")])), [["la mesa", true], ["el libro", false]], "«el libro» está en los 7 idiomas: sin «+»; «la mesa» falta en griego: con «+»");
+  await study(q); const lado = await q.locator(".k-tools > *").evaluateAll((l) => l.map((e) => e.className.split(" ")[0]));
+  ok(lado.includes("k-pause") && (lado.includes("k-imp") ? lado.indexOf("k-imp") < lado.indexOf("k-pause") : true), "en la tarjeta de Estudiar, el «+» (si sale) va antes de pausar: " + JSON.stringify(lado));
+  const r = await open({ seed: impSeed() }); await study(r);
+  const k = await r.locator(".k-tools > *").evaluateAll((l) => l.map((e) => e.className.split(" ")[0]));
+  ok(k.includes("k-imp") && k.indexOf("k-imp") < k.indexOf("k-pause"), "con palabra sin repetir en los demás idiomas sale: " + JSON.stringify(k));
+  noErrors(p); noErrors(q); noErrors(r);
+});
+
+test("Importar · el menú ofrece solo los idiomas donde no está, se cierra con Escape o al pulsar fuera y se maneja con el teclado", async () => {
+  const p = await open({ seed: impSeed() }); await mazo(p);
+  await imp(p, "x1").click();   // «la calle»: ya está en francés (y es el idioma actual: alemán)
+  ok(await p.locator("#impMenu").isVisible() && (await imp(p, "x1").getAttribute("aria-expanded")) === "true", "al pulsar el «+» se despliega el menú");
+  eq(await opciones(p), ["it", "pt", "ca", "pl", "en", "el"], "sin alemán (el actual) ni francés (ya la tiene)");
+  ok(/Añadir «la calle» a…/.test(await txt(p.locator(".imp-title"))) && await p.locator("#impMenu .flag").count() === 6, "titula con la palabra y cada idioma lleva su bandera");
+  eq(await p.evaluate(() => document.activeElement.dataset.impto), "it", "el foco está en la primera opción");
+  await p.keyboard.press("ArrowDown"); await p.keyboard.press("End"); eq(await p.evaluate(() => document.activeElement.dataset.impto), "el", "las flechas y Fin recorren la lista");
+  await p.keyboard.press("Home"); eq(await p.evaluate(() => document.activeElement.dataset.impto), "it", "Inicio vuelve a la primera");
+  await p.keyboard.press("Escape"); ok(await p.locator("#impMenu").count() === 0 && await p.evaluate(() => document.activeElement.hasAttribute("data-imp")), "Escape lo cierra y devuelve el foco al «+»");
+  await imp(p, "x1").click(); await p.mouse.click(5, 5); eq(await p.locator("#impMenu").count(), 0, "pulsar fuera lo cierra");
+  await imp(p, "x1").click(); await imp(p, "x1").click(); eq(await p.locator("#impMenu").count(), 0, "pulsar otra vez el «+» lo cierra");
+  await imp(p, "x0").click(); eq((await opciones(p)).length, 7, "«la estación» no está en ningún otro idioma: salen los 7");
+  await imp(p, "x1").click(); ok(await p.locator("#impMenu").count() === 1 && /la calle/.test(await txt(p.locator(".imp-title"))), "abrir el de otra fila cambia de menú (no quedan dos)");
+  await p.waitForTimeout(320); await p.evaluate(() => window.scrollBy(0, 40)); await p.waitForTimeout(80); eq(await p.locator("#impMenu").count(), 0, "al desplazar la página se cierra (va fijo en la pantalla)");
+  noErrors(p);
+});
+
+test("Importar · desde Mazo: Crear del otro idioma sale rellena y sin guardar, con las propuestas, y al guardar se vuelve a la misma lista", async () => {
+  const p = await open({ seed: impSeed() });
+  await mockNet(p, { wik: { "estación": wikEstacion }, mm: { "La estación está cerca": "A estação está perto" } });
+  await mazo(p); await p.fill("#deckQ", "a"); await p.waitForTimeout(300);
+  const n0 = await p.locator("li.row").count(); await p.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await imp(p, "x0").click(); await p.waitForTimeout(300); const y0 = await p.evaluate(() => Math.round(window.scrollY));
+  ok(y0 > 200, "la lista se ha desplazado hasta la entrada (" + y0 + " px): así se puede comprobar que se vuelve al mismo punto");
+  await p.click('#impMenu .imp-opt[data-impto="pt"]');
+  await p.waitForFunction(() => location.hash === "#pt" && document.getElementById("esWord"));
+  eq(await txt(p.locator(".panel-title").first()), "Importar entrada", "se abre Crear en portugués, como «Importar entrada»");
+  ok(/Importando desde Alemán/.test(await txt(p.locator("#impBar"))) && /la estación/.test(await txt(p.locator("#impBar"))) && /der Bahnhof/.test(await txt(p.locator("#impBar"))), "con un aviso de dónde viene: «" + await txt(p.locator("#impBar")) + "»");
+  eq([await p.inputValue("#esWord"), await p.inputValue("#esSent")], ["la estación", "La estación está cerca"], "la palabra y la frase en español, ya puestas");
+  await p.waitForFunction(() => document.getElementById("deWord").value !== "", null, { timeout: 8000 });
+  eq(await p.inputValue("#deWord"), "estação", "la palabra en portugués es la primera traducción del Wikcionario");
+  await p.waitForFunction(() => document.getElementById("deSent").value !== "", null, { timeout: 8000 });
+  eq(await p.inputValue("#deSent"), "A estação está perto", "y la frase, la traducción automática de MyMemory");
+  ok(await p.locator(".sugg-chip.on").count() === 1 && await p.locator(".sugg-chip").count() === 2, "las demás traducciones siguen a mano para cambiarla (estação marcada, paragem)");
+  ok(/emenin|f/i.test(await p.locator("#gtrigEs").getAttribute("title")), "el género en español viaja también: «" + await p.locator("#gtrigEs").getAttribute("title") + "»");
+  eq(await stored(p, "pt"), null, "todavía no se ha guardado nada en portugués");
+  ok(/Guardar y volver a Alemán/.test(await txt(p.locator("#save"))) && /Cancelar y volver a Alemán/.test(await txt(p.locator("#impCancel"))), "los botones dicen adónde se vuelve");
+  await p.click(".sugg-chip:not(.on)"); eq(await p.inputValue("#deWord"), "paragem", "se puede cambiar por otra propuesta");
+  await p.fill("#deWord", "a estação"); await p.click("#save");
+  await p.waitForFunction(() => location.hash === "#de" && document.getElementById("deckBody"));
+  const pt = (await stored(p, "pt")).deck; eq(pt.length, 1, "se guarda en portugués");
+  const e = pt[0]; eq([e.esWord, e.deWord, e.esSent, e.deSent, e.esGender], ["la estación", "a estação", "La estación está cerca", "A estação está perto", "f"], "con todos sus campos (y el género en español)");
+  ok(/Guardada en Portugués/.test(await txt(p.locator("#toast"))) && /de vuelta en Alemán/.test(await txt(p.locator("#toast"))), "avisa: «" + await txt(p.locator("#toast")) + "»");
+  eq([await p.locator(".tab.is-active").innerText(), await p.inputValue("#deckQ"), await p.locator("li.row").count()], ["Mazo", "a", n0], "de vuelta en Mazo, con el mismo buscador y la misma lista");
+  ok(Math.abs((await p.evaluate(() => Math.round(window.scrollY))) - y0) < 4, "y en el mismo punto de la página (" + y0 + " px, ahora " + (await p.evaluate(() => Math.round(window.scrollY))) + ")");
+  await imp(p, "x0").click(); eq(await opciones(p), ["fr", "it", "ca", "pl", "en", "el"], "y ya no ofrece portugués para esa palabra");
+  noErrors(p);
+});
+
+test("Importar · cancelar vuelve sin guardar nada; si no hay conexión el formulario sale igual (con el aviso de siempre) y no se puede guardar sin la palabra", async () => {
+  const p = await open({ seed: impSeed() }); await mazo(p);
+  await imp(p, "x0").click(); await p.click('#impMenu .imp-opt[data-impto="pt"]');
+  await p.waitForFunction(() => location.hash === "#pt" && document.getElementById("esWord"));
+  eq([await p.inputValue("#esWord"), await p.inputValue("#esSent"), await p.inputValue("#deWord"), await p.inputValue("#deSent")], ["la estación", "La estación está cerca", "", ""], "sin conexión: la parte en español sí, la del idioma nuevo vacía");
+  await p.waitForSelector(".sugg-err", { timeout: 15000 }); ok(/no se pudo conectar/.test(await txt(p.locator(".sugg-err"))), "y el aviso de siempre de las consultas: «" + await txt(p.locator(".sugg-err")) + "»");
+  await p.click("#save"); ok(/Rellena la palabra en los dos idiomas/.test(await txt(p.locator("#toast"))) && (await p.evaluate(() => location.hash)) === "#pt", "guardar sin la palabra del idioma avisa y no vuelve");
+  await p.click("#impCancel"); await p.waitForFunction(() => location.hash === "#de" && document.getElementById("deckBody"));
+  eq([await p.locator(".tab.is-active").innerText(), (await stored(p, "pt")) === null || (await stored(p, "pt")).deck.length === 0], ["Mazo", true], "al cancelar se vuelve a Mazo y el portugués sigue vacío");
+  ok(/Importación cancelada/.test(await txt(p.locator("#toast"))), "con su aviso");
+  // salir por otro camino (cambiar de idioma) también descarta el borrador
+  await imp(p, "x0").click(); await p.click('#impMenu .imp-opt[data-impto="ca"]'); await p.waitForFunction(() => location.hash === "#ca" && document.getElementById("esWord"));
+  await p.evaluate(() => { location.hash = "#it"; }); await p.waitForFunction(() => location.hash === "#it" && document.getElementById("esWord"));
+  eq([await p.inputValue("#esWord"), await p.locator("#impBar").count(), await txt(p.locator(".panel-title").first())], ["", 0, "Nueva entrada"], "irse a otro idioma descarta el borrador: formulario vacío y sin aviso");
+  await p.evaluate(() => { location.hash = "#ca"; }); await p.waitForFunction(() => location.hash === "#ca" && document.getElementById("esWord"));
+  eq([await p.inputValue("#esWord"), await p.locator("#impBar").count()], ["", 0], "y al volver al idioma de la importación abandonada, el borrador no reaparece");
+  noErrors(p);
+});
+
+test("Importar · desde Estudiar se vuelve a la misma tarjeta, y con las consultas automáticas apagadas no se pide nada a internet", async () => {
+  const corto = { de: bucket("de", [{ esWord: "el tren", deWord: "der Zug" }, { esWord: "la estación", deWord: "der Bahnhof", esSent: "La estación está cerca", deSent: "Der Bahnhof ist nah" }]), it: bucket("it", [{ esWord: "manzana", deWord: "la mela" }]) };
+  const p = await open({ seed: corto, prefs: { "vocabulando:autoSuggest": "0" } });
+  await mockNet(p, { wik: { "estación": wikEstacion }, mm: { "La estación está cerca": "La gare est proche" } });
+  await study(p);
+  const f = async () => (await front(p));
+  for (let k = 0; k < 4 && (await f()) !== "la estación"; k++) { await p.click("#show"); await p.click('[data-rate="Good"]'); await p.waitForFunction(() => !document.querySelector("[data-rate]")); }
+  eq(await f(), "la estación", "llega «la estación»");
+  await p.click(".k-imp"); await p.click('#impMenu .imp-opt[data-impto="it"]');
+  await p.waitForFunction(() => location.hash === "#it" && document.getElementById("esWord"));
+  eq([await p.inputValue("#esWord"), await p.inputValue("#deWord"), await p.inputValue("#deSent")], ["la estación", "", ""], "con las consultas automáticas apagadas, la parte del idioma nuevo queda vacía");
+  await p.waitForTimeout(400); eq([p.net.wik, p.net.mm], [0, 0], "y no se ha pedido nada al Wikcionario ni a MyMemory");
+  await p.fill("#deWord", "la stazione"); await p.fill("#deSent", "La stazione è vicina"); await p.click("#save");
+  await p.waitForFunction(() => location.hash === "#de" && document.querySelector(".k-front"));
+  eq([await p.locator(".tab.is-active").innerText(), await f(), await p.locator("#show").count()], ["Estudiar", "la estación", 1], "de vuelta en Estudiar, con la tarjeta sin mostrar la respuesta");
+  eq((await stored(p, "it")).deck.map((e) => e.deWord), ["la mela", "la stazione"], "y la entrada está guardada en italiano");
+  // cancelar desde la tarjeta
+  await p.click(".k-imp"); await p.click('#impMenu .imp-opt[data-impto="pt"]'); await p.waitForFunction(() => location.hash === "#pt" && document.getElementById("impCancel"));
+  await p.click("#impCancel"); await p.waitForFunction(() => location.hash === "#de" && document.querySelector(".k-front"));
+  eq([await f(), (await stored(p, "pt")) === null || (await stored(p, "pt")).deck.length === 0], ["la estación", true], "cancelar también devuelve a la tarjeta y no guarda nada");
+  await p.click('.seg-btn[data-mode="sentence"]'); await p.waitForSelector(".k-front");
+  await p.click(".k-imp"); await p.click('#impMenu .imp-opt[data-impto="pt"]'); await p.waitForFunction(() => location.hash === "#pt" && document.getElementById("impCancel"));
+  await p.click("#impCancel"); await p.waitForFunction(() => location.hash === "#de" && document.querySelector(".k-front"));
+  eq(await txt(p.locator(".seg-btn.is-active")), "Frases", "y se vuelve al mismo modo de estudio (Frases)");
+  noErrors(p);
+});
+
+
 (async () => {
   const filter = process.argv[2];
   await startServer(); browser = await chromium.launch(); const t0 = Date.now();
