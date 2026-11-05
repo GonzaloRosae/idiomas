@@ -21,10 +21,18 @@ function test(name, fn) { T.push({ name, fn }); }
 function ok(c, m) { if (c) { passes++; console.log("   OK    " + m); } else { fails++; console.log("   FALLA " + m); } }
 function eq(a, b, m) { const same = JSON.stringify(a) === JSON.stringify(b); ok(same, m + (same ? "" : "   [obtenido " + JSON.stringify(a) + " · esperado " + JSON.stringify(b) + "]")); }
 const noErrors = (p) => ok(p.errs.length === 0, "sin errores de JavaScript" + (p.errs.length ? ": " + p.errs : ""));
+// voz simulada: voices = ["pt-PT", {lang, name, localService}…]; lo «pronunciado» queda en window.__spoken
+const SPEECH = (voices) => {
+  const spoken = []; window.__spoken = spoken;
+  const list = voices.map((v) => typeof v === "string" ? { lang: v, name: "voz " + v, localService: true } : v);
+  window.SpeechSynthesisUtterance = function (t) { this.text = t; };
+  Object.defineProperty(window, "speechSynthesis", { configurable: true, value: { getVoices: () => list, speak: (u) => spoken.push({ text: u.text, lang: u.lang, voz: u.voice && u.voice.name }), cancel() { } } });
+};
 async function open(lang, o = {}) {
   const ctx = await browser.newContext({ viewport: o.viewport || { width: 1000, height: 1000 } }); ctxs.push(ctx);
   await ctx.route((u) => !u.href.startsWith(BASE), (r) => r.abort());
   const page = await ctx.newPage(); page.errs = []; page.on("pageerror", (e) => page.errs.push(String(e)));
+  if (o.speech) await page.addInitScript(SPEECH, o.speech);
   await page.goto(BASE + "index.html" + (lang ? "#" + lang : "")); await page.waitForFunction(() => window.__booted === true);
   return page;
 }
@@ -544,6 +552,65 @@ test("Cambio de web · en el móvil la cabecera no desborda y la lista cabe", as
   }
 });
 
+
+// =====================================================================================================================
+// VOZ: solo con acento europeo
+// =====================================================================================================================
+const habla = async (p, code, texto = "falar") => { await p.evaluate(([c, x]) => speak(x, c), [code, texto]); return p.evaluate(() => window.__spoken.map((s) => ({ voz: s.voz, lang: s.lang }))); };
+test("Voz · solo acento europeo: portugués de Portugal, inglés británico, francés de Francia…; sin voz europea no se habla y se avisa", async () => {
+  // [idioma, voces, la que debe sonar (o null: no se habla y sale el aviso)]
+  const casos = [
+    ["pt", ["pt-BR"], null], ["pt", ["pt-BR", "pt-PT"], "voz pt-PT"], ["pt", ["pt-PT", "pt-BR"], "voz pt-PT"], ["pt", ["pt_PT"], "voz pt_PT"], ["pt", ["pt"], null],
+    ["pt", ["pt-PT-x-lusitano"], "voz pt-PT-x-lusitano"], ["pt", ["pt-BR-x-paulista"], null],
+    ["fr", ["fr-CA"], null], ["fr", ["fr-CA", "fr-FR"], "voz fr-FR"], ["fr", ["fr-CA", "fr-BE", "fr-FR"], "voz fr-FR"], ["fr", ["fr-CA", "fr-BE"], "voz fr-BE"],
+    ["en", ["en-US"], null], ["en", ["en-US", "en-GB"], "voz en-GB"], ["en", ["en-AU", "en-IE"], "voz en-IE"],
+    ["de", ["de-AT"], "voz de-AT"], ["de", ["de-AT", "de-DE"], "voz de-DE"], ["it", ["it-IT"], "voz it-IT"], ["ca", ["ca-ES"], "voz ca-ES"], ["pl", ["pl-PL"], "voz pl-PL"], ["el", ["el-GR"], "voz el-GR"]];
+  for (const [code, voces, quiero] of casos) {
+    const p = await open(code, { speech: voces }); const s = await habla(p, code);
+    const aviso = await p.locator("#voiceToast.show").count();
+    ok((quiero === null ? s.length === 0 && aviso === 1 : s.length === 1 && s[0].voz === quiero && s[0].lang === quiero.slice(4) && aviso === 0), code + " con " + JSON.stringify(voces) + ": " + (s.length ? s[0].voz : "no habla") + (aviso ? " + aviso" : ""));
+    noErrors(p);
+  }
+});
+
+test("Voz · una voz de red de Brasil ya no gana a una de Portugal del sistema, y el inglés es británico por defecto", async () => {
+  const brRemota = { lang: "pt-BR", name: "Google português do Brasil", localService: false }, ptLocal = { lang: "pt-PT", name: "Microsoft Helia - Portuguese (Portugal)", localService: true };
+  let p = await open("pt", { speech: [brRemota, ptLocal] });
+  eq((await habla(p, "pt")).map((s) => s.voz), ["Microsoft Helia - Portuguese (Portugal)"], "con una pt-BR de red y una pt-PT del sistema, suena la de Portugal (antes ganaba la de red, brasileña)");
+  eq((await habla(p, "pt")).map((s) => s.lang), ["pt-PT", "pt-PT"], "y la utterance lleva el idioma de la voz elegida");
+  const enRemota = { lang: "en-GB", name: "Google UK English Female", localService: false }, enUs = { lang: "en-US", name: "Google US English", localService: false };
+  p = await open("en", { speech: [enUs, enRemota] });
+  eq((await habla(p, "en", "water")).map((s) => s.voz), ["Google UK English Female"], "inglés: la británica, aunque la americana esté primero en la lista");
+  // dentro de las voces europeas de la misma etiqueta, la de red del navegador («Google …») va antes que la del sistema
+  const frSis = { lang: "fr-FR", name: "Microsoft Hortense - French (France)", localService: true }, frRed = { lang: "fr-FR", name: "Google français", localService: false };
+  p = await open("fr", { speech: [frSis, frRed] });
+  eq((await habla(p, "fr", "maison")).map((s) => s.voz), ["Google français"], "francés: entre dos voces de Francia, la de red del navegador");
+  p = await open("en", { speech: [] });
+  eq(await habla(p, "en", "water"), [{ lang: "en-GB" }], "sin lista de voces, el inglés se pide como en-GB (no en-US)");
+  p = await open("pt", { speech: [] });
+  eq(await habla(p, "pt"), [{ lang: "pt-PT" }], "si el navegador no da lista de voces no se puede comprobar: se habla con el idioma pt-PT y sin aviso");
+  eq(await p.locator("#voiceToast.show").count(), 0, "(sin aviso)");
+  noErrors(p);
+});
+
+test("Voz · el aviso dice qué voces hay y permite «usar la que haya» (se recuerda con la misma clave que Vocabulando)", async () => {
+  const p = await open("pt", { speech: ["pt-BR", "fr-FR"] });
+  eq(await habla(p, "pt"), [], "con solo pt-BR no se habla");
+  const t = await txt(p.locator("#voiceToast"));
+  ok(/no tiene una voz con acento europeo en Portugués/.test(t) && /solo hay: pt-BR/.test(t) && /Agregar|Configuración › Hora e idioma › Voz/.test(t) && !/fr-FR/.test(t), "avisa de lo que falta y de lo que hay: «" + t + "»");
+  await p.click("#voiceToast .voiceany");
+  eq([await p.evaluate(() => localStorage.getItem("idiomas:anyVoice")), (await p.evaluate(() => window.__spoken)).map((s) => s.voz)], ["1", ["voz pt-BR"]], "«Usar la que haya» lo guarda y reproduce el audio con la voz disponible");
+  eq(await p.locator("#voiceToast.show").count(), 0, "y el aviso se cierra");
+  eq((await habla(p, "pt")).length, 2, "y a partir de ahí se habla siempre");
+  // con voces de otros idiomas pero ninguna del idioma: aviso sin botón
+  const q = await open("el", { speech: ["fr-FR"] });
+  eq(await habla(q, "el", "σπίτι"), [], "sin voces del idioma, no se habla");
+  eq([await q.locator("#voiceToast .voiceany").count(), /no tiene una voz con acento europeo en Griego/.test(await txt(q.locator("#voiceToast")))], [0, true], "el aviso no ofrece «usar la que haya» si no hay ninguna");
+  // la clave ya puesta (p. ej. desde Vocabulando) vale
+  const r = await open("pt", { speech: ["pt-BR"] }); await r.evaluate(() => localStorage.setItem("idiomas:anyVoice", "1"));
+  eq((await habla(r, "pt")).map((s) => s.voz), ["voz pt-BR"], "con la clave puesta antes, también suena la de Brasil");
+  noErrors(p); noErrors(q); noErrors(r);
+});
 
 (async () => {
   const filter = process.argv[2];

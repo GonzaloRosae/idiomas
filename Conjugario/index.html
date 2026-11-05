@@ -486,6 +486,8 @@ footer{margin-top:26px;font-family:var(--mono);font-size:11.5px;color:var(--ink-
   transform:translateY(140%);transition:transform .25s ease}
 .voicetoast.show{transform:translateY(0)}
 .voicetoast .msg{flex:1;line-height:1.4}
+.voicetoast .voiceany{margin-top:8px;border:1px solid var(--line);background:transparent;color:var(--ink);font:inherit;font-weight:700;font-size:12.5px;padding:5px 10px;border-radius:999px;cursor:pointer}
+.voicetoast .voiceany:hover{border-color:var(--accent,var(--amber))}
 .voicetoast .close{flex:none;background:none;border:none;cursor:pointer;font-size:19px;line-height:1;
   color:var(--ink-soft);padding:0 2px}
 .voicetoast .close:hover{color:var(--ink)}
@@ -1033,9 +1035,8 @@ const ICO = {
 /* =========================================================
    VOZ · Web Speech API
    ========================================================= */
-const TTS_LANG = {fr:'fr-FR', it:'it-IT', pt:'pt-PT', ca:'ca-ES', pl:'pl-PL', en:'en-US', de:'de-DE', el:'el-GR'};
+const TTS_LANG = {fr:'fr-FR', it:'it-IT', pt:'pt-PT', ca:'ca-ES', pl:'pl-PL', en:'en-GB', de:'de-DE', el:'el-GR'};
 let VOICES_CACHE = [];
-const warnedVoiceLangs = new Set();
 let TTS_OK = false;
 try{ TTS_OK = !!window.speechSynthesis; }catch(e){}   /* en algunos visores restringidos incluso leer la propiedad puede fallar */
 function refreshVoices(){
@@ -1044,46 +1045,69 @@ function refreshVoices(){
 }
 if(TTS_OK){
   refreshVoices();
-  try{ window.speechSynthesis.onvoiceschanged = () => { refreshVoices(); warnedVoiceLangs.clear(); }; }catch(e){}
+  try{ window.speechSynthesis.onvoiceschanged = () => { refreshVoices(); }; }catch(e){}
 }
-/* el atributo .lang de la utterance no basta en todos los navegadores: hay que
-   asignar también la voz exacta, o muchos motores caen de vuelta a la voz
-   por defecto del sistema. Se prioriza la voz de red del propio navegador
-   (voice.localService === false, p. ej. las «Google …» de Chrome) sobre la
-   voz instalada en el sistema operativo: así funciona igual en cualquier
-   equipo, sin depender de qué paquetes de idioma tenga instalados Windows. */
-function pickVoice(langTag){
+/* Solo se usan voces con acento EUROPEO: francés de Francia (no de Canadá), portugués de Portugal (no de Brasil), inglés británico (no
+   americano)… Si el dispositivo no tiene ninguna, no se reproduce el audio (mejor nada que con otro acento) y se avisa, salvo que se haya
+   permitido «usar la que haya» (clave compartida con Vocabulando). Una voz «xx-YY-zzz» cuenta como «xx-YY»; una etiqueta sin región («fr»)
+   solo se acepta donde la región por defecto es europea. */
+const VOICE_EU = {
+  fr:['fr-FR','fr-BE','fr-CH','fr-LU','fr-MC','fr'], it:['it-IT','it-CH','it-SM','it'], pt:['pt-PT'], ca:['ca-ES','ca-AD','ca-FR','ca-IT','ca'],
+  pl:['pl-PL','pl'], en:['en-GB','en-IE','en-scotland'], de:['de-DE','de-AT','de-CH','de-LI','de'], el:['el-GR','el-CY','el']
+};
+const VOICE_ANY_KEY = 'idiomas:anyVoice';
+function anyVoiceOk(){ try{ return localStorage.getItem(VOICE_ANY_KEY) === '1'; }catch(e){ return false; } }
+const voiceLang = v => String(v.lang || '').replace(/_/g,'-').toLowerCase();
+function voiceByTags(tags){   /* la primera etiqueta con voces manda; dentro de ella, la voz de red del propio navegador (las «Google …») antes que la del sistema */
+  for(const t0 of tags){
+    const tag = t0.toLowerCase(), regional = tag.includes('-');
+    const m = VOICES_CACHE.filter(v => { const l = voiceLang(v); return regional ? (l === tag || l.startsWith(tag + '-')) : l === tag; });
+    if(m.length) return m.find(v => !v.localService) || m[0];
+  }
+  return null;
+}
+/* el comportamiento anterior (cualquier voz del idioma, de cualquier acento), solo si se permite */
+function pickVoiceAny(langTag){
+  const tag = langTag.toLowerCase(), prefix = tag.split('-')[0];
+  const isExact = v => voiceLang(v) === tag, isPrefix = v => voiceLang(v).startsWith(prefix), isRemote = v => !v.localService;
+  return VOICES_CACHE.find(v => isRemote(v) && isExact(v)) || VOICES_CACHE.find(v => isRemote(v) && isPrefix(v))
+      || VOICES_CACHE.find(isExact) || VOICES_CACHE.find(isPrefix) || null;
+}
+/* { v: voz o null, eu: ¿europea?, known: ¿se conoce la lista de voces? } */
+function pickVoice(code){
   if(!VOICES_CACHE.length) refreshVoices();
-  if(!VOICES_CACHE.length) return null;
-  const tag = langTag.toLowerCase();
-  const prefix = tag.split('-')[0];
-  const isExact = v => v.lang.toLowerCase() === tag;
-  const isPrefix = v => v.lang.toLowerCase().startsWith(prefix);
-  const isRemote = v => !v.localService;
-  return VOICES_CACHE.find(v => isRemote(v) && isExact(v))
-      || VOICES_CACHE.find(v => isRemote(v) && isPrefix(v))
-      || VOICES_CACHE.find(isExact)
-      || VOICES_CACHE.find(isPrefix)
-      || null;
+  if(!VOICES_CACHE.length) return { v:null, eu:false, known:false };
+  const eu = voiceByTags(VOICE_EU[code] || [code]);
+  if(eu) return { v:eu, eu:true, known:true };
+  return { v: anyVoiceOk() ? pickVoiceAny(TTS_LANG[code] || code) : null, eu:false, known:true };
 }
-/* aviso breve y no intrusivo cuando no existe ninguna voz para ese idioma:
-   se avisa una sola vez por idioma y sesión, para no repetirlo en cada clic */
-function showVoiceToast(langName){
+/* aviso cuando el dispositivo no tiene voz con acento europeo para ese idioma: el audio no se reproduce (con otro acento sería peor) */
+function showVoiceToast(code, text){
   let box = $('voiceToast');
   if(!box){
     box = el('div','voicetoast');
     box.id = 'voiceToast';
     document.body.appendChild(box);
   }
+  const lang = LANGS[code], pre = (TTS_LANG[code] || code).split('-')[0];
+  const others = VOICES_CACHE.map(v => v.lang).filter((l, i, a) => voiceLang({lang:l}).split('-')[0] === pre && a.indexOf(l) === i);
   box.innerHTML = '';
-  box.appendChild(el('div','msg','Tu navegador no tiene ninguna voz en <b>'+esc(langName)+'</b>: se oirá la voz predeterminada. Instala el idioma en los ajustes de voz de tu sistema (iPad: Ajustes › Accesibilidad › Contenido leído › Voces) o prueba con Chrome en un ordenador.'));
+  const msg = el('div','msg','Tu navegador no tiene una voz con acento europeo en <b>' + esc(lang.name) + '</b>' + (others.length ? ' (solo hay: ' + esc(others.join(', ')) + ')' : '') +
+    ', así que no se reproduce el audio. Instala una en los ajustes de voz de tu sistema (Windows: Configuración › Hora e idioma › Voz; iPad: Ajustes › Accesibilidad › Contenido leído › Voces) o prueba con Microsoft Edge.');
+  if(others.length){
+    const any = el('button','voiceany','Usar la que haya');
+    any.type = 'button';
+    any.onclick = () => { try{ localStorage.setItem(VOICE_ANY_KEY, '1'); }catch(e){} box.classList.remove('show'); speak(text, code); };
+    msg.appendChild(document.createElement('br')); msg.appendChild(any);
+  }
+  box.appendChild(msg);
   const close = el('button','close','×');
   close.type = 'button'; close.setAttribute('aria-label','Cerrar aviso');
   close.onclick = () => box.classList.remove('show');
   box.appendChild(close);
   requestAnimationFrame(() => box.classList.add('show'));
   clearTimeout(box._hideTimer);
-  box._hideTimer = setTimeout(() => box.classList.remove('show'), 15000);
+  box._hideTimer = setTimeout(() => box.classList.remove('show'), 20000);
 }
 function speak(text, langCode){
   if(!TTS_OK || !text) return;
@@ -1093,12 +1117,12 @@ function speak(text, langCode){
     const tag = TTS_LANG[langCode] || 'es-ES';
     const u = new SpeechSynthesisUtterance(String(text).replace(/\|.*/,''));
     u.lang = tag;
-    const v = pickVoice(tag);
-    if(v){
-      u.voice = v;
-    } else if(VOICES_CACHE.length && langCode && LANGS[langCode] && !warnedVoiceLangs.has(langCode)){
-      warnedVoiceLangs.add(langCode);
-      showVoiceToast(LANGS[langCode].name);
+    const pick = pickVoice(langCode);
+    if(pick.v){
+      u.voice = pick.v; u.lang = pick.v.lang;
+    } else if(pick.known && langCode && LANGS[langCode]){
+      showVoiceToast(langCode, text);   /* hay voces, pero ninguna con acento europeo: no se habla con otro acento */
+      return;
     }
     u.rate = state.slowAudio ? 0.5 : 0.92;
     window.speechSynthesis.speak(u);
@@ -11967,7 +11991,7 @@ function infoHtml(){
     '<p>Conjugario es una sala de práctica de conjugación en 8 idiomas: francés, italiano, portugués, catalán, polaco, inglés, alemán y griego. Eliges un idioma y trabajas tiempo verbal a tiempo verbal, con dos pestañas: Teoría y Prácticas. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Conjugario» vuelves a ella.' + (sib ? ' El botón con el logo (junto al del tema) te lleva a Vocabulando (vocabulario y frases) o a Declinario (declinaciones y pronombres), en el mismo idioma.' : '') + '</p>' +
     '<h3>Teoría</h3><ul>' +
     '<li>Cada tiempo tiene su ficha: para qué se usa, cómo se forma (reglas con las terminaciones resaltadas y tablas con verbos modelo), unos trucos y cuatro frases de ejemplo. Los tiempos se eligen en los botones redondeados de debajo de las pestañas.</li>' +
-    '<li>En las frases de ejemplo intentas adivinar el verbo; después pulsas el ojo para ver la frase en el idioma y el altavoz para oírla.</li>' +
+    '<li>En las frases de ejemplo intentas adivinar el verbo; después pulsas el ojo para ver la frase en el idioma y el altavoz para oírla. El audio usa solo voces con acento europeo (portugués de Portugal, inglés británico, francés de Francia…); si tu dispositivo no tiene una, no se reproduce y la app te lo avisa y te explica cómo instalarla.</li>' +
     '<li>Al final están los verbos irregulares más importantes de ese tiempo.</li></ul>' +
     '<h3>Prácticas</h3><ul>' +
     '<li><b>Tabla completa:</b> escribes el verbo en todas las personas. Si no fallas ninguna, el tiempo se marca con ✓ (tabla perfecta, solo durante la sesión).</li>' +
