@@ -647,6 +647,119 @@
     background: var(--accent-soft);
   }
 
+  /* «+»: añadir la entrada a otro idioma */
+  .imp {
+    border: 0;
+    background: transparent;
+    color: #AEB8C5;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 7px;
+    line-height: 0;
+  }
+
+  .imp svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .imp:hover,
+  .imp[aria-expanded="true"] {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .k-imp {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 7px;
+    line-height: 0;
+  }
+
+  .k-imp svg {
+    width: 21px;
+    height: 21px;
+  }
+
+  .k-imp:hover,
+  .k-imp[aria-expanded="true"] {
+    color: var(--accent);
+  }
+
+  .imp-menu {
+    position: fixed;
+    z-index: 60;
+    min-width: 250px;
+    max-width: calc(100vw - 16px);
+    max-height: min(70vh, 460px);
+    overflow: auto;
+    padding: 6px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: 0 20px 50px -20px rgba(0, 0, 0, .55);
+  }
+
+  .imp-title {
+    padding: 6px 10px 8px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 11px;
+    letter-spacing: .04em;
+    color: var(--muted);
+  }
+
+  .imp-opt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 10px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-size: 14px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .imp-opt:hover,
+  .imp-opt:focus-visible {
+    background: var(--accent-soft);
+    outline: none;
+  }
+
+  .imp-opt .lang-nat {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 12px;
+  }
+
+  .imp-bar {
+    margin: 0 0 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--accent);
+    border-radius: 12px;
+    background: var(--accent-soft);
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .imp-bar .flag {
+    vertical-align: -2px;
+  }
+
+  .imp-bar-s {
+    display: block;
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
   .row.is-editing {
     background: var(--accent-soft);
     border-radius: 8px;
@@ -5085,7 +5198,7 @@
     var DECK_PAGE = 100; // filas de la lista del mazo que se dibujan de una vez (el resto, con «Mostrar más»)
     var S = {
       lang: null, tab: "crear", deckDir: "es-it", autoSentence: false, theme: "dark",
-      editing: null, confirmDelete: null, expanded: {}, deckShown: DECK_PAGE, q: "", fState: "all", fSent: "all", fGender: "all", fSort: "new", qSent: true, goal: 10, typeOn: false, typed: null, clozeOn: false, dictOn: false, xlOpen: {}, nextTab: null, dictPlayed: "", editFrom: null, editY: 0, restoreY: null, undo: [], newExtra: {}, newWords: 20, newSents: 10, revOn: false, autoSpeak: false, mode: "word",
+      editing: null, confirmDelete: null, expanded: {}, deckShown: DECK_PAGE, q: "", fState: "all", fSent: "all", fGender: "all", fSort: "new", qSent: true, goal: 10, typeOn: false, typed: null, clozeOn: false, dictOn: false, xlOpen: {}, nextTab: null, dictPlayed: "", editFrom: null, editY: 0, restoreY: null, imp: null, restore: null, undo: [], newExtra: {}, newWords: 20, newSents: 10, revOn: false, autoSpeak: false, mode: "word",
       current: null, flipped: false, showSentence: false, studyAhead: false, bannerOff: false,
       formGender: "", formEsGender: "", formWikt: null, formBusy: false, suggErr: null, autoGen: true, detecting: false, autoSugg: true, sugg: null, suggBusy: false, sents: null, sentsBusy: false, sentsSlow: false, transBusy: false, tatDownAt: 0,
       deck: [], review: {}, stats: { reviewsTotal: 0, byDay: {} }
@@ -6015,7 +6128,10 @@
       if (lang !== S.lang) {
         S.lang = lang; S.tab = S.nextTab || "crear"; S.nextTab = null; S.editing = null; S.formGender = ""; S.formEsGender = ""; S.suggErr = null; S.formWikt = null; S.sugg = null; S.sents = null; S.suggBusy = false; S.confirmDelete = null; S.expanded = {}; S.xlOpen = {}; S.deckShown = DECK_PAGE; resetDeckView(); S.editFrom = null; S.undo = [];
         S.current = null; S.flipped = false; S.studyAhead = false; S.mode = "word";
+        if (S.imp && S.imp.to !== lang) S.imp = null;                                  // otra importación o salir del idioma: el borrador se descarta
+        if (S.imp) S.formEsGender = S.imp.draft.esGender || "";                         // el género en español viaja con la entrada
         bindLang(); window.scrollTo(0, 0);
+        if (S.restore) { var rs = S.restore; S.restore = null; if (rs.lang === lang) impRestore(rs); }
         if (lang && initDone) { if (loaded[lang]) syncFromFile(); else openLang(lang); }
       }
       updateTtsClass();
@@ -6047,7 +6163,10 @@
         S.dictPlayed = S.current.key; speak(cardTarget(findEntry(S.current.entry.id) || S.current.entry, "dict"));
       }
       if (S.restoreY !== null) { var y0 = S.restoreY; S.restoreY = null; window.scrollTo(0, y0); }
-      if (S.tab === "crear") { updateDupUI(); updateGenderUI(); updateSuggUI(); updateSentUI(); fitSentences(); updateAiBtn(); }
+      if (S.tab === "crear") {
+        updateDupUI(); updateGenderUI(); updateSuggUI(); updateSentUI(); fitSentences(); updateAiBtn();
+        if (S.imp && S.imp.to === S.lang && !S.imp.started && !S.editing) { S.imp.started = true; impAuto(); }
+      }
     }
     function renderConfirm() {
       var e = findEntry(S.confirmDelete);
@@ -6223,6 +6342,7 @@
       S.suggBusy = false;
       S.sugg = { key: es, code: code, items: res.items, title: res.title, g: res.g };
       updateSuggUI();
+      if (S.imp && S.imp.auto && S.imp.to === code && !val("deWord") && val("esWord") === es && res.items.length) { S.imp.auto = false; pickSuggestion(res.items[0].w); } // importación: se propone la primera traducción
       if (val("esWord") !== es) scheduleSuggLookup(); // siguió escribiendo mientras tanto
     }
     // los botones se ven mientras el campo del idioma está vacío o contiene una de las sugerencias (marcada)
@@ -6634,7 +6754,7 @@
         "<h3>Mazo</h3><ul>" +
         "<li>Aquí está la lista completa de tus palabras y frases. El buscador no distingue mayúsculas ni acentos (escribir «uber» encuentra «über») y, si lo dejas marcado, mira también dentro de las frases. Puedes escribir varias palabras: salen las entradas que las llevan todas.</li>" +
         "<li>Filtros: por estado (nuevas, en aprendizaje, en repaso o que ya toca repasar), por tener o no frase y por género. Orden: más recientes o antiguas, alfabético (sin contar el artículo, así «der Apfel» va en la A), por próximo repaso o por las que más fallas.</li>" +
-        "<li>El lápiz lleva a Crear con la entrada cargada; al guardar o cancelar vuelves a la lista, en el mismo punto. La × borra (pide confirmación), «frase» abre la oración y el altavoz la pronuncia. En Crear, bajo el formulario, quedan las últimas 5 añadidas para comprobar lo que acabas de guardar.</li></ul>" +
+        "<li>El lápiz lleva a Crear con la entrada cargada; al guardar o cancelar vuelves a la lista, en el mismo punto. La × borra (pide confirmación), «frase» abre la oración y el altavoz la pronuncia. El <b>+</b> añade esa entrada a otro idioma: eliges uno en el que todavía no esté y se abre Crear en él con la palabra española, su frase y su género ya puestos y, si hay conexión, la traducción de la palabra (Wikcionario) y de la frase (MyMemory) como propuesta. No se guarda nada hasta que pulses «Guardar»: lo revisas, lo cambias y, al guardar o cancelar, vuelves al idioma, la pestaña y el punto en que estabas (la lista con sus filtros y su posición, o Estudiar con el mismo modo). Está también en la tarjeta de Estudiar. En Crear, bajo el formulario, quedan las últimas 5 añadidas para comprobar lo que acabas de guardar.</li></ul>" +
         "<h3>Estudiar</h3>" +
         "<p>Se muestra la palabra (o la frase) en español, pulsas «Mostrar respuesta» y la valoras con <i>Otra vez, Difícil, Bien</i> o <i>Fácil</i>. La app programa el siguiente repaso con el algoritmo FSRS: cuanto mejor la sabes, más tarde vuelve. Las tarjetas con plazo de días tocan desde las 4:00 de su día, y el día nuevo (también para los contadores de Actividad) empieza a las 4:00: lo que repases de madrugada cuenta como el día anterior. Hay dos modos, Palabras y Frases (y, si lo activas, Inversa: del idioma al español). Atajos: punto o espacio para mostrar la respuesta; J, K, L, Ñ (o 0, 1, 2, 3) para valorar; Z para deshacer el último repaso; P para oír la pronunciación.</p>" +
         "<ul>" +
@@ -6655,7 +6775,7 @@
         "<h3>En el iPad o el móvil</h3>" +
         "<p>Safari no puede guardar en una carpeta. Abre la web publicada y usa «Añadir a pantalla de inicio»: funciona sin conexión y Safari no borra sus datos por falta de uso. Para pasar tu progreso entre dispositivos usa Exportar JSON e Importar JSON en Actividad: al importar se fusiona (se quedan los repasos más recientes), no se pierde nada. También puedes importar listas de palabras pegando texto o un CSV.</p>" +
         "<h3>Qué sale de tu navegador</h3>" +
-        "<p>Vocabulando no usa ningún servidor propio. Solo se consulta internet para ayudarte: el <b>Wikcionario</b> (la palabra en español que escribes, y la palabra del idioma para el género) y, únicamente cuando pulsas sus botones, <b>Tatoeba</b> y <b>MyMemory</b> (frases; si Tatoeba falla, ejemplos del Wikcionario). Las consultas automáticas se pueden apagar en Actividad.</p>" +
+        "<p>Vocabulando no usa ningún servidor propio. Solo se consulta internet para ayudarte: el <b>Wikcionario</b> (la palabra en español que escribes, y la palabra del idioma para el género) y, únicamente cuando pulsas sus botones (o importas una entrada con el <b>+</b>, que traduce su frase), <b>Tatoeba</b> y <b>MyMemory</b> (frases; si Tatoeba falla, ejemplos del Wikcionario). Las consultas automáticas se pueden apagar en Actividad.</p>" +
         '<div class="diag"><button type="button" class="btn btn-ghost btn-sm" id="diagBtn">Probar conexión</button><div id="diagOut" class="diag-out" aria-live="polite"></div></div>' +
         '<h3>Créditos</h3><p class="muted-note">Traducciones y géneros: <a href="https://es.wiktionary.org" target="_blank" rel="noopener">Wikcionario</a> (CC BY-SA). Frases: <a href="https://tatoeba.org" target="_blank" rel="noopener">Tatoeba</a> (CC BY 2.0 FR) y, de respaldo, ejemplos del <a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wikcionario</a> (CC BY-SA). Traducción de frases: <a href="https://mymemory.translated.net" target="_blank" rel="noopener">MyMemory</a>. Repaso espaciado: FSRS.</p>' +
         "</div>";
@@ -6712,7 +6832,7 @@
     }
     // género que tiene ahora la palabra en español del formulario: lo elegido > el artículo > lo guardado/consultado en el Wikcionario
     function formEsGenderInfo() {
-      var w = val("esWord"), cur = S.editing ? findEntry(S.editing) : null, sel = "", src = "", auto = "";
+      var w = val("esWord"), cur = S.editing ? findEntry(S.editing) : (impActive() ? S.imp.draft : null), sel = "", src = "", auto = "";
       if (cur && cur.esWord === w && cur.esAutoGender) auto = cur.esAutoGender;
       else if (S.sugg && S.sugg.key === w && S.sugg.g) auto = S.sugg.g;
       var a = esArticle(w);
@@ -6843,7 +6963,7 @@
     // ---- lista del mazo: más reciente primero, por tramos (con miles de palabras, dibujarlas todas a la vez es lo que ralentiza la pestaña) ----
     function rowHtml(e) {
       var hasS = e.esSent && e.deSent;
-      var open = !!S.expanded[e.id], xs = xlFor(e), xo = !!S.xlOpen[e.id];
+      var open = !!S.expanded[e.id], xs = xlFor(e), xo = !!S.xlOpen[e.id], canImp = impTargets(e).length > 0;
       var esSpan = '<span class="row-es"' + esGenderStyle(e) + '>' + esc(e.esWord) + '</span>';
       var deSpan = '<span class="row-de"' + genderStyle(e) + '>' + esc(e.deWord) + '</span>';
       var arrow = '<span class="row-arrow">→</span>';
@@ -6862,6 +6982,7 @@
         // primero lo que no siempre aparece (idiomas, frase) y a la derecha lo que sí (escuchar, pausar, editar, eliminar): así los botones fijos no se mueven
         (xs.length ? '<button class="chip-btn' + (xo ? " on" : "") + '" data-xl="' + esc(e.id) + '" title="La misma palabra en tus otros idiomas">idiomas</button>' : "") +
         (hasS ? '<button class="chip-btn' + (open ? " on" : "") + '" data-frase="' + esc(e.id) + '">frase</button>' : "") +
+        (canImp ? '<button class="imp" data-imp="' + esc(e.id) + '" aria-haspopup="menu" aria-expanded="false" aria-label="Añadir a otro idioma" title="Añadir esta entrada a otro idioma">' + ICON_IMP + "</button>" : "") +
         '<button class="say" data-say="' + esc(e.id) + '" aria-label="Escuchar" title="Escuchar">' + ICON_SPEAK + "</button>" +
         '<button class="pause" data-pause="' + esc(e.id) + '" aria-label="' + (e.paused ? "Reanudar" : "Pausar") + '" title="' + (e.paused ? "Reanudar: vuelve a salir al estudiar" : "Pausar: no saldrá al estudiar hasta que la reanudes") + '">' + (e.paused ? ICON_PLAY : ICON_PAUSE) + "</button>" +
         '<button class="edit" data-edit="' + esc(e.id) + '" aria-label="Editar">✎</button>' +
@@ -7031,6 +7152,7 @@
     var ICON_FLAME = gsvg('<path d="M12 3c.6 3.2 4.2 5 4.2 9a4.2 4.2 0 0 1-8.4 0c0-1.7.7-2.9 1.6-3.9.2 1.2.9 1.9 1.7 2 .5-2.3.3-4.5.9-7.1z"/>');
     var ICON_PAUSE = gsvg('<rect x="6.5" y="5" width="3.6" height="14" rx="1"/><rect x="13.9" y="5" width="3.6" height="14" rx="1"/>');
     var ICON_PLAY = gsvg('<path d="M7.5 5.5v13l11-6.5z"/>');
+    var ICON_IMP = gsvg('<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>');
     var GOALS = [1, 5, 10, 20, 30, 50];
     var mirrors = {};   // código → { raw, b, at }: copia local ya analizada, para no repetirlo mientras no cambie
     function peekBucket(code, fast) { // los datos de un idioma, esté abierto o no (los que no, de la copia local del navegador)
@@ -7242,18 +7364,116 @@
       if (nb) nb.focus({ preventScroll: true });
     }
 
+
+    // ---- importar una entrada a otro idioma («+»): abre Crear en ese idioma con la entrada ya rellena, sin guardarla ----
+    // Se copia lo que no depende del idioma (la palabra española, su frase y su género); la palabra y la frase del idioma nuevo se
+    // proponen con las consultas de siempre (Wikcionario y MyMemory) y todo queda en el formulario para revisarlo. Al guardar, o al
+    // cancelar, se vuelve al idioma, la pestaña y el punto de partida (la lista de Mazo con sus filtros y su posición, o Estudiar con el mismo modo).
+    var impBtn = null, impAt = 0;
+    function impTargets(e) { // idiomas (menos el actual) en los que la palabra española de la entrada todavía no está
+      var k = xlKey(e.esWord), have = {};
+      if (k) (xlIndex()[k] || []).forEach(function (x) { have[x.code] = 1; });
+      return LANGS.filter(function (l) { return l.code !== S.lang && !have[l.code]; });
+    }
+    function impEntry(id) { return id === "card" ? (S.current && (findEntry(S.current.entry.id) || S.current.entry)) : findEntry(id); }
+    function impActive() { return S.imp && S.imp.to === S.lang && !S.editing ? S.imp : null; }
+    function closeImpMenu(refocus) {
+      var m = document.getElementById("impMenu"); if (!m) return;
+      var b = impBtn; m.remove(); impBtn = null;
+      if (b && document.body.contains(b)) { b.setAttribute("aria-expanded", "false"); if (refocus) b.focus(); }
+    }
+    function openImpMenu(btn) {
+      closeImpMenu();
+      var id = btn.getAttribute("data-imp"), e = impEntry(id); if (!e) return;
+      var tg = impTargets(e);
+      if (!tg.length) { toast("Esa palabra ya está en todos tus otros idiomas."); return; }
+      var m = document.createElement("div");
+      m.id = "impMenu"; m.className = "imp-menu"; m.setAttribute("role", "menu"); m.setAttribute("aria-label", "Añadir a otro idioma"); m.setAttribute("data-for", id);
+      m.innerHTML = '<div class="imp-title">Añadir «' + esc(e.esWord) + '» a…</div>' + tg.map(function (l) {
+        return '<button type="button" class="imp-opt" role="menuitem" data-impto="' + l.code + '">' + flag(l.code) + '<span class="lang-name">' + esc(l.name) + '</span><span class="lang-nat">' + esc(l.native) + "</span></button>";
+      }).join("");
+      document.body.appendChild(m);
+      btn.setAttribute("aria-expanded", "true"); impBtn = btn; impAt = Date.now();
+      var r = btn.getBoundingClientRect(), W = document.documentElement.clientWidth, H = window.innerHeight, w = m.offsetWidth, h = m.offsetHeight;
+      var top = r.bottom + 6; if (top + h > H - 8 && r.top - h - 6 > 8) top = r.top - h - 6; // si no cabe debajo, va encima
+      m.style.left = Math.max(8, Math.min(r.right - w, W - w - 8)) + "px"; m.style.top = Math.max(8, top) + "px";
+      var first = m.querySelector(".imp-opt"); if (first) first.focus({ preventScroll: true });
+    }
+    document.addEventListener("click", function (ev) { // el menú cuelga del <body>: sus opciones y el cierre al pulsar fuera se atienden aquí
+      var t = ev.target; if (!t || !t.closest) return;
+      var io = t.closest(".imp-opt");
+      if (io) { var m = document.getElementById("impMenu"), fid = m && m.getAttribute("data-for"); closeImpMenu(); if (fid) startImport(io.getAttribute("data-impto"), fid); return; }
+      if (!t.closest("#impMenu") && !t.closest("[data-imp]")) closeImpMenu();
+    });
+    document.addEventListener("keydown", function (ev) {
+      var m = document.getElementById("impMenu"); if (!m) return;
+      if (ev.key === "Escape") { ev.preventDefault(); closeImpMenu(true); return; }
+      var opts = Array.prototype.slice.call(m.querySelectorAll(".imp-opt")), i = opts.indexOf(document.activeElement);
+      if (ev.key === "ArrowDown") { ev.preventDefault(); opts[(i + 1) % opts.length].focus(); }
+      else if (ev.key === "ArrowUp") { ev.preventDefault(); opts[(i - 1 + opts.length) % opts.length].focus(); }
+      else if (ev.key === "Home") { ev.preventDefault(); opts[0].focus(); }
+      else if (ev.key === "End") { ev.preventDefault(); opts[opts.length - 1].focus(); }
+      else if (ev.key === "Tab") closeImpMenu();
+    });
+    window.addEventListener("scroll", function (ev) { // el menú va fijo en la pantalla: si se desplaza la página, se cierra
+      var m = document.getElementById("impMenu");
+      if (m && Date.now() - impAt > 250 && !(ev.target instanceof Element && m.contains(ev.target))) closeImpMenu(); // (el desplazamiento que lleva la fila a la vista, justo al pulsar, no cuenta)
+    }, true);
+    window.addEventListener("resize", function () { closeImpMenu(); });
+    function startImport(code, forId) {
+      var e = impEntry(forId);
+      if (!e || !LANG_BY[code] || code === S.lang) return;
+      S.imp = {
+        to: code, started: false, auto: false,
+        from: {
+          lang: S.lang, tab: S.tab, y: window.scrollY, mode: S.mode, word: e.deWord,
+          deck: { q: S.q, fState: S.fState, fSent: S.fSent, fGender: S.fGender, fSort: S.fSort, qSent: S.qSent, shown: S.deckShown, expanded: S.expanded, xlOpen: S.xlOpen }
+        },
+        draft: { esWord: e.esWord, esSent: e.esSent || "", esGender: e.esGender || "", esAutoGender: e.esAutoGender || "" }
+      };
+      S.nextTab = "crear";
+      location.hash = "#" + code;
+    }
+    function impBack(imp) { // de vuelta al idioma, la pestaña y el punto de partida
+      S.imp = null; // (guardar ya invalida lo que ven «otros idiomas»: commit() pone xl.at = 0)
+      S.restore = Object.assign({}, imp.from); S.nextTab = imp.from.tab;
+      location.hash = "#" + imp.from.lang;
+    }
+    function impRestore(r) { // lo que route() borra al cambiar de idioma: filtros de Mazo, modo de estudio, tarjeta y posición
+      var d = r.deck;
+      S.q = d.q; S.fState = d.fState; S.fSent = d.fSent; S.fGender = d.fGender; S.fSort = d.fSort; S.qSent = d.qSent; S.deckShown = d.shown; S.expanded = d.expanded; S.xlOpen = d.xlOpen;
+      S.mode = r.mode || "word"; S.restoreY = r.y;
+    }
+    function cancelImport() {
+      var imp = S.imp; if (!imp) return;
+      impBack(imp);
+      toast("Importación cancelada: no se ha guardado nada");
+    }
+    function impBanner(imp) {
+      var from = LANG_BY[imp.from.lang].name, to = LANG_BY[imp.to].name.toLowerCase();
+      return '<div class="imp-bar" id="impBar" role="status"><b>Importando desde ' + esc(from) + "</b>: " + flag("es") + " " + esc(imp.draft.esWord) + " → " + flag(imp.from.lang) + " " + esc(imp.from.word) +
+        '<span class="imp-bar-s">Lo que ves en ' + esc(to) + " es una propuesta (palabra del Wikcionario y frase de MyMemory, si hay conexión) y no se guarda nada hasta que pulses «Guardar». Revísalo y cambia lo que quieras.</span></div>";
+    }
+    function impAuto() { // propuestas para el idioma nuevo, salvo que hayas apagado las consultas automáticas
+      if (!S.autoSugg) return;
+      S.imp.auto = true;
+      scheduleSuggLookup(true);
+      if (val("esSent") && !val("deSent")) translateSentence();
+    }
+
     function renderCrear() {
       if (S.editing && !findEntry(S.editing)) S.editing = null;
-      var editing = S.editing ? findEntry(S.editing) : null;
-      var e0 = editing || {};
+      var editing = S.editing ? findEntry(S.editing) : null, imp = impActive();
+      var e0 = editing || (imp ? imp.draft : {});
       var count = S.deck.length;
 
       var pend = S.deck.filter(needsAny).length;
       var legend = legendHtml(pend ? '<button class="link-btn js-detect">' + detectLabel(pend) + "</button>" : "");
 
       return '<section class="panel">' +
-        '<div class="panel-head"><h2 class="panel-title">' + (editing ? "Editar entrada" : "Nueva entrada") + '</h2>' +
+        '<div class="panel-head"><h2 class="panel-title">' + (editing ? "Editar entrada" : imp ? "Importar entrada" : "Nueva entrada") + '</h2>' +
         '<button class="gemini-btn" id="geminiBtn" title="ChatGPT" aria-label="ChatGPT">✨</button></div>' +
+        (imp ? impBanner(imp) : "") +
         '<div class="field-grid">' +
         '<div class="field"><label class="lab">Palabra/expresión ' + flag("es") + '</label>' + esWordField(e0) + '</div>' +
         '<div class="field"><label class="lab">Palabra/expresión ' + flag(S.lang) + '</label>' + deWordField(e0) + '</div>' +
@@ -7266,8 +7486,8 @@
         '<div class="sbtns"><button type="button" class="sbtn sbtn-trans" id="sentTransDe" hidden>' + ICON_TRANS + "</button></div></div></div>" +
         "</div>" +
         sentTools() +
-        '<button id="save" class="btn btn-primary">' + (editing ? "Guardar cambios" : "Guardar entrada") + "</button>" +
-        (editing ? '<button id="cancelEdit" class="btn btn-ghost btn-block">Cancelar</button>' : "") +
+        '<button id="save" class="btn btn-primary">' + (editing ? "Guardar cambios" : imp ? "Guardar y volver a " + esc(LANG_BY[imp.from.lang].name) : "Guardar entrada") + "</button>" +
+        (editing ? '<button id="cancelEdit" class="btn btn-ghost btn-block">Cancelar</button>' : imp ? '<button id="impCancel" class="btn btn-ghost btn-block">Cancelar y volver a ' + esc(LANG_BY[imp.from.lang].name) + "</button>" : "") +
         "</section>" +
         '<section class="panel">' +
         '<div class="deck-head"><h2 class="panel-title">Últimas añadidas</h2>' +
@@ -7368,12 +7588,13 @@
       var front = isSent ? e.esSent : isRev ? e.deWord : e.esWord;
       var back = isSent ? e.deSent : isRev ? e.esWord : e.deWord;
       var say = (isRev || isDict || S.flipped) ? '<button class="say k-say" data-say="card" aria-label="Escuchar" title="Escuchar (P)">' + ICON_SPEAK + "</button>" : "";
+      var imp = impTargets(e).length ? '<button class="k-imp" data-imp="card" aria-haspopup="menu" aria-expanded="false" aria-label="Añadir a otro idioma" title="Añadir esta entrada a otro idioma">' + ICON_IMP + "</button>" : "";
       var pause = '<button class="k-pause" data-pause="card" aria-label="Pausar esta entrada" title="Pausar: no volverá a salir hasta que la reanudes en Mazo">' + ICON_PAUSE + "</button>";
       var sw = !sentLike
         ? '<button class="switch' + (S.autoSentence ? " on" : "") + '" id="autoSent" role="switch" aria-checked="' + (S.autoSentence ? "true" : "false") + '"><span class="switch-label">Frase</span><span class="switch-track"><span class="switch-thumb"></span></span></button>'
         : "";
       var tag = (isDict ? "dictado" : isCloze ? "hueco" : isSent ? "frase" : "palabra") + " · " + (isRev ? S.lang + " → es" : isDict ? S.lang : "es → " + S.lang);
-      var inner = '<div class="k-head"><div class="k-tag">' + tag + '</div><div class="k-tools">' + say + sw + pause + "</div></div>";
+      var inner = '<div class="k-head"><div class="k-tag">' + tag + '</div><div class="k-tools">' + say + sw + imp + pause + "</div></div>";
       if (isDict) {
         inner += '<div class="k-front k-dict-front">Escucha la frase y escríbela</div>' +
           '<div class="k-dict"><button class="btn btn-ghost" data-say="card">▶ Escuchar</button><button class="btn btn-ghost" data-say-slow="card">Más despacio</button></div>';
@@ -7664,14 +7885,24 @@
       if (t.closest("#autoSuggSw")) { S.autoSugg = !S.autoSugg; lsSet(K_AUTOSUGG, S.autoSugg ? "1" : "0"); render(); return; }
       if (t.closest("#autoGenSw")) { S.autoGen = !S.autoGen; lsSet(K_AUTOGEN, S.autoGen ? "1" : "0"); render(); return; }
       if (t.closest("#save")) {
+        var imp = impActive();
         var v = { esWord: val("esWord"), deWord: val("deWord"), esSent: noEndDot(val("esSent")), deSent: noEndDot(val("deSent")), gender: S.formGender, esGender: S.formEsGender };
         if (!S.formGender && S.formWikt && S.formWikt.word === v.deWord) v.autoGender = S.formWikt.g; // ya consultado en el formulario
         if (!S.formEsGender && S.sugg && S.sugg.key === v.esWord && S.sugg.g) v.esAutoGender = S.sugg.g;
+        else if (!S.formEsGender && imp && imp.draft.esAutoGender && imp.draft.esWord === v.esWord) v.esAutoGender = imp.draft.esAutoGender;
         if (!v.esWord || !v.deWord) { toast("Rellena la palabra en los dos idiomas.", true); return; }
         if ((v.esSent && !v.deSent) || (!v.esSent && v.deSent)) { toast("La oración necesita las dos versiones (o deja ambas vacías).", true); return; }
         t.disabled = true;
         var ok = S.editing ? await updateEntry(S.editing, v) : await addEntry(v);
         t.disabled = false;
+        if (ok && imp) { // entrada importada: se guarda en este idioma y se vuelve al punto de partida
+          var solo = F.state === "error" || F.state === "needs-permission" || F.err[S.lang] ? " solo en este navegador" : "";
+          S.formGender = ""; S.formEsGender = ""; S.formWikt = null; S.sugg = null; S.sents = null;
+          if (S.autoGen) detectGenders({ ids: [ok] });
+          toast("Guardada en " + LANG_BY[imp.to].name + solo + " · de vuelta en " + LANG_BY[imp.from.lang].name);
+          impBack(imp);
+          return;
+        }
         if (ok) { toast((S.editing ? "Cambios guardados" : "Guardada") + (F.state === "error" || F.state === "needs-permission" || F.err[S.lang] ? " solo en este navegador" : "")); S.editing = null; S.formGender = ""; S.formEsGender = ""; S.formWikt = null; S.sugg = null; S.sents = null; afterEdit(); render(); focusFirst(); if (S.autoGen) detectGenders({ ids: [ok] }); }
         else { toast("No se pudo guardar. Reintenta.", true); }
         return;
@@ -7680,6 +7911,9 @@
       if (fr) { toggleFrase(fr); return; }
       var xb = t.closest("[data-xl]");
       if (xb) { toggleXl(xb); return; }
+      var ib = t.closest("[data-imp]");
+      if (ib) { if (document.getElementById("impMenu") && impBtn === ib) closeImpMenu(); else openImpMenu(ib); return; }
+      if (t.closest("#impCancel")) { cancelImport(); return; }
       if (t.closest(".js-freset")) { resetFilters(); render(); var q0 = document.getElementById("deckQ"); if (q0) q0.focus(); return; }
       if (t.closest("#goMazo")) { S.tab = "mazo"; S.deckShown = DECK_PAGE; render(); window.scrollTo(0, 0); return; }
       if (t.closest("#deckMore")) { showMoreRows(false); return; }
