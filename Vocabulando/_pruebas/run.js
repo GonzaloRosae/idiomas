@@ -525,9 +525,9 @@ test("En tus otros idiomas · la misma palabra en los demás idiomas, al mostrar
 
 test("Mazo · lo que no siempre aparece va a la izquierda de los botones fijos de cada fila", async () => {
   const p = await open({ seed: otros() }); await mazo(p);
-  const orden = await p.locator("li.row").evaluateAll((rs) => rs.map((x) => [...x.querySelectorAll(".row-meta > *")].map((e) => e.dataset.xl !== undefined ? "idiomas" : e.dataset.frase !== undefined ? "frase" : e.dataset.say !== undefined ? "escuchar" : e.dataset.pause !== undefined ? "pausar" : e.dataset.edit !== undefined ? "editar" : e.dataset.del !== undefined ? "eliminar" : "chip")));
-  const fijos = ["escuchar", "pausar", "editar", "eliminar"];
-  ok(orden.length >= 4 && orden.every((o) => JSON.stringify(o.filter((k) => fijos.includes(k))) === JSON.stringify(fijos)), "los cuatro botones fijos van siempre en el mismo orden: " + JSON.stringify(orden[0]));
+  const orden = await p.locator("li.row").evaluateAll((rs) => rs.map((x) => [...x.querySelectorAll(".row-meta > *")].map((e) => e.dataset.xl !== undefined ? "idiomas" : e.dataset.frase !== undefined ? "frase" : e.dataset.say !== undefined ? "escuchar" : e.dataset.ipa !== undefined ? "ipa" : e.dataset.pause !== undefined ? "pausar" : e.dataset.edit !== undefined ? "editar" : e.dataset.del !== undefined ? "eliminar" : "chip")));
+  const fijos = ["escuchar", "ipa", "pausar", "editar", "eliminar"];
+  ok(orden.length >= 4 && orden.every((o) => JSON.stringify(o.filter((k) => fijos.includes(k))) === JSON.stringify(fijos)), "los cinco botones fijos (con IPA) van siempre en el mismo orden: " + JSON.stringify(orden[0]));
   ok(orden.every((o) => { const iFijo = o.findIndex((k) => fijos.includes(k)); return o.every((k, i) => fijos.includes(k) || i < iFijo); }), "y todo lo condicional (chips, «idiomas», «frase») queda a su izquierda, sin cambiar de sitio los fijos");
   ok(orden.some((o) => o.includes("idiomas")) && orden.some((o) => o.includes("frase")), "(la prueba ve filas con «idiomas» y con «frase»)");
   noErrors(p);
@@ -1277,6 +1277,146 @@ test("Importar · desde Estudiar se vuelve a la misma tarjeta, y con las consult
   await p.click(".k-imp"); await p.click('#impMenu .imp-opt[data-impto="pt"]'); await p.waitForFunction(() => location.hash === "#pt" && document.getElementById("impCancel"));
   await p.click("#impCancel"); await p.waitForFunction(() => location.hash === "#de" && document.querySelector(".k-front"));
   eq(await txt(p.locator(".seg-btn.is-active")), "Frases", "y se vuelve al mismo modo de estudio (Frases)");
+  noErrors(p);
+});
+
+
+
+// =====================================================================================================================
+// IPA: transcripción fonética de la palabra, consultada en el Wiktionary en el momento
+// OJO: estas pruebas usan páginas del Wiktionary SIMULADAS, escritas a mano a partir de cómo es su marcado (los encabezados de idioma, la sección
+// «Pronunciation» y los <span class="IPA"> con la etiqueta de acento). No son respuestas reales del servicio: no se pudo llegar a él al escribirlas.
+// =====================================================================================================================
+const wikOld = false;
+const wikRoot = (...inners) => '<div class="mw-content-ltr mw-parser-output" lang="en" dir="ltr">' + inners.join("") + "</div>";
+const wikInner = (lang, body, old = false) => (old ? '<h2><span class="mw-headline" id="' + lang + '">' + lang + "</span></h2>" : '<div class="mw-heading mw-heading2"><h2 id="' + lang + '">' + lang + "</h2></div>") + body;
+const wikHead = (lang, body, old = false) => wikRoot(wikInner(lang, body, old));
+const wikLine = (label, ...ipas) => "<li>" + (label ? '<span class="usage-label-accent"><span class="ib-brac qualifier-brac">(</span><span class="ib-content qualifier-content"><a href="/wiki/x" title="x">' + label + '</a></span><span class="ib-brac qualifier-brac">)</span></span> ' : "") +
+  '<a href="/wiki/Wiktionary:International_Phonetic_Alphabet" title="Wiktionary:International Phonetic Alphabet">IPA</a><sup>(<a href="/wiki/Appendix:Pronunciation">key</a>)</sup>: ' + ipas.map((i) => '<span class="IPA nowrap">' + i + "</span>").join(", ") + "</li>";
+const wikPron = (old, ...lines) => (old ? '<h3><span class="mw-headline" id="Pronunciation">Pronunciation</span></h3>' : '<div class="mw-heading mw-heading3"><h3 id="Pronunciation">Pronunciation</h3></div>') +
+  "<ul>" + lines.join("") + "<li>Rhymes: <a href=\"/wiki/Rhymes:French/aʁ\"><span class=\"IPA\">-aʁ</span></a></li></ul>";
+const wikEty = '<div class="mw-heading mw-heading3"><h3 id="Etymology">Etymology</h3></div><p>De <i>garer</i> <span class="IPA">/ɡa.ʁe/</span>.</p>';
+// pages: { título: html | null (no existe) }; cuenta las peticiones que llegan
+async function mockWik(page, pages, o = {}) {
+  page.ipaReq = [];
+  await page.route(/en\.wiktionary\.org\/w\/api\.php/, (r) => {
+    const u = new URL(r.request().url()), title = u.searchParams.get("page");
+    if (u.searchParams.get("action") !== "parse") return r.fulfill({ contentType: "application/json", body: "{}" });
+    page.ipaReq.push(title);
+    if (o.fail) return r.abort();
+    const html = pages[title];
+    r.fulfill({ contentType: "application/json", body: JSON.stringify(html == null ? { error: { code: "missingtitle", info: "The page you specified doesn't exist." } } : { parse: { title, pageid: 1, text: html } }) });
+  });
+}
+const ipaBox = (p, id) => p.locator('li.row[data-id="' + id + '"] .ipa-box');
+const ipaTxt = async (loc) => (await loc.innerText()).replace(/\s+/g, " ").trim();
+const wikFr = (old) => wikRoot(wikInner("French", wikEty + wikPron(old, wikLine("France", "/ɡaʁ/"), wikLine("Quebec", "/ɡɑːʁ/", "[ɡɑ̝ːʁ]")), old), wikInner("Italian", wikPron(old, wikLine("", "/ˈɡa.re/")), old));
+
+test("IPA · en Mazo: el botón va tras el altavoz y antes de pausar; se consulta al abrirlo (una sola vez), con acento de Francia y avisando de lo omitido", async () => {
+  const p = await open({ lang: "fr", seed: { fr: bucket("fr", [{ esWord: "la estación", deWord: "la gare" }]) } });
+  await mockWik(p, { gare: wikFr(false) }); await mazo(p);
+  const orden = await p.locator("li.row .row-meta > *").evaluateAll((l) => l.map((e) => e.dataset.say !== undefined ? "escuchar" : e.dataset.ipa !== undefined ? "ipa" : e.dataset.pause !== undefined ? "pausar" : e.dataset.edit !== undefined ? "editar" : e.dataset.del !== undefined ? "eliminar" : "otro"));
+  ok(orden.indexOf("ipa") === orden.indexOf("escuchar") + 1 && orden.indexOf("ipa") === orden.indexOf("pausar") - 1, "va justo después de escuchar y antes de pausar: " + JSON.stringify(orden));
+  eq([await p.locator("[data-ipa]").getAttribute("aria-expanded"), await p.locator("[data-ipa]").innerText()], ["false", "IPA"], "cerrado al principio, con su texto «IPA»");
+  eq(p.ipaReq.length, 0, "no se pide nada hasta pulsarlo");
+  await p.click("[data-ipa]");
+  await p.waitForSelector(".ipa-box .ipa-sym");
+  const t = await ipaTxt(p.locator(".ipa-box"));
+  ok(/gare/.test(t) && /France/.test(t) && /\/ɡaʁ\//.test(t), "sale «gare», la etiqueta de Francia y su transcripción fonémica: «" + t + "»");
+  ok(!/ɡɑːʁ/.test(t) && /se omiten: Quebec/.test(t), "no sale la de Quebec y avisa de que se omite");
+  ok(!/ˈɡa\.re/.test(t) && !/-aʁ/.test(t) && !/ɡa\.ʁe/.test(t), "ni la de otro idioma de la misma página, ni las rimas, ni lo que haya fuera de «Pronunciation»");
+  eq(await p.locator(".ipa-src").getAttribute("href"), "https://en.wiktionary.org/wiki/gare#French", "con el enlace a la entrada del Wiktionary, en la sección del idioma");
+  eq([p.ipaReq, await p.locator("[data-ipa]").getAttribute("aria-expanded")], [["gare"], "true"], "una sola petición, con la palabra sin artículo");
+  await p.click("[data-ipa]"); eq(await p.locator(".ipa-box").count(), 0, "al pulsar otra vez se cierra");
+  await p.click("[data-ipa]"); await p.waitForSelector(".ipa-box .ipa-sym"); eq(p.ipaReq.length, 1, "y al reabrirlo no vuelve a pedir nada (se recuerda mientras la página está abierta)");
+  eq(await stored(p, "fr").then((b) => Object.keys(b.deck[0]).sort()), ["createdAt", "deSent", "deWord", "esSent", "esWord", "id"], "y no se guarda nada en la entrada");
+  await p.evaluate(() => { location.hash = "#it"; }); await p.waitForFunction(() => location.hash === "#it" && document.getElementById("esWord"));
+  await p.evaluate(() => { location.hash = "#fr"; }); await p.waitForFunction(() => location.hash === "#fr" && document.getElementById("esWord")); await mazo(p);
+  eq(await p.locator(".ipa-box").count(), 0, "al cambiar de idioma y volver, lo abierto se cierra (pero lo consultado sigue recordado)");
+  noErrors(p);
+});
+
+test("IPA · acento europeo en cada idioma: portugués de Portugal, inglés británico, alemán estándar; y las dos generaciones de marcado del Wiktionary", async () => {
+  const pt = wikHead("Portuguese", wikPron(false, wikLine("Brazil", "/ˈka.ʁu/"), wikLine("Portugal", "/ˈka.ʁu/", "[ˈka.ʁu]")));
+  const en = wikHead("English", wikPron(true, wikLine("UK", "/ˈwɔːtə/"), wikLine("US", "/ˈwɔtɚ/", "/ˈwɑtɚ/")), true);
+  const de = wikHead("German", wikPron(false, wikLine("Germany", "/ˈkaːtɐ/"), wikLine("Austria", "/ˈkaːtɐ/"), wikLine("Switzerland", "/ˈkaːtər/")));
+  const envuelto = '<div class="mw-content-ltr mw-parser-output"><div class="extra">' + wikHead("English", wikPron(false, wikLine("UK", "/ɡeɪt/"), wikLine("US", "/ɡeɪt/"))).replace(/^<div[^>]*>|<\/div>$/g, "") + "</div></div>";
+  const orden = wikHead("Portuguese", wikPron(false, wikLine("", "/ˈka.zɐ/"), wikLine("Portugal", "/ˈkaː.zɐ/")));
+  const sinMarcado = wikHead("French", wikPron(false, '<li>(Quebec) IPA: <span class="IPA">/vid/</span></li>', '<li>(Paris) IPA: <span class="IPA">/vid/</span></li>'));
+  const casos = [
+    ["pt", "casa", { casa: orden }, ["Portugal", "/ˈkaː.zɐ/", "/ˈka.zɐ/"], []],
+    ["fr", "vide", { vide: sinMarcado }, ["Paris", "/vid/", "se omiten: Quebec"], []],
+    ["en", "gate", { gate: envuelto }, ["UK", "/ɡeɪt/"], ["se omiten: US"]],   // con un <div> de más alrededor del contenido
+    ["pt", "o carro", { carro: pt }, ["Portugal", "/ˈka.ʁu/", "[ˈka.ʁu]"], ["se omiten: Brazil"]],
+    ["en", "water", { water: en }, ["UK", "/ˈwɔːtə/"], ["se omiten: US"]],
+    ["de", "der Kater", { Kater: de }, ["Germany", "/ˈkaːtɐ/"], ["se omiten: Austria, Switzerland"]]];
+  for (const [code, word, pages, dentro, notas] of casos) {
+    const p = await open({ lang: code, seed: { [code]: bucket(code, [{ esWord: "x", deWord: word }]) } });
+    await mockWik(p, pages); await mazo(p); await p.click("[data-ipa]"); await p.waitForSelector(".ipa-box .ipa-sym");
+    const t = await ipaTxt(p.locator(".ipa-box"));
+    ok(dentro.every((x) => t.includes(x)) && notas.every((x) => t.includes(x)), code + " «" + word + "»: «" + t + "»");
+    if (word === "casa") ok(t.indexOf("Portugal") < t.indexOf("/ˈka.zɐ/"), "el acento preferido (Portugal) sale antes que el que no lleva etiqueta");
+    ok(!/ˈwɔtɚ|ˈwɑtɚ|ˈkaːtər/.test(t) && !/US \//.test(t), code + ": no sale la variante no europea ni la regional");
+    noErrors(p);
+  }
+});
+
+test("IPA · si el Wiktionary solo trae una variante no europea, se muestra avisando; y los casos sin transcripción dicen por qué", async () => {
+  const pt = wikHead("Portuguese", wikPron(false, wikLine("Brazil", "/a.ba.kaˈʃi/"), wikLine("Brazil · Rio de Janeiro", "/a.ba.kaˈʃi/")));
+  const soloEn = wikHead("English", wikPron(false, wikLine("", "/ɡɑːr/")));
+  const sinIpa = wikHead("French", wikEty + "<ul><li>Audio: algo</li></ul>");
+  const p = await open({ lang: "pt", seed: { pt: bucket("pt", [{ esWord: "a", deWord: "abacaxi" }, { esWord: "b", deWord: "gare" }, { esWord: "c", deWord: "nada" }]) } });
+  await mockWik(p, { abacaxi: pt, gare: soloEn, nada: null }); await mazo(p);
+  const fila = (w) => p.locator("li.row", { hasText: w });
+  await fila("abacaxi").locator("[data-ipa]").click(); await p.waitForSelector(".ipa-sym");
+  const t = await ipaTxt(fila("abacaxi").locator(".ipa-box"));
+  ok(/sin acento europeo/.test(t) && /Brazil/.test(t) && /a\.ba\.kaˈʃi/.test(t), "solo Brasil: se muestra con el aviso «sin acento europeo»: «" + t + "»");
+  await fila("gare").locator("[data-ipa]").click(); await p.waitForSelector("li.row >> text=no la tiene en portugués");
+  ok(/el Wiktionary no la tiene en portugués/.test(await ipaTxt(fila("gare").locator(".ipa-box"))), "página sin sección del idioma: lo dice");
+  await fila("nada").locator("[data-ipa]").click(); await p.waitForSelector("li.row >> text=no tiene esta palabra");
+  ok(/el Wiktionary no tiene esta palabra/.test(await ipaTxt(fila("nada").locator(".ipa-box"))) && p.ipaReq.filter((x) => x === "nada").length >= 1, "página que no existe: lo dice (tras probar la otra grafía)");
+  // una sección del idioma sin transcripción
+  const q = await open({ lang: "fr", seed: { fr: bucket("fr", [{ esWord: "x", deWord: "vide" }]) } });
+  await mockWik(q, { vide: sinIpa }); await mazo(q); await q.click("[data-ipa]"); await q.waitForSelector("li.row >> text=no trae su transcripción");
+  ok(true, "una sección del idioma sin transcripción: «el Wiktionary no trae su transcripción»");
+  noErrors(p); noErrors(q);
+});
+
+test("IPA · varias formas en la palabra, y la segunda grafía (mayúscula en alemán); lo que falla se puede reintentar", async () => {
+  const kat = wikHead("German", wikPron(false, wikLine("", "/ˈkat͡sə/")));
+  const kater = wikHead("German", wikPron(false, wikLine("Germany", "/ˈkaːtɐ/")));
+  const p = await open({ lang: "de", seed: { de: bucket("de", [{ esWord: "el gato", deWord: "die Katze (pl. Katzen) / der Kater" }, { esWord: "la casa", deWord: "das haus" }]) } });
+  await mockWik(p, { Katze: kat, Kater: kater, Haus: wikHead("German", wikPron(false, wikLine("", "/haʊ̯s/"))) }); await mazo(p);
+  await p.locator("li.row", { hasText: "Kater" }).locator("[data-ipa]").click(); await p.waitForSelector(".ipa-form >> nth=1");
+  const t = await ipaTxt(p.locator(".ipa-box"));
+  ok(/Katze/.test(t) && /ˈkat͡sə/.test(t) && /Kater/.test(t) && /ˈkaːtɐ/.test(t), "salen las dos formas, cada una con su transcripción: «" + t + "»");
+  eq(await p.locator(".ipa-form").count(), 2, "en dos líneas");
+  await p.locator("li.row", { hasText: "haus" }).locator("[data-ipa]").click(); await p.waitForSelector("li.row >> text=haʊ̯s");
+  ok(p.ipaReq.includes("haus") && p.ipaReq.includes("Haus"), "«das haus»: prueba «haus» y, como no existe, «Haus» (en alemán los sustantivos van con mayúscula): " + JSON.stringify(p.ipaReq));
+  // sin conexión: aviso y «Reintentar»
+  const q = await open({ lang: "fr", seed: { fr: bucket("fr", [{ esWord: "x", deWord: "la gare" }]) } });
+  await mockWik(q, { gare: wikFr(false) }, { fail: true }); await mazo(q); await q.click("[data-ipa]");
+  await q.waitForSelector(".ipa-err"); ok(/No se pudo consultar: no se pudo conectar con el Wiktionary/.test(await ipaTxt(q.locator(".ipa-box"))), "sin conexión: «" + await ipaTxt(q.locator(".ipa-box")) + "»");
+  await q.unroute(/en\.wiktionary\.org\/w\/api\.php/); await mockWik(q, { gare: wikFr(false) });
+  await q.click("[data-ipa-retry]"); await q.waitForSelector(".ipa-sym");
+  ok(/\/ɡaʁ\//.test(await ipaTxt(q.locator(".ipa-box"))), "«Reintentar» vuelve a consultar y ahora sale");
+  noErrors(p); noErrors(q);
+});
+
+test("IPA · en Estudiar el botón aparece cuando ya ves la palabra del idioma (tras mostrar la respuesta, o desde el principio en «Inversa»)", async () => {
+  const seed = { fr: bucket("fr", [{ esWord: "la estación", deWord: "la gare" }]) };
+  const p = await open({ lang: "fr", seed, prefs: { "vocabulando:rev": "1" } });
+  await mockWik(p, { gare: wikFr(true) }); await study(p);
+  eq(await p.locator('[data-ipa="card"]').count(), 0, "en Palabras, antes de mostrar la respuesta no se ve (revelaría la palabra)");
+  await p.click("#show");
+  const orden = await p.locator(".k-tools > *").evaluateAll((l) => l.map((e) => e.dataset.ipa !== undefined ? "ipa" : e.className.split(" ")[0]));
+  ok(orden.includes("ipa") && orden.indexOf("ipa") < orden.indexOf("k-pause"), "con la respuesta a la vista sale, antes del botón de pausar: " + JSON.stringify(orden));
+  await p.click('[data-ipa="card"]'); await p.waitForSelector(".karte .ipa-sym");
+  ok(/France/.test(await ipaTxt(p.locator(".karte .ipa-box"))) && /\/ɡaʁ\//.test(await ipaTxt(p.locator(".karte .ipa-box"))), "se abre dentro de la tarjeta, con el marcado antiguo del Wiktionary también: «" + await ipaTxt(p.locator(".karte .ipa-box")) + "»");
+  ok(await p.locator(".karte #show").count() === 0 && await p.locator("[data-rate]").count() === 4, "y la tarjeta sigue con sus botones de valorar");
+  await p.click('.seg-btn[data-mode="rev"]'); await p.waitForSelector(".k-front");
+  eq(await p.locator('[data-ipa="card"]').count(), 1, "en «Inversa» (el anverso es la palabra del idioma) sale desde el principio");
+  await p.waitForSelector(".karte .ipa-sym"); eq(p.ipaReq, ["gare"], "la transcripción ya abierta para esa palabra sigue ahí al cambiar de modo, sin volver a pedirla");
   noErrors(p);
 });
 
