@@ -28,6 +28,8 @@
     --accent: #2748D6;
     --accent-soft: #E7ECFC;
     --again: #CC4436;
+    --ipa: #C026D3;
+    --ipa-src: #0F766E;
     --hard: #B0741A;
     --good: #2748D6;
     --easy: #17936F;
@@ -758,7 +760,7 @@
   .ipa-sym {
     font-family: "Noto Sans", "Segoe UI", "DejaVu Sans", "Charis SIL", system-ui, sans-serif;
     font-size: 16px;
-    color: var(--ink);
+    color: var(--ipa);
   }
 
   .ipa-it {
@@ -783,6 +785,11 @@
   .ipa-src {
     margin-left: 4px;
     font-size: 12px;
+    color: var(--ipa-src);
+  }
+
+  .ipa-src a {
+    color: inherit;
   }
 
   /* «+»: añadir la entrada a otro idioma */
@@ -2861,6 +2868,8 @@
     --accent: #5B79F0;
     --accent-soft: #1E2A47;
     --again: #E56B5E;
+    --ipa: #E879F9;
+    --ipa-src: #2DD4BF;
     --hard: #D2A24A;
     --good: #5B79F0;
     --easy: #3FBF8E;
@@ -6904,7 +6913,7 @@
         "<li>Aquí está la lista completa de tus palabras y frases. El buscador no distingue mayúsculas ni acentos (escribir «uber» encuentra «über») y, si lo dejas marcado, mira también dentro de las frases. Puedes escribir varias palabras: salen las entradas que las llevan todas.</li>" +
         "<li>Filtros: por estado (nuevas, en aprendizaje, en repaso o que ya toca repasar), por tener o no frase y por género. Orden: más recientes o antiguas, alfabético (sin contar el artículo, así «der Apfel» va en la A), por próximo repaso o por las que más fallas.</li>" +
         "<li>El lápiz lleva a Crear con la entrada cargada; al guardar o cancelar vuelves a la lista, en el mismo punto. La × borra (pide confirmación), «frase» abre la oración y el altavoz la pronuncia. El <b>+</b> añade esa entrada a otro idioma: eliges uno en el que todavía no esté y se abre Crear en él con la palabra española, su frase y su género ya puestos y, si hay conexión, la traducción de la palabra (Wikcionario) y de la frase (MyMemory) como propuesta. No se guarda nada hasta que pulses «Guardar»: lo revisas, lo cambias y, al guardar o cancelar, vuelves al idioma, la pestaña y el punto en que estabas (la lista con sus filtros y su posición, o Estudiar con el mismo modo). Está también en la tarjeta de Estudiar. En Crear, bajo el formulario, quedan las últimas 5 añadidas para comprobar lo que acabas de guardar.</li>" +
-        "<li>El botón <b>IPA</b> (en cada fila de Mazo y en la tarjeta de Estudiar, cuando ya ves la respuesta) consulta <b>en ese momento</b> en el Wiktionary la transcripción fonética de la palabra del idioma: fonémica entre barras /…/ y fonética entre corchetes […]. Enseña la pronunciación <b>europea</b> (francés de Francia y no de Quebec, portugués de Portugal y no de Brasil, inglés británico y no americano…) y dice qué variantes ha dejado fuera. Si el Wiktionary solo trae una no europea, la muestra avisando. Si la palabra lleva varias formas («der Mann / der Kerl»), salen todas. No se guarda: se pide de nuevo al volver a abrir la página.</li></ul>" +
+        "<li>El botón <b>IPA</b> (en cada fila de Mazo y en la tarjeta de Estudiar, cuando ya ves la respuesta) consulta <b>en ese momento</b> en Wiktionary la transcripción fonética de la palabra del idioma: fonémica entre barras /…/ y fonética entre corchetes […]. Enseña la pronunciación <b>europea</b> (francés de Francia y no de Quebec, portugués de Portugal y no de Brasil, inglés británico y no americano…) y dice qué variantes ha dejado fuera. El inglés se transcribe en el <b>SSB</b> (Standard Southern British) en el sistema de Geoff Lindsey, el de <b>CUBE</b>: se convierte desde el RP de Wiktionary y el enlace «(CUBE)» deja comprobar la palabra en su diccionario. Si Wiktionary solo trae una no europea, la muestra avisando. Si la palabra lleva varias formas («der Mann / der Kerl»), salen todas. Si Wiktionary no trae la transcripción (una frase, una forma flexionada, un compuesto largo…), se prueba <b>palabra a palabra</b> y, donde falte, se calcula una <b>aproximada con las reglas de pronunciación</b> del idioma (se avisa de que no es la de un diccionario; en inglés no se puede deducir de la ortografía). La transcripción se ve en fucsia y entre paréntesis queda el enlace a la entrada. No se guarda: se pide de nuevo al volver a abrir la página.</li></ul>" +
         "<h3>Estudiar</h3>" +
         "<p>Se muestra la palabra (o la frase) en español, pulsas «Mostrar respuesta» y la valoras con <i>Otra vez, Difícil, Bien</i> o <i>Fácil</i>. La app programa el siguiente repaso con el algoritmo FSRS: cuanto mejor la sabes, más tarde vuelve. Las tarjetas con plazo de días tocan desde las 4:00 de su día, y el día nuevo (también para los contadores de Actividad) empieza a las 4:00: lo que repases de madrugada cuenta como el día anterior. Hay dos modos, Palabras y Frases (y, si lo activas, Inversa: del idioma al español). Atajos: punto o espacio para mostrar la respuesta; J, K, L, Ñ (o 0, 1, 2, 3) para valorar; Z para deshacer el último repaso; P para oír la pronunciación.</p>" +
         "<ul>" +
@@ -6925,7 +6934,7 @@
         "<h3>En Safari (Mac, iPad) y en el móvil</h3>" +
         "<p>Safari no puede guardar en una carpeta: tus datos se quedan en el propio navegador y Safari puede borrarlos si no visitas la web en mucho tiempo. En el iPad o el móvil, abre la web publicada y usa «Añadir a pantalla de inicio»: funciona sin conexión y Safari no borra sus datos por falta de uso. En el Mac, lo más cómodo es usar Chrome o Edge (guardan en una carpeta); con Safari, añade la web al Dock (Archivo › Añadir al Dock, desde Safari 17) y haz copias con Exportar JSON de vez en cuando. Para pasar tu progreso entre dispositivos usa Exportar JSON e Importar JSON en Actividad: al importar se fusiona (se quedan los repasos más recientes), no se pierde nada. También puedes importar listas de palabras pegando texto o un CSV.</p>" +
         "<h3>Qué sale de tu navegador</h3>" +
-        "<p>Vocabulando no usa ningún servidor propio. Solo se consulta internet para ayudarte: el <b>Wikcionario</b> (la palabra en español que escribes, y la palabra del idioma para el género y, al pulsar «IPA», para su transcripción) y, únicamente cuando pulsas sus botones (o importas una entrada con el <b>+</b>, que traduce su frase), <b>Tatoeba</b> y <b>MyMemory</b> (frases; si Tatoeba falla, ejemplos del Wikcionario). Las consultas automáticas se pueden apagar en Actividad.</p>" +
+        "<p>Vocabulando no usa ningún servidor propio. Solo se consulta internet para ayudarte: el <b>Wikcionario</b> (la palabra en español que escribes, y la palabra del idioma para el género y, al pulsar «IPA», para su transcripción; si no la trae, se calcula una aproximada con reglas de pronunciación, sin consultar nada más) y, únicamente cuando pulsas sus botones (o importas una entrada con el <b>+</b>, que traduce su frase), <b>Tatoeba</b> y <b>MyMemory</b> (frases; si Tatoeba falla, ejemplos del Wikcionario). Las consultas automáticas se pueden apagar en Actividad.</p>" +
         '<div class="diag"><button type="button" class="btn btn-ghost btn-sm" id="diagBtn">Probar conexión</button><div id="diagOut" class="diag-out" aria-live="polite"></div></div>' +
         '<h3>Créditos</h3><p class="muted-note">Traducciones y géneros: <a href="https://es.wiktionary.org" target="_blank" rel="noopener">Wikcionario</a> (CC BY-SA). Frases: <a href="https://tatoeba.org" target="_blank" rel="noopener">Tatoeba</a> (CC BY 2.0 FR) y, de respaldo, ejemplos del <a href="https://en.wiktionary.org" target="_blank" rel="noopener">Wikcionario</a> (CC BY-SA). Traducción de frases: <a href="https://mymemory.translated.net" target="_blank" rel="noopener">MyMemory</a>. Repaso espaciado: FSRS.</p>' +
         "</div>";
@@ -7518,6 +7527,764 @@
 
 
 
+    // ---- transcripción aproximada por reglas (último recurso, cuando Wiktionary no trae la transcripción) ----
+    // Se calcula una pronunciación probable a partir de la ortografía y de las convenciones de cada idioma (nada de diccionario, así que se
+    // avisa de que es aproximada): fonémica, sin sílabas ni variantes, con la tónica marcada (ˈ) cuando se puede deducir. Cada idioma pasa
+    // la palabra a una lista de fonemas {p: símbolo, t: tipo, s: tónica}. Tipos: V vocal · S sonante · B obstruyente sonora · P obstruyente sorda.
+    // Sin lookbehind (Safari anterior a 16.4 no lo admite).
+    function phV(p, s) { return { p: p, t: "V", s: !!s }; }
+    function phC(p, t) { return { p: p, t: t || "S" }; }
+    function phVowels(toks) { var o = []; toks.forEach(function (x, i) { if (x.t === "V") o.push(i); }); return o; }
+    function phOnset(a, b) { // ¿puede «a b» abrir una sílaba?
+      return (/^[pbtdkɡfvθðxɣszʃʒɕʑcɟçʝ]$/.test(a) && /^[lrɾʁjwɫ]$/.test(b)) || (/^[sʃ]$/.test(a) && /^[ptk]$/.test(b));
+    }
+    function phPlace(toks, mono) { // inserta ˈ delante de la sílaba tónica (en una palabra de una sola sílaba solo si mono)
+      var si = -1, i, k = 0, n, first = true;
+      if (phVowels(toks).length < 2 && !(mono && phVowels(toks).length === 1 && toks.some(function (x) { return x.s; }))) return toks.map(function (x) { return x.p; }).join("");
+      for (i = 0; i < toks.length; i++) if (toks[i].s) { si = i; break; }
+      if (si < 0) return toks.map(function (x) { return x.p; }).join("");
+      while (si - k - 1 >= 0 && toks[si - k - 1].t !== "V") k++;
+      for (i = 0; i < si - k; i++) if (toks[i].t === "V") first = false;
+      if (first || k <= 1) n = k;
+      else {
+        n = 1;
+        if (k >= 3 && /^[sʃ]$/.test(toks[si - 3].p) && /^[ptk]$/.test(toks[si - 2].p) && /^[lrɾʁ]$/.test(toks[si - 1].p)) n = 3;
+        else if (phOnset(toks[si - 2].p.charAt(0), toks[si - 1].p)) n = 2;
+      }
+      var out = toks.slice(); out.splice(si - n, 0, { p: "ˈ", t: "M" });
+      return out.map(function (x) { return x.p; }).join("");
+    }
+    function phPenult(toks) { var v = phVowels(toks); if (v.length >= 2 && !toks.some(function (x) { return x.s; })) toks[v[v.length - 2]].s = true; }
+    function phLast(toks) { var v = phVowels(toks); if (v.length >= 2 && !toks.some(function (x) { return x.s; })) toks[v[v.length - 1]].s = true; }
+
+    // griego: casi fonética; el acento escrito (tonos) da la sílaba tónica
+    function phEl(w) {
+      var ACC = { "ά": "α", "έ": "ε", "ή": "η", "ί": "ι", "ό": "ο", "ύ": "υ", "ώ": "ω", "ΐ": "ι", "ΰ": "υ" }, DIA = { "ϊ": "ι", "ϋ": "υ", "ΐ": 1, "ΰ": 1 };
+      var L = [], t = [], j = 0, n, i;
+      w = w.toLowerCase().replace(/ς/g, "σ");
+      for (i = 0; i < w.length; i++) { var ch = w.charAt(i); L.push({ b: ACC[ch] || DIA[ch] === "ι" && "ι" || DIA[ch] === "υ" && "υ" || ch, st: !!ACC[ch], di: !!DIA[ch] }); }
+      n = L.length;
+      function isVow(x) { return !!x && "αεηιουω".indexOf(x.b) >= 0; }
+      function front(k) { // ¿empieza en k un sonido vocálico anterior (ε η ι υ, αι ει οι υι)?
+        var a = L[k], b = L[k + 1]; if (!a) return false;
+        if ("εηιυ".indexOf(a.b) >= 0) return true;
+        return (a.b === "α" || a.b === "ο") && !!b && b.b === "ι" && !b.di && !a.di;
+      }
+      function last(k) { return t.length ? t[t.length - 1] : null; }
+      while (j < n) {
+        var a = L[j], b = L[j + 1], A = a.b, B = b ? b.b : "", dig = !!b && !b.di && !a.di, st = a.st, p;
+        if (isVow(a)) {
+          if (dig && A === "α" && B === "ι") { t.push(phV("e", a.st || b.st)); j += 2; continue; }
+          if (dig && (A === "ε" || A === "ο" || A === "υ") && B === "ι") { t.push(phV("i", a.st || b.st)); j += 2; continue; }
+          if (dig && A === "ο" && B === "υ") { t.push(phV("u", a.st || b.st)); j += 2; continue; }
+          if (dig && (A === "α" || A === "ε" || A === "η") && B === "υ") {
+            var nx = L[j + 2], vl = !nx || "κξπστφχψθ".indexOf(nx.b) >= 0;
+            t.push(phV(A === "α" ? "a" : A === "ε" ? "e" : "i", a.st || b.st)); t.push(vl ? phC("f", "P") : phC("v", "B")); j += 2; continue;
+          }
+          if (A === "ι" && !a.st) { // ι tras consonante y ante vocal: palataliza (no es sílaba aparte)
+            var pv = last(), nv = L[j + 1];
+            if (pv && pv.t !== "V" && isVow(nv)) {
+              if (pv.p === "l") pv.p = "ʎ"; else if (pv.p === "n") pv.p = "ɲ"; else if (!/^[cʝç]$/.test(pv.p)) t.push(phC("j"));
+              j++; continue;
+            }
+          }
+          p = { α: "a", ε: "e", η: "i", ι: "i", ο: "o", υ: "i", ω: "o" }[A];
+          t.push(phV(p, st)); j++; continue;
+        }
+        if (A === "γ" && B === "γ") { t.push(phC("ŋ")); t.push(phC("ɡ", "B")); j += 2; continue; }
+        if (A === "γ" && B === "κ") { if (j) t.push(phC("ŋ")); t.push(phC("ɡ", "B")); j += 2; continue; }
+        if (A === "γ" && B === "χ") { t.push(phC("ŋ")); t.push(phC("x", "P")); j += 2; continue; }
+        if (A === "γ" && B === "ξ") { t.push(phC("ŋ")); t.push(phC("k", "P")); t.push(phC("s", "P")); j += 2; continue; }
+        if (A === "μ" && B === "π") { if (j) t.push(phC("m")); t.push(phC("b", "B")); j += 2; continue; }
+        if (A === "ν" && B === "τ") { if (j) t.push(phC("n")); t.push(phC("d", "B")); j += 2; continue; }
+        if (A === "τ" && B === "σ") { t.push(phC("ts", "P")); j += 2; continue; }
+        if (A === "τ" && B === "ζ") { t.push(phC("dz", "B")); j += 2; continue; }
+        if (A === B && !isVow(a)) { j++; continue; } // consonante doble: una sola
+        var fr = front(j + 1);
+        switch (A) {
+          case "β": t.push(phC("v", "B")); break;
+          case "γ": t.push(phC(fr ? "ʝ" : "ɣ", "B")); break;
+          case "δ": t.push(phC("ð", "B")); break;
+          case "ζ": t.push(phC("z", "B")); break;
+          case "θ": t.push(phC("θ", "P")); break;
+          case "κ": t.push(phC(fr ? "c" : "k", "P")); break;
+          case "λ": t.push(phC("l")); break;
+          case "μ": t.push(phC("m")); break;
+          case "ν": t.push(phC("n")); break;
+          case "ξ": t.push(phC("k", "P")); t.push(phC("s", "P")); break;
+          case "π": t.push(phC("p", "P")); break;
+          case "ρ": t.push(phC("ɾ")); break;
+          case "σ": t.push(B && "βγδμ".indexOf(B) >= 0 ? phC("z", "B") : phC("s", "P")); break;
+          case "τ": t.push(phC("t", "P")); break;
+          case "φ": t.push(phC("f", "P")); break;
+          case "χ": t.push(phC(fr ? "ç" : "x", "P")); break;
+          case "ψ": t.push(phC("p", "P")); t.push(phC("s", "P")); break;
+          default: break; // letras sueltas (apóstrofos, guiones…) se ignoran
+        }
+        j++;
+      }
+      return phPlace(t);
+    }
+
+    // polaco: ortografía muy regular; tónica en la penúltima sílaba (salvo -yka/-ika)
+    function phPl(w) {
+      var t = [], i = 0, n, c, d, e, f, V = "aeiouyąęó";
+      w = w.toLowerCase(); n = w.length;
+      function isV(x) { return !!x && V.indexOf(x) >= 0; }
+      while (i < n) {
+        c = w.charAt(i); d = w.charAt(i + 1); e = w.charAt(i + 2); f = w.charAt(i + 3);
+        if (c === "d" && d === "z" && e === "i") { t.push(phC("dʑ", "B")); i += 3; if (!isV(w.charAt(i))) t.push(phV("i")); continue; }
+        if (c === "d" && d === "ź") { t.push(phC("dʑ", "B")); i += 2; continue; }
+        if (c === "d" && d === "ż") { t.push(phC("dʐ", "B")); i += 2; continue; }
+        if (c === "d" && d === "z") { t.push(phC("dz", "B")); i += 2; continue; }
+        if (c === "c" && d === "h") { t.push(phC("x", "P")); i += 2; continue; }
+        if (c === "c" && d === "z") { t.push(phC("tʂ", "P")); i += 2; continue; }
+        if (c === "s" && d === "z") { t.push(phC("ʂ", "P")); i += 2; continue; }
+        if (c === "r" && d === "z") { t.push({ p: "ʐ", t: "R" }); i += 2; continue; }
+        if ((c === "c" || c === "s" || c === "z" || c === "n") && d === "i") { // ci si zi ni: consonante palatal (la «i» solo marca la palatalidad ante vocal)
+          t.push(phC({ c: "tɕ", s: "ɕ", z: "ʑ", n: "ɲ" }[c], c === "z" ? "B" : c === "n" ? "S" : "P")); i += 2;
+          if (!isV(w.charAt(i))) t.push(phV("i")); continue;
+        }
+        if (c === "ć") { t.push(phC("tɕ", "P")); i++; continue; }
+        if (c === "ś") { t.push(phC("ɕ", "P")); i++; continue; }
+        if (c === "ź") { t.push(phC("ʑ", "B")); i++; continue; }
+        if (c === "ń") { t.push(phC("ɲ")); i++; continue; }
+        if ("kgpbfwmltdr".indexOf(c) >= 0 && d === "i" && isV(e)) {
+          var CM = { k: ["k", "P"], g: ["ɡ", "B"], p: ["p", "P"], b: ["b", "B"], f: ["f", "P"], m: ["m", "S"], l: ["l", "S"], t: ["t", "P"], d: ["d", "B"], r: ["r", "S"] };
+          t.push(c === "w" ? { p: "v", t: "W" } : phC(CM[c][0], CM[c][1])); t.push(phC("j")); i += 2; continue;
+        }
+        if (c === "ą" || c === "ę") {
+          var nasal = c === "ą" ? "ɔ" : "ɛ", nx = d;
+          if (!nx) { t.push(c === "ą" ? phV("ɔ") : phV("ɛ")); if (c === "ą") t.push(phC("w̃")); i++; continue; }
+          if ("pb".indexOf(nx) >= 0) { t.push(phV(nasal)); t.push(phC("m")); i++; continue; }
+          if ("td".indexOf(nx) >= 0 || (nx === "c" && d !== "h") || (nx === "d" && (e === "z" || e === "ż"))) { t.push(phV(nasal)); t.push(phC("n")); i++; continue; }
+          if (nx === "ć" || nx === "ś" || nx === "ź" || nx === "ń") { t.push(phV(nasal)); t.push(phC("ɲ")); i++; continue; }
+          if (nx === "k" || nx === "g") { t.push(phV(nasal)); t.push(phC("ŋ")); i++; continue; }
+          if (nx === "l" || nx === "ł") { t.push(phV(nasal)); i++; continue; }
+          t.push(phV(nasal)); t.push(phC("w̃")); i++; continue;
+        }
+        switch (c) {
+          case "a": t.push(phV("a")); if (d === "u" && !isV(e)) { t.push(phC("w")); i++; } break;
+          case "e": t.push(phV("ɛ")); if (d === "u" && !isV(e) && i > 0) { t.push(phC("w")); i++; } break;
+          case "i": t.push(phV("i")); break;
+          case "o": t.push(phV("ɔ")); break;
+          case "ó": case "u": t.push(phV("u")); break;
+          case "y": t.push(phV("ɘ")); break;
+          case "b": t.push(phC("b", "B")); break;
+          case "c": t.push(phC("ts", "P")); break;
+          case "d": t.push(phC("d", "B")); break;
+          case "f": t.push(phC("f", "P")); break;
+          case "g": t.push(phC("ɡ", "B")); break;
+          case "h": t.push(phC("x", "P")); break;
+          case "j": t.push(phC("j")); break;
+          case "k": t.push(phC("k", "P")); break;
+          case "l": t.push(phC("l")); break;
+          case "ł": t.push(phC("w")); break;
+          case "m": t.push(phC("m")); break;
+          case "n": t.push(phC(/^[kg]/.test(d) ? "ŋ" : "n")); break;
+          case "p": t.push(phC("p", "P")); break;
+          case "r": t.push(phC("r")); break;
+          case "s": t.push(phC("s", "P")); break;
+          case "t": t.push(phC("t", "P")); break;
+          case "w": t.push({ p: "v", t: "W" }); break;
+          case "z": t.push(phC("z", "B")); break;
+          case "ż": t.push(phC("ʐ", "B")); break;
+          default: break;
+        }
+        i++;
+      }
+      // sonoridad: ensordece ante sorda y al final; sonoriza ante sonora (w y rz solo se ensordecen tras sorda)
+      var DEV = { b: "p", d: "t", "ɡ": "k", v: "f", z: "s", "ʐ": "ʂ", "ʑ": "ɕ", dz: "ts", "dʑ": "tɕ", "dʐ": "tʂ" }, VOI = {}, k;
+      for (k in DEV) VOI[DEV[k]] = k;
+      function obs(x) { return x && (x.t === "B" || x.t === "P" || x.t === "W" || x.t === "R"); }
+      function voiced(x) { return DEV[x.p] !== undefined; }
+      for (k = 1; k < t.length; k++) if ((t[k].t === "W" || t[k].t === "R") && t[k - 1].t === "P" && DEV[t[k].p]) t[k].p = DEV[t[k].p];
+      for (k = t.length - 2; k >= 0; k--) {
+        if (!obs(t[k]) || !obs(t[k + 1])) continue;
+        if (t[k + 1].t === "W") continue;
+        if (voiced(t[k + 1]) && !voiced(t[k]) && VOI[t[k].p]) { t[k].p = VOI[t[k].p]; t[k].t = "B"; }
+        else if (!voiced(t[k + 1]) && voiced(t[k]) && DEV[t[k].p]) { t[k].p = DEV[t[k].p]; t[k].t = "P"; }
+      }
+      var z = t[t.length - 1]; if (z && obs(z) && voiced(z) && DEV[z.p]) { z.p = DEV[z.p]; z.t = "P"; }
+      var vs = phVowels(t);
+      if (vs.length >= 2) {
+        var ant = /(yka|ika|ytet)$/.test(w) && vs.length >= 3;
+        t[vs[vs.length - (ant ? 3 : 2)]].s = true;
+      } else if (vs.length === 1) t[vs[0]].s = true; // monosílabo: Wiktionary también marca la tónica
+      return phPlace(t, true);
+    }
+
+    // italiano: casi fonético; la tónica sin acento escrito se supone en la penúltima y e/o se dejan cerradas
+    function phIt(w) {
+      var t = [], i = 0, n, a, b, c, d;
+      var ACC = { "à": ["a", 1], "è": ["ɛ", 1], "é": ["e", 1], "ì": ["i", 1], "ò": ["ɔ", 1], "ó": ["o", 1], "ù": ["u", 1] };
+      w = w.toLowerCase().replace(/[’']/g, ""); n = w.length;
+      function isV(x) { return !!x && "aeiouàèéìòóù".indexOf(x) >= 0; }
+      function fr(x) { return x === "e" || x === "i" || x === "è" || x === "é" || x === "ì"; }
+      function prevV() { return t.length && t[t.length - 1].t === "V"; }
+      while (i < n) {
+        a = w.charAt(i); b = w.charAt(i + 1); c = w.charAt(i + 2); d = w.charAt(i + 3);
+        if (ACC[a]) { t.push(phV(ACC[a][0], true)); i++; continue; }
+        if (a === "a" || a === "e" || a === "o") { t.push(phV(a)); i++; continue; }
+        if (a === "i" || a === "u") {
+          var pv = t.length ? t[t.length - 1] : null, semi = isV(b) || (pv && pv.t === "V" && (a === "i" ? /^[aeoɛɔ]$/.test(pv.p) : /^[aeɛ]$/.test(pv.p)) && !isV(b));
+          if (a === "u" && pv && pv.t === "V" && pv.p === "i") semi = false; // «lui»: dos sílabas
+          t.push(semi ? phC(a === "i" ? "j" : "w") : phV(a)); i++; continue;
+        }
+        if (a === "c") {
+          if (b === "c") { if (fr(c)) { t.push(phC("ttʃ", "P")); i += 2; if (c === "i" && isV(d)) i++; } else { t.push(phC("kk", "P")); i += 2; } continue; }
+          if (b === "h") { t.push(phC("k", "P")); i += 2; continue; }
+          if (fr(b)) { t.push(phC("tʃ", "P")); i++; if (b === "i" && isV(c)) i++; continue; }
+          t.push(phC("k", "P")); i++; continue;
+        }
+        if (a === "g") {
+          if (b === "g") { if (fr(c)) { t.push(phC("ddʒ", "B")); i += 2; if (c === "i" && isV(d)) i++; } else { t.push(phC("ɡɡ", "B")); i += 2; } continue; }
+          if (b === "h") { t.push(phC("ɡ", "B")); i += 2; continue; }
+          if (b === "n") { t.push(phC(prevV() ? "ɲɲ" : "ɲ")); i += 2; continue; }
+          if (b === "l" && c === "i") { t.push(phC(prevV() ? "ʎʎ" : "ʎ")); i += 3; if (!isV(w.charAt(i))) t.push(phV("i")); continue; }
+          if (fr(b)) { t.push(phC(prevV() ? "ddʒ" : "dʒ", "B")); i++; if (b === "i" && isV(c)) i++; continue; }
+          t.push(phC("ɡ", "B")); i++; continue;
+        }
+        if (a === "s") {
+          if (b === "c" && fr(c)) { t.push(phC(prevV() ? "ʃʃ" : "ʃ", "P")); i += 2; if (c === "i" && isV(d)) i++; continue; }
+          if (b === "c" && c === "h") { t.push(phC("s", "P")); t.push(phC("k", "P")); i += 3; continue; }
+          if (b === "s") { t.push(phC("ss", "P")); i += 2; continue; }
+          var z = !t.length && "bdglmnrv".indexOf(b) >= 0;
+          t.push(z ? phC("z", "B") : phC("s", "P")); i++; continue;
+        }
+        if (a === "z") {
+          if (b === "z") { t.push(phC("tts", "P")); i += 2; continue; }
+          if (b === "i" && isV(c)) { t.push(phC("tts", "P")); i++; continue; }
+          t.push(!t.length && isV(b) ? phC("dz", "B") : phC("ts", "P")); i++; continue;
+        }
+        if (a === "q") { t.push(phC("k", "P")); i++; continue; }
+        if (a === "h") { i++; continue; }
+        if (a === "n" && (/^[kq]$/.test(b) || (b === "g" && !fr(c)) || (b === "c" && !fr(c)))) { t.push(phC("ŋ")); i++; continue; }
+        if (b === a && "bdflmnprtv".indexOf(a) >= 0) { t.push(phC(a + a, "pbdfrtv".indexOf(a) >= 0 ? (a === "p" || a === "t" || a === "f" ? "P" : "B") : "S")); i += 2; continue; }
+        var P = { b: "B", d: "B", f: "P", p: "P", t: "P", v: "B" };
+        if ("bdfjklmnprtv".indexOf(a) >= 0) { t.push(phC(a === "j" ? "j" : a, P[a] || "S")); i++; continue; }
+        if (a === "x") { t.push(phC("k", "P")); t.push(phC("s", "P")); i++; continue; }
+        if (a === "w") { t.push(phC("v", "B")); i++; continue; }
+        if (a === "y") { t.push(phV("i")); i++; continue; }
+        i++;
+      }
+      phPenult(t);
+      t.forEach(function (x, k) {
+        if (!x.s || (x.p !== "e" && x.p !== "o")) return;
+        var nx = t[k + 1], pv = t[k - 1], gem = !!nx && /^(.)\1|^(tts|ddz|ttʃ|ddʒ)/.test(nx.p);
+        if (gem || (pv && ((pv.p === "j" && x.p === "e") || (pv.p === "w" && x.p === "o")))) x.p = x.p === "e" ? "ɛ" : "ɔ";
+      });
+      return phPlace(t);
+    }
+
+    // alemán: tónica en la primera sílaba (tras prefijos átonos), vocal larga ante una sola consonante y e átona reducida
+    function phDe(w) {
+      var s = w.toLowerCase().replace(/[’']/g, ""), U = [], i = 0, n = s.length, k, x;
+      var GRAPH = ["tsch", "sch", "chs", "ch", "ck", "ph", "pf", "qu", "ng", "nk", "th", "tz", "dt", "ss", "ß", "ie", "ei", "ai", "ey", "ay", "eu", "äu", "au", "aa", "ee", "oo"];
+      while (i < n) {
+        var g = null;
+        for (k = 0; k < GRAPH.length; k++) if (s.substr(i, GRAPH[k].length) === GRAPH[k]) { g = GRAPH[k]; break; }
+        if (!g) g = s.charAt(i);
+        U.push({ g: g, v: /^(ie|ei|ai|ey|ay|eu|äu|au|aa|ee|oo)$/.test(g) || (g.length === 1 && "aeiouäöüy".indexOf(g) >= 0), at: i }); i += g.length;
+      }
+      var nuc = []; U.forEach(function (u, ix) { if (u.v) nuc.push(ix); });
+      // tónica: los prefijos átonos (be- ge- er- ver- zer- ent- emp-) la pasan a la sílaba siguiente; ciertas terminaciones la llevan
+      var stress = 0, PREF = /^(be(?=[^iu])|ge(?=[^iu])|ver|zer|er|ent|emp)/.exec(s), pre = null;
+      var preEnd = -1;
+      if (PREF && nuc.length >= 2 && (/^(be|ge)$/.test(PREF[1]) ? s.length > 4 : s.length > 5 && nuc.length >= 3)) {
+        U.forEach(function (u, ix) { if (u.at + u.g.length === PREF[1].length) preEnd = ix; });
+        if (preEnd >= 0) { pre = PREF[1]; stress = 1; }
+      }
+      if (/ieren$/.test(s) && nuc.length >= 2) stress = nuc.length - 2;
+      else if (/ium$/.test(s) && nuc.length === 4) stress = 1;
+      else if (/ade$/.test(s) && nuc.length >= 3) stress = nuc.length - 2;
+      else if (nuc.length >= 2 && (/(ion|ität|ik|ant|ist|eur|ell|iv|ei|[^h]ur)$/.test(s) || (/ent$/.test(s) && s.length > 5 && !/^ent/.test(s)))) stress = nuc.length - 1;
+      var SEP = /^(bei|be|ge|ver|zer|er|ent|emp|ab|an|auf|aus|ein|mit|nach|vor|zu|her|hin|los|weg|durch|über|unter|um)/.exec(s), sepLen = SEP ? SEP[1].length : 0;
+      var SHORT = /^(mit|in|im|an|am|ab|bis|das|was|es|ist|hat|man|von|ich|mich|dich|sich|nicht|den|dem|des|um|und|aber|noch|doch|dann|wann|wenn|kann|will|soll|muss|darf|bin|bist|sind|ein|eine|nun|zum|zur)$/;
+      var t = [], ni = -1;
+      function consAfter(ix) { // consonantes (en grafías) hasta la siguiente vocal; la «h» tras vocal no cuenta (alarga)
+        var c = 0, q = ix + 1; while (q < U.length && !U[q].v) { if (U[q].g !== "h") c += (/^(ck|tz|ss|ng|nk|sch|tsch|chs|pf|x)$/.test(U[q].g) ? 2 : 1); q++; } return c;
+      }
+      function reducedE(ix) { // «e» átona de -en -er -el -em -es -et y la e final
+        var rest = s.slice(U[ix].at + 1);
+        if (!rest) return true;
+        if (!/^[nrlmst]/.test(rest)) return false;
+        var after = U[ix + 2];
+        return rest.length === 1 || !after || !after.v;
+      }
+      var PRE_PH = { be: ["b", "ə"], ge: ["ɡ", "ə"], er: ["ɛ", "ɐ"], ver: ["f", "ɛ", "ɐ"], zer: ["ts", "ɛ", "ɐ"], ent: ["ɛ", "n", "t"], emp: ["ɛ", "m", "p"] };
+      for (x = 0; x < U.length; x++) {
+        var u = U[x], g2 = u.g, prevU = U[x - 1], nextU = U[x + 1], pv = t.length ? t[t.length - 1] : null;
+        if (pre && x === 0) {
+          PRE_PH[pre].forEach(function (p) { t.push(/^[ɛəɐ]$/.test(p) ? phV(p) : phC(p, "S")); });
+          ni++; x = preEnd; continue;
+        }
+        if (u.v) {
+          ni++;
+          var stressed = ni === stress, hAfter = !!nextU && nextU.g === "h", longV = false, ph;
+          if (g2 === "e" && !stressed && (reducedE(x) || (x > 1 && prevU && (prevU.g === "g" || prevU.g === "b") && nextU && !nextU.v && U[x + 2] && U[x + 2].v))) {
+            if (nextU && nextU.g === "r" && (!U[x + 2] || !U[x + 2].v)) { t.push(phV("ɐ")); x++; continue; }
+            t.push(phV("ə")); continue;
+          }
+          // -ium: la «i» es semivocal y la «u» corta
+          if (g2 === "i" && nextU && nextU.g === "u" && x + 2 === U.length - 1 && U[x + 2].g === "m") { t.push(phC("i̯")); ni--; continue; }
+          if (g2 === "u" && !stressed && x === U.length - 2 && nextU.g === "m") { t.push(phV("ʊ")); continue; }
+          if (/^(ie|aa|ee|oo)$/.test(g2) || hAfter) longV = true;
+          else if (!/^(ei|ai|ey|ay|eu|äu|au)$/.test(g2)) {
+            var cn = consAfter(x);
+            longV = (cn === 0 && x === U.length - 1) || cn === 1;
+            if (SHORT.test(s)) longV = false;
+            if (ni < stress) longV = false;
+            if (!stressed && g2 === "i" && /^(ch|g|sch|ng|n|s|st|t|k|ll|l|m|r|nd|ns)(e|en|er|es|em|el|lich|ig|isch)?$/.test(s.slice(u.at + 1))) longV = false;
+          }
+          switch (g2) {
+            case "a": case "aa": ph = longV ? "aː" : "a"; break;
+            case "e": case "ee": ph = longV ? "eː" : (!stressed && ni < stress ? "e" : "ɛ"); break;
+            case "i": ph = longV ? "iː" : "ɪ"; break;
+            case "ie": ph = "iː"; break;
+            case "o": case "oo": ph = longV ? "oː" : (!stressed && ni < stress ? "o" : "ɔ"); break;
+            case "u": ph = longV ? "uː" : "ʊ"; break;
+            case "ä": ph = longV ? "ɛː" : "ɛ"; break;
+            case "ö": ph = longV ? "øː" : "œ"; break;
+            case "ü": case "y": ph = longV ? "yː" : "ʏ"; break;
+            case "ei": case "ai": case "ey": case "ay": ph = "aɪ"; break;
+            case "eu": case "äu": ph = "ɔʏ"; break;
+            case "au": ph = "aʊ"; break;
+            default: ph = g2;
+          }
+          if (g2 === "i" && nextU && nextU.g === "o" && x + 2 === U.length - 1 && /ion$/.test(s)) { t.push(phC("j")); ni--; continue; }
+          t.push(phV(ph, stressed)); continue;
+        }
+        // consonantes
+        var pvowel = !!prevU && prevU.v, nvowel = !!nextU && nextU.v, atEnd = x === U.length - 1, c2, nxt = nextU ? nextU.g : "";
+        switch (g2) {
+          case "tsch": c2 = [["tʃ", "P"]]; break;
+          case "sch": c2 = [["ʃ", "P"]]; break;
+          case "chs": c2 = [["k", "P"], ["s", "P"]]; break;
+          case "ch":
+            if (x === 0 && /^(a|o|u|l|r)$/.test(nxt)) c2 = [["k", "P"]];
+            else c2 = [[prevU && /^(a|o|u|au|aa|oo)$/.test(prevU.g) ? "x" : "ç", "P"]];
+            break;
+          case "ck": c2 = [["k", "P"]]; break;
+          case "ph": c2 = [["f", "P"]]; break;
+          case "pf": c2 = [["pf", "P"]]; break;
+          case "qu": c2 = [["k", "P"], ["v", "B"]]; break;
+          case "ng": c2 = [["ŋ", "S"]]; break;
+          case "nk": c2 = [["ŋ", "S"], ["k", "P"]]; break;
+          case "th": case "dt": c2 = [["t", "P"]]; break;
+          case "tz": case "z": c2 = [["ts", "P"]]; break;
+          case "ss": case "ß": c2 = [["s", "P"]]; break;
+          case "b": c2 = [atEnd || (nextU && !nextU.v && !/^(l|r)$/.test(nxt)) ? ["p", "P"] : ["b", "B"]]; break;
+          case "d": c2 = [atEnd || (nextU && !nextU.v && !/^(l|r)$/.test(nxt)) ? ["t", "P"] : ["d", "B"]]; break;
+          case "g": c2 = [atEnd || (nextU && !nextU.v && !/^(l|r)$/.test(nxt)) ? (atEnd && /ig$/.test(s) ? ["ç", "P"] : ["k", "P"]) : ["ɡ", "B"]]; break;
+          case "c": c2 = [["k", "P"]]; break;
+          case "f": c2 = [["f", "P"]]; break;
+          case "h": c2 = pvowel ? [] : [["h", "P"]]; break;
+          case "j": c2 = [["j", "S"]]; break;
+          case "k": c2 = [["k", "P"]]; break;
+          case "l": c2 = [["l", "S"]]; break;
+          case "m": c2 = [["m", "S"]]; break;
+          case "n": c2 = [["n", "S"]]; break;
+          case "p": c2 = [["p", "P"]]; break;
+          case "q": c2 = [["k", "P"]]; break;
+          case "r": { // vocalizada (ɐ) tras vocal larga y ante consonante o al final; ʁ en los demás casos
+            var lastV = pv && pv.t === "V" ? pv.p : "";
+            c2 = [pvowel && !nvowel && /ː$/.test(lastV) ? ["ɐ", "S"] : ["ʁ", "S"]];
+            break;
+          }
+          case "s":
+            if ((nxt === "t" || nxt === "p") && (x === 0 || (SEP && u.at === sepLen))) c2 = [["ʃ", "P"]];
+            else c2 = [nvowel && (x === 0 || pvowel || (SEP && u.at === sepLen)) ? ["z", "B"] : ["s", "P"]];
+            break;
+          case "t": c2 = [["t", "P"]]; break;
+          case "v": c2 = [(x === 0 && !/^v(id|ok|as|ent)/.test(s)) || atEnd ? ["f", "P"] : ["v", "B"]]; break;
+          case "w": c2 = [["v", "B"]]; break;
+          case "x": c2 = [["k", "P"], ["s", "P"]]; break;
+          default: c2 = [];
+        }
+        if (prevU && prevU.g === g2 && g2.length === 1 && pv && c2[0] && pv.p === c2[0][0]) continue; // consonante doble: una sola
+        c2.forEach(function (q) { t.push(phC(q[0], q[1])); });
+      }
+      return phPlace(t, true);
+    }
+
+    // portugués europeo: tónica por el acento escrito o por la terminación; vocales átonas reducidas
+    function phPt(w) {
+      var s = w.toLowerCase().replace(/[’']/g, ""), t = [], i = 0, n = s.length, a, b, c, d;
+      var ACCV = { "á": "a", "â": "ɐ", "é": "ɛ", "ê": "e", "í": "i", "ó": "ɔ", "ô": "o", "ú": "u" };
+      function isV(x) { return !!x && "aeiouáâãéêíóôõú".indexOf(x) >= 0; }
+      function fr(x) { return x === "e" || x === "i" || x === "é" || x === "ê" || x === "í"; }
+      // 1) núcleos vocálicos del texto (para saber cuál es la tónica)
+      var accent = /[áâéêíóôú]/.test(s) || /[ãõ]/.test(s);
+      var syl = (s.replace(/qu(?=[ei])|gu(?=[ei])/g, function (m) { return m.charAt(0); }).match(/[aeiouáâãéêíóôõú]+/g) || []).map(function (g) {
+        return g.replace(/(ão|ãe|õe|ai|ei|oi|ui|au|eu|ou|iu|éu|ói|ái|éi)/g, "·").length > 0 ? g : g;
+      });
+      var stressIdx = -1, groups = [];
+      s.replace(/qu(?=[ei])|gu(?=[ei])|[aeiouáâãéêíóôõú]+/g, function (m, off) { if (!/^(qu|gu)$/.test(m)) groups.push({ g: m, at: off }); return m; });
+      // se parten los grupos en núcleos: diptongos (ão ãe õe ai ei oi ui au eu ou iu) cuentan como uno; el resto (hiatos) como varios
+      var nuclei = [];
+      groups.forEach(function (gr) {
+        var g = gr.g, p = 0;
+        while (p < g.length) {
+          var two = g.substr(p, 2);
+          if (/^(ão|ãe|õe|ai|ei|oi|ui|au|eu|ou|iu|éu|ói|ái|éi|ói)$/.test(two) && !(p === 0 && false)) { nuclei.push({ at: gr.at + p, len: 2 }); p += 2; }
+          else if (/^[iu]$/.test(g.charAt(p)) && p + 1 < g.length && /[aeoáéóâêô]/.test(g.charAt(p + 1)) && p === 0 && gr.at > 0 && /[qg]/.test(s.charAt(gr.at - 1))) { p++; }
+          else if (/[áâéêíóôú]/.test(s) && p === 0 && /^[iu]$/.test(g.charAt(0)) && g.length > 1 && /[aeoáéóâêô]/.test(g.charAt(1))) { p++; }
+          else { nuclei.push({ at: gr.at + p, len: 1 }); p++; }
+        }
+      });
+      var tonic = -1;
+      nuclei.forEach(function (nu, k) { if (/[áâéêíóôúãõ]/.test(s.substr(nu.at, nu.len))) tonic = k; });
+      if (tonic < 0 && nuclei.length >= 2) {
+        var endsPen = /(a|e|o|as|es|os|am|em|ens)$/.test(s) && !/(ão|ões|ãe)$/.test(s);
+        tonic = endsPen ? nuclei.length - 2 : nuclei.length - 1;
+      } else if (tonic < 0) tonic = 0;
+      var nidx = function (pos) { for (var q = 0; q < nuclei.length; q++) if (pos >= nuclei[q].at && pos < nuclei[q].at + nuclei[q].len) return q; return -1; };
+      var lastNuc = nuclei.length - 1;
+      function vowel(pos, ch) {
+        var k = nidx(pos), st = k === tonic, fin = k === lastNuc, ph;
+        switch (ch) {
+          case "á": ph = "a"; break; case "â": ph = "ɐ"; break; case "é": ph = "ɛ"; break; case "ê": ph = "e"; break;
+          case "í": ph = "i"; break; case "ó": ph = "ɔ"; break; case "ô": ph = "o"; break; case "ú": ph = "u"; break;
+          case "a": ph = st ? (/^(m|n)[aeiouáéíóúâêô]/.test(s.substr(pos + 1)) ? "ɐ" : "a") : "ɐ"; break;
+          case "e": ph = /^[ij]/.test(s.substr(pos + 1)) && !/^[ij][aeiou]/.test(s.substr(pos + 1)) ? "ɐ" : st ? (/^(m|n|b|c|ç|v|x|z|j)/.test(s.substr(pos + 1)) ? "e" : "ɛ") : (pos === 0 && /^e(s[^aeiouáéíóú]|x[aeiou])/.test(s) ? "i" : "ɨ"); break;
+          case "i": ph = "i"; break;
+          case "o": ph = st ? (/^(m|n|b|c|ç|v|x|z|j)/.test(s.substr(pos + 1)) ? "o" : "ɔ") : "u"; break;
+          case "u": ph = "u"; break;
+          default: ph = ch;
+        }
+        return phV(ph, st && k >= 0);
+      }
+      var cnt = 0;
+      while (i < n) {
+        a = s.charAt(i); b = s.charAt(i + 1); c = s.charAt(i + 2); d = s.charAt(i + 3);
+        // ditongos nasais
+        if (a === "ã" && b === "o") { t.push(vowel(i, "a")); t[t.length - 1].p = "ɐ̃"; t.push(phC("w̃")); i += 2; continue; }
+        if (a === "ã" && b === "e") { t.push(vowel(i, "a")); t[t.length - 1].p = "ɐ̃"; t.push(phC("j̃")); i += 2; continue; }
+        if (a === "õ" && b === "e") { t.push(vowel(i, "o")); t[t.length - 1].p = "õ"; t.push(phC("j̃")); i += 2; continue; }
+        if (a === "ã") { var vn = vowel(i, "a"); vn.p = "ɐ̃"; t.push(vn); i++; continue; }
+        if (a === "õ") { var vo = vowel(i, "o"); vo.p = "õ"; t.push(vo); i++; continue; }
+        if (isV(a)) {
+          // vogal + m/n antes de consoante o fim: vogal nasal
+          var nas = (b === "m" || b === "n") && (!c || !isV(c)) && !(b === "n" && c === "h");
+          if (nas && /[aeiouâêô]/.test(a)) {
+            var vv = vowel(i, a); vv.p = { a: "ɐ̃", e: "ẽ", i: "ĩ", o: "õ", u: "ũ", "â": "ɐ̃", "ê": "ẽ", "ô": "õ" }[a]; t.push(vv);
+            if (!c && b === "m" && a === "e") { t.push(phC("j̃")); }
+            i += 2; continue;
+          }
+          // semivocales de los diptongos
+          var pvT = t.length ? t[t.length - 1] : null;
+          if ((a === "i" || a === "u") && pvT && pvT.t === "V" && !isV(b) && /[ae]/.test(s.charAt(i - 1))) { t.push(phC(a === "i" ? "j" : "w")); i++; continue; }
+          if ((a === "u") && /[qg]/.test(s.charAt(i - 1)) && isV(b)) { i++; t.push(phC("w")); continue; }
+          if ((a === "i" || a === "u") && nidx(i) < 0 && isV(b) && !isV(s.charAt(i - 1))) { t.push(phC(a === "i" ? "j" : "w")); i++; continue; }
+          if ((a === "i" || a === "u") && isV(b) && false) { t.push(phC(a === "i" ? "j" : "w")); i++; continue; }
+          t.push(vowel(i, a)); i++; continue;
+        }
+        var pvowel = isV(s.charAt(i - 1)), nvowel = isV(b), atEnd = i === n - 1;
+        if (a === "c" && b === "h") { t.push(phC("ʃ", "P")); i += 2; continue; }
+        if (a === "l" && b === "h") { t.push(phC("ʎ")); i += 2; continue; }
+        if (a === "n" && b === "h") { t.push(phC("ɲ")); i += 2; continue; }
+        if (a === "r" && b === "r") { t.push(phC("ʁ")); i += 2; continue; }
+        if (a === "s" && b === "s") { t.push(phC("s", "P")); i += 2; continue; }
+        if (a === "s" && b === "c" && fr(c)) { t.push(phC("ʃ", "P")); t.push(phC("s", "P")); i += 2; continue; }
+        if (a === "q" && b === "u") { t.push(phC("k", "P")); i += (fr(c) ? 2 : 1); if (!fr(c)) { /* qua/quo: la u es semivocal */ } continue; }
+        if (a === "g" && b === "u" && fr(c)) { t.push(phC("ɡ", "B")); i += 2; continue; }
+        switch (a) {
+          case "b": t.push(phC("b", "B")); break;
+          case "c": t.push(phC(fr(b) ? "s" : "k", "P")); break;
+          case "ç": t.push(phC("s", "P")); break;
+          case "d": t.push(phC("d", "B")); break;
+          case "f": t.push(phC("f", "P")); break;
+          case "g": t.push(phC(fr(b) ? "ʒ" : "ɡ", "B")); break;
+          case "h": break;
+          case "j": t.push(phC("ʒ", "B")); break;
+          case "k": t.push(phC("k", "P")); break;
+          case "l": t.push(phC(atEnd || (b && !isV(b)) ? "ɫ" : "l")); break;
+          case "m": t.push(phC("m")); break;
+          case "n": t.push(phC("n")); break;
+          case "p": t.push(phC("p", "P")); break;
+          case "q": t.push(phC("k", "P")); break;
+          case "r": t.push(phC(i === 0 || /[nls]/.test(s.charAt(i - 1)) ? "ʁ" : "ɾ")); break;
+          case "s": {
+            if (i === 0 || (!pvowel && !/[nlr]/.test(s.charAt(i - 1)) && false)) t.push(phC("s", "P"));
+            else if (atEnd) t.push(phC("ʃ", "P"));
+            else if (pvowel && nvowel) t.push(phC("z", "B"));
+            else if (/[bdgvmnlrz]/.test(b)) t.push(phC("ʒ", "B"));
+            else if (/[ptkfscq]/.test(b)) t.push(phC("ʃ", "P"));
+            else t.push(phC("s", "P"));
+            break;
+          }
+          case "t": t.push(phC("t", "P")); break;
+          case "v": t.push(phC("v", "B")); break;
+          case "w": t.push(phC("v", "B")); break;
+          case "x": t.push(i === 1 && s.charAt(0) === "e" && nvowel ? phC("z", "B") : phC("ʃ", "P")); break;
+          case "y": t.push(phV("i")); break;
+          case "z": t.push(phC(atEnd ? "ʃ" : "z", atEnd ? "P" : "B")); break;
+          default: break;
+        }
+        i++;
+      }
+      return phPlace(t);
+    }
+
+    // francés: sin tónica marcada; letras finales mudas (salvo c, r, f, l) y vocales nasales
+    function phFr(w) {
+      var s = w.toLowerCase().replace(/[’']/g, ""), t = [], i = 0, n = s.length, a, b, c, d, FRONT = "eiyéèêë";
+      function isV(x) { return !!x && "aeiouyàâäéèêëîïôöùûüœ".indexOf(x) >= 0; }
+      var MUTE_E = /^(le|de|je|me|te|se|ne|ce|que|ke)$/;
+      while (i < n) {
+        a = s.charAt(i); b = s.charAt(i + 1); c = s.charAt(i + 2); d = s.charAt(i + 3);
+        var rest = s.substr(i), atEnd = i === n - 1, endsAfter = function (k) { return i + k >= n; };
+        // grupos de vocales
+        if (rest.indexOf("eau") === 0) { t.push(phV("o")); i += 3; continue; }
+        if (rest.indexOf("oin") === 0 && (endsAfter(3) || !isV(d)) && d !== "n" && d !== "m") { t.push(phC("w")); t.push(phV("ɛ̃")); i += 3; continue; }
+        if (rest.indexOf("oî") === 0) { t.push(phC("w")); t.push(phV("a")); i += 2; continue; }
+        if (rest.indexOf("ou") === 0 && isV(c) && !(c === "e" && endsAfter(3)) && !(c === "e" && (rest.indexOf("oues") === 0 || rest.indexOf("ouent") === 0))) { t.push(phC("w")); i += 2; continue; }
+        if (rest.indexOf("ou") === 0) { t.push(phV("u")); i += 2; continue; }
+        if (rest.indexOf("oi") === 0) { t.push(phC("w")); t.push(phV("a")); i += 2; continue; }
+        if (rest.indexOf("au") === 0) { t.push(phV("o")); i += 2; continue; }
+        if (rest.indexOf("œu") === 0 || rest.indexOf("eu") === 0) { t.push(phV(endsAfter(2) || (c === "s" && endsAfter(3)) || c === "z" ? "ø" : "œ")); i += 2; continue; }
+        if ((rest.indexOf("ai") === 0 || rest.indexOf("ei") === 0) && !(c === "n" || c === "m") ) { t.push(phV("ɛ")); i += 2; continue; }
+        if (/^(ain|aim|ein|eim)/.test(rest) && (endsAfter(3) || !isV(d))) { t.push(phV("ɛ̃")); i += 3; continue; }
+        if (/^ien/.test(rest) && (endsAfter(3) || !isV(d)) && d !== "n") { t.push(phC("j")); t.push(phV("ɛ̃")); i += 3; continue; }
+        if (/^(an|am|en|em)/.test(rest) && (endsAfter(2) || !isV(c)) && !(c === s.charAt(i + 1) && "nm".indexOf(c) >= 0)) { t.push(phV("ɑ̃")); i += 2; continue; }
+        if (/^(on|om)/.test(rest) && (endsAfter(2) || !isV(c)) && c !== "n" && c !== "m") { t.push(phV("ɔ̃")); i += 2; continue; }
+        if (/^(in|im|yn|ym)/.test(rest) && (endsAfter(2) || !isV(c)) && c !== "n" && c !== "m") { t.push(phV("ɛ̃")); i += 2; continue; }
+        if (/^(un|um)/.test(rest) && (endsAfter(2) || !isV(c)) && c !== "n" && c !== "m") { t.push(phV("œ̃")); i += 2; continue; }
+        if (rest.indexOf("tion") === 0) { t.push(phC("s", "P")); t.push(phC("j")); t.push(phV("ɔ̃")); i += 4; continue; }
+        if (rest.indexOf("ill") === 0 && i > 0 && isV(s.charAt(i - 1))) { t.push(phC("j")); i += 3; continue; }
+        if (a === "l" && b === "l" && s.charAt(i - 1) === "i" && !/^(vill|mill|tranquill)/.test(s)) { t.push(phC("j")); i += 2; continue; }
+        if (a === "e" && rest.indexOf("ement") === 0 && endsAfter(5) && i > 0 && isV(s.charAt(i - 1))) { i++; continue; } // e muda de -iement, -uement
+        if (a === b && /[bdfgklmnprtvz]/.test(a)) { i++; continue; } // consonante doble: una sola
+        if (a === "e" && (endsAfter(1) || (b === "s" && endsAfter(2)) || (b === "n" && c === "t" && endsAfter(3) && n > 4))) { i += (endsAfter(1) ? 1 : b === "s" ? 2 : 3); continue; } // e final muda (-e, -es, -ent)
+        if (a === "e" && ((b === "r" || b === "z") && endsAfter(2) && n > 3)) { t.push(phV("e")); i += 2; continue; } // -er, -ez
+        if (a === "e" && b === "t" && endsAfter(2)) { t.push(phV("ɛ")); i += 2; continue; }
+        if (a === "e" && !isV(b) && !isV(c) && b && c) { t.push(phV("ɛ")); i++; continue; } // e ante dos consonantes
+        if (a === "e" && MUTE_E.test(s)) { t.push(phV("ə")); i++; continue; }
+        switch (a) {
+          case "a": case "à": case "â": t.push(phV("a")); break;
+          case "e": t.push(phV("ə")); break;
+          case "é": t.push(phV("e")); break;
+          case "è": case "ê": case "ë": t.push(phV("ɛ")); break;
+          case "i": case "î": case "ï": t.push(isV(b) && t.length && t[t.length - 1].t !== "V" && !(b === "e" && (endsAfter(2) || (c === "s" && endsAfter(3)) || (c === "n" && d === "t" && endsAfter(4)))) ? phC("j") : phV("i")); break;
+          case "o": case "ô": t.push(phV(rest.length > 1 && isV(b) ? "o" : /^o(se|s)?$/.test(rest) || atEnd ? "o" : "ɔ")); break;
+          case "u": case "û": case "ù": case "ü": t.push(isV(b) && !/[qg]/.test(s.charAt(i - 1)) && !(b === "e" && (endsAfter(2) || (c === "s" && endsAfter(3)))) && t.length && t[t.length - 1].t !== "V" ? phC("ɥ") : phV("y")); break;
+          case "y": t.push(isV(b) ? phC("j") : phV("i")); break;
+          case "œ": t.push(phV("œ")); break;
+          case "b": t.push(phC("b", "B")); break;
+          case "c": {
+            if (b === "h") { t.push(phC("ʃ", "P")); i += 2; continue; }
+            if (b === "c" && FRONT.indexOf(c) >= 0) { t.push(phC("k", "P")); t.push(phC("s", "P")); i += 2; continue; }
+            if (b === "c") { t.push(phC("k", "P")); i += 2; continue; }
+            if (FRONT.indexOf(b) >= 0) t.push(phC("s", "P")); else if (!atEnd || /^(parc|sac|sec|bec|avec|lac|truc|chic|choc|bloc|clic|trac|duc|bac|roc|tic)$/.test(s) || n <= 3) t.push(phC("k", "P"));
+            break;
+          }
+          case "ç": t.push(phC("s", "P")); break;
+          case "d": if (!atEnd) t.push(phC("d", "B")); break;
+          case "f": t.push(phC("f", "P")); break;
+          case "g": {
+            if (b === "n") { t.push(phC("ɲ")); i += 2; continue; }
+            if (b === "u" && FRONT.indexOf(c) >= 0) { t.push(phC("ɡ", "B")); i += 2; continue; }
+            if (FRONT.indexOf(b) >= 0) t.push(phC("ʒ", "B")); else if (!atEnd || n <= 3) t.push(phC("ɡ", "B"));
+            break;
+          }
+          case "h": break;
+          case "j": t.push(phC("ʒ", "B")); break;
+          case "k": t.push(phC("k", "P")); break;
+          case "l": t.push(phC("l")); break;
+          case "m": t.push(phC("m")); break;
+          case "n": t.push(phC("n")); break;
+          case "p": if (b === "h") { t.push(phC("f", "P")); i += 2; continue; } if (!atEnd || n <= 3) t.push(phC("p", "P")); break;
+          case "q": t.push(phC("k", "P")); if (b === "u") i++; break;
+          case "r": t.push(phC("ʁ")); break;
+          case "s": {
+            if (b === "s") { t.push(phC("s", "P")); i += 2; continue; }
+            if (b === "c" && FRONT.indexOf(c) >= 0) { t.push(phC("s", "P")); i += 2; continue; }
+            if (atEnd) break;
+            t.push(t.length && t[t.length - 1].t === "V" && isV(b) ? phC("z", "B") : phC("s", "P")); break;
+          }
+          case "t": if (!atEnd || /^(net|fait|est|ouest|but|huit|sept|brut|abrupt)$/.test(s)) t.push(phC("t", "P")); break;
+          case "v": t.push(phC("v", "B")); break;
+          case "w": t.push(phC("w")); break;
+          case "x": if (!atEnd) { t.push(phC("k", "P")); t.push(phC("s", "P")); } break;
+          case "z": if (!atEnd) t.push(phC("z", "B")); break;
+          default: break;
+        }
+        i++;
+      }
+      return t.map(function (x) { return x.p; }).join("");
+    }
+
+    // catalán (central): tónica por el acento escrito o la terminación; a, e átonas → ə y o átona → u
+    function phCa(w) {
+      var s = w.toLowerCase().replace(/[’']/g, ""), t = [], i = 0, n = s.length, a, b, c;
+      var ACC = { "à": "a", "è": "ɛ", "é": "e", "í": "i", "ï": "i", "ò": "ɔ", "ó": "o", "ú": "u", "ü": "u" };
+      function isV(x) { return !!x && "aeiouàèéíïòóúü".indexOf(x) >= 0; }
+      function fr(x) { return x === "e" || x === "i" || x === "è" || x === "é" || x === "í" || x === "ï"; }
+      // núcleos: diptongos decrecientes (ai ei oi ui au eu iu ou) cuentan como uno; gu/qu + e/i: la u no cuenta
+      var nuclei = [], p = 0;
+      while (p < n) {
+        if (isV(s.charAt(p))) {
+          var two = s.substr(p, 2), skip = (s.charAt(p) === "u" && p > 0 && /[gq]/.test(s.charAt(p - 1)) && isV(s.charAt(p + 1)));
+          if (skip) { p++; continue; }
+          if (/^(ai|ei|oi|ui|au|eu|iu|ou)$/.test(two)) { nuclei.push({ at: p, len: 2 }); p += 2; } else { nuclei.push({ at: p, len: 1 }); p++; }
+        } else p++;
+      }
+      var tonic = -1;
+      nuclei.forEach(function (nu, k) { if (ACC[s.charAt(nu.at)] && /[àèéíòóú]/.test(s.charAt(nu.at))) tonic = k; });
+      if (tonic < 0 && nuclei.length >= 2) tonic = /(a|e|i|o|u|as|es|is|os|us|en|in)$/.test(s) ? nuclei.length - 2 : nuclei.length - 1;
+      else if (tonic < 0) tonic = 0;
+      function nidx(pos) { for (var q = 0; q < nuclei.length; q++) if (pos >= nuclei[q].at && pos < nuclei[q].at + nuclei[q].len) return q; return -1; }
+      function vow(pos, ch) {
+        var k = nidx(pos), st = k === tonic, ph;
+        if (ACC[ch] && st) ph = ACC[ch];
+        else if (st) ph = ch === "e" ? "ɛ" : ch === "o" ? "ɔ" : ch === "ü" ? "u" : ch === "ï" ? "i" : ch;
+        else ph = ch === "a" || ch === "à" ? "ə" : ch === "e" || ch === "è" || ch === "é" ? "ə" : ch === "o" || ch === "ò" || ch === "ó" ? "u" : ch === "ï" ? "i" : ch === "ü" ? "u" : ACC[ch] || ch;
+        return phV(ph, st && k >= 0);
+      }
+      while (i < n) {
+        a = s.charAt(i); b = s.charAt(i + 1); c = s.charAt(i + 2);
+        var pvowel = isV(s.charAt(i - 1)), atEnd = i === n - 1;
+        if (isV(a)) {
+          if ((a === "u") && /[gq]/.test(s.charAt(i - 1)) && isV(b)) { if (s.charAt(i - 1) === "q" || !fr(b)) t.push(phC("w")); i++; continue; }
+          if ((a === "u" && fr(s.charAt(i - 1)) === false) && /[gq]/.test(s.charAt(i - 1)) && fr(b)) { i++; continue; }
+          var pv = t.length ? t[t.length - 1] : null;
+          if ((a === "i" || a === "u") && pv && pv.t === "V" && nidx(i) === nidx(i - 1)) { t.push(phC(a === "i" ? "j" : "w")); i++; continue; }
+          t.push(vow(i, a)); i++; continue;
+        }
+        if (a === "q" && b === "u") { t.push(phC("k", "P")); i += 2; if (!fr(c)) { t.push(phC("w")); } continue; }
+        if (a === "g" && b === "u" && fr(c)) { t.push(phC("ɡ", "B")); i += 2; continue; }
+        if (a === "l" && b === "l") { t.push(phC("ʎ")); i += 2; continue; }
+        if (a === "l" && b === "·" && c === "l") { t.push(phC("ll")); i += 3; continue; }
+        if (a === "n" && b === "y") { t.push(phC("ɲ")); i += 2; continue; }
+        if (a === "s" && b === "s") { t.push(phC("s", "P")); i += 2; continue; }
+        if (a === "r" && b === "r") { t.push(phC("r")); i += 2; continue; }
+        if (a === "i" && b === "g" && i + 2 === n) { t.push(phC("tʃ", "P")); i += 2; continue; }
+        if (a === "t" && (b === "j" || b === "g") && (b === "j" || fr(c))) { t.push(phC("dʒ", "B")); i += 2; continue; }
+        if (a === "t" && b === "x") { t.push(phC("tʃ", "P")); i += 2; continue; }
+        if (a === "t" && b === "s") { t.push(phC("ts", "P")); i += 2; continue; }
+        if (a === "e" && b === "x" && isV(c)) { t.push(phV("ə")); t.push(phC("ɡ", "B")); t.push(phC("z", "B")); i += 2; continue; }
+        switch (a) {
+          case "b": case "v": t.push(atEnd ? phC("p", "P") : phC("b", "B")); break;
+          case "c": t.push(phC(fr(b) ? "s" : "k", "P")); break;
+          case "ç": t.push(phC("s", "P")); break;
+          case "d": t.push(atEnd ? phC("t", "P") : phC("d", "B")); break;
+          case "f": t.push(phC("f", "P")); break;
+          case "g": t.push(fr(b) ? phC("ʒ", "B") : atEnd ? phC("k", "P") : phC("ɡ", "B")); break;
+          case "h": break;
+          case "j": t.push(phC("ʒ", "B")); break;
+          case "k": t.push(phC("k", "P")); break;
+          case "l": t.push(phC("l")); break;
+          case "m": t.push(phC("m")); break;
+          case "n": if (!(atEnd && false)) t.push(phC("n")); break;
+          case "p": t.push(phC("p", "P")); break;
+          case "q": t.push(phC("k", "P")); break;
+          case "r": if (atEnd && n > 3 && nuclei.length >= 2) break; t.push(phC(i === 0 || /[nls]/.test(s.charAt(i - 1)) ? "r" : "ɾ")); break;
+          case "s": t.push(pvowel && isV(b) ? phC("z", "B") : phC("s", "P")); break;
+          case "t": if (atEnd && /[nl]/.test(s.charAt(i - 1)) && n > 3) break; t.push(atEnd && false ? phC("t", "P") : phC("t", "P")); break;
+          case "x": t.push(phC(/[iaeou]/.test(s.charAt(i - 1)) && false ? "ks" : "ʃ", "P")); break;
+          case "z": t.push(phC("z", "B")); break;
+          case "w": t.push(phC("b", "B")); break;
+          case "y": t.push(phV("i")); break;
+          default: break;
+        }
+        i++;
+      }
+      return phPlace(t, true);
+    }
+
+    var IPA_RULE_FN = { el: phEl, pl: phPl, it: phIt, de: phDe, pt: phPt, fr: phFr, ca: phCa };
+    function ipaRules(word, code) { // IPA aproximada de una palabra suelta ("" si el idioma no tiene reglas fiables, como el inglés)
+      var fn = IPA_RULE_FN[code], w = String(word || "").trim();
+      if (!fn || !w || !/\p{L}/u.test(w)) return "";
+      try { return fn(w); } catch (err) { return ""; }
+    }
+
+    // ---- inglés: SSB (Standard Southern British) en el sistema de Geoff Lindsey, el de CUBE (seas.elte.hu/cube) ----
+    // CUBE no se puede consultar desde la página (no permite lecturas desde otras webs), así que se parte de la transcripción de Wiktionary
+    // (casi siempre la del RP clásico, al estilo del Cambridge Dictionary) y se convierte a los símbolos de Lindsey: TRAP a, DRESS ɛ, LOT ɔ,
+    // THOUGHT oː, FOOT ɵ, FLEECE ɪj, GOOSE ʉw, FACE ɛj, PRICE ɑj, CHOICE oj, GOAT əw, MOUTH aw, NEAR ɪː, SQUARE ɛː, CURE oː, NURSE əː…
+    function ssbRank(g) { // 0 RP, SSB o UK · 1 sin etiqueta o «England» · 3 forma débil, arcaica o anticuada · 2 variante regional (no vale)
+      var l = g.label || "";
+      if (!l || /^(?:(?:verb|noun|adjective|adverb|preposition|pronoun|conjunction|interjection|determiner|numeral|auxiliary)(?: · )?)+$/i.test(l)) return 1;
+      if (/th-fronting|Cockney|Estuary|Yorkshire|Geordie|Scouse|Brummie|Northern Ireland|dialect|slang/i.test(l)) return 2;
+      var ph = g.ipas.some(function (x) { return x.charAt(0) === "/"; }) ? 0 : 1.2; // sin fonémica (solo [..] estrecha): detrás
+      if (/weak form|archaic|dated/i.test(l) && /Received Pronunciation|Standard Southern British|\bUK\b|\bBritish\b/.test(l)) return (/weak form/i.test(l) ? 3.5 : 3) + ph;
+      if (/Received Pronunciation|Standard Southern British|\bUK\b|\bBritish\b/.test(l)) return 0 + ph;
+      if (/\bEngland\b/.test(l) && !/Northern|Lancashire|Yorkshire|Northumbria|Cockney|Estuary|th-fronting/i.test(l)) return 1 + ph;
+      return 2;
+    }
+    function ssbChoose(groups) { // los grupos de transcripciones que se convierten: { items, omitted, nonEu }
+      var rk = groups.map(function (g, i) { return { g: g, r: ssbRank(g), i: i }; }).filter(function (x) { return x.r !== 2; });
+      if (!rk.length) return { items: [], omitted: [], nonEu: false };
+      rk.sort(function (a, b) { return (a.r - b.r) || (a.i - b.i); });
+      var best = rk[0].r, POS = /^(?:(?:verb|noun|adjective|adverb|preposition|pronoun|conjunction|interjection|determiner|numeral|auxiliary)(?: · )?)+$/i;
+      return { items: rk.filter(function (x, k) { return k === 0 || (POS.test(x.g.label || "") && POS.test(rk[0].g.label || "") && Math.floor(x.r) === Math.floor(best)); }).slice(0, 3).map(function (x) { return x.g; }), omitted: [], nonEu: false };
+    }
+    function ssbConvert(ipa) { // /ˈkæt/ → /ˈkat/ (de RP clásico a SSB de Lindsey); "" si no hay nada que convertir
+      var s = String(ipa || "").replace(/^[\/\[]|[\/\]]$/g, "");
+      s = s.replace(/͡/g, "").replace(/[ʰʔˑ̯̆̚]/g, "");
+      s = s.replace(/\(([ɪə])\)(?=[nlm]$)/, "$1").replace(/\(([jəʊu])\)/g, "$1").replace(/\([^)]*\)/g, "");      // (j) y (ə) se dejan; (ɹ) de «far», (ɪ), (p)… fuera
+      s = s.replace(/ᵻ/g, "ɪ").replace(/ᵿ/g, "ə");
+      s = s.replace(/n̩/g, "ən").replace(/l̩/g, "əl").replace(/m̩/g, "əm");
+      var VOW = "aeiouæɑɒɔɛɜɪʊʌəɐɵʉ", out = [], i = 0, n = s.length, k;
+      var DI = [["ɜː", "əː"], ["ɜ", "əː"], ["ɑː", "ɑː"], ["ɔː", "oː"], ["iː", "ɪj"], ["uː", "ʉw"], ["eɪ", "ɛj"], ["aɪ", "ɑj"], ["ɔɪ", "oj"], ["oɪ", "oj"], ["əʊ", "əw"], ["oʊ", "əw"], ["aʊ", "aw"],
+        ["ɪə", "ɪː"], ["eə", "ɛː"], ["ɛə", "ɛː"], ["ʊə", "oː"], ["ɛj", "ɛj"], ["ɪj", "ɪj"], ["ʉw", "ʉw"], ["əw", "əw"], ["ɑj", "ɑj"], ["oj", "oj"], ["aw", "aw"]];
+      var tokens = []; // [símbolo ya convertido, ¿es vocal?, símbolo original]
+      while (i < n) {
+        var ch = s.charAt(i), two = s.substr(i, 2), hit = null;
+        for (k = 0; k < DI.length; k++) if (two === DI[k][0] || (DI[k][0].length === 1 && ch === DI[k][0])) { hit = DI[k]; break; }
+        if (hit) { tokens.push([hit[1], true, hit[0]]); i += hit[0].length; continue; }
+        if (ch === "æ") { tokens.push(["a", true, ch]); i++; continue; }
+        if (ch === "ɒ") { tokens.push(["ɔ", true, ch]); i++; continue; }
+        if (ch === "e" || ch === "ɛ") { tokens.push(["ɛ", true, ch]); i++; continue; }
+        if (ch === "ɐ") { tokens.push(["ʌ", true, ch]); i++; continue; }
+        if (ch === "ʊ") { tokens.push(["\u0001", true, ch]); i++; continue; }      // FOOT: depende de la sílaba
+        if (ch === "i" || ch === "u") { tokens.push([ch === "i" ? "ɪj" : "ʉw", true, ch]); i++; continue; }
+        if (ch === "ɹ") { tokens.push(["r", false, ch]); i++; continue; }
+        if (ch === "ɡ") { tokens.push(["ɡ", false, ch]); i++; continue; }
+        if (ch === "ː" && tokens.length && /^[ɑəɛɪo]$/.test(tokens[tokens.length - 1][0])) { tokens[tokens.length - 1][0] += "ː"; i++; continue; }
+        tokens.push([ch, VOW.indexOf(ch) >= 0 && /[aeiouɑɔɛɪʌəɵʉ]/.test(ch), ch]); i++;
+      }
+      // FOOT: ɵ en sílaba tónica; ə si es átona; ʉw si es átona y final o ante vocal (graduation, thank you)
+      var hasStress = tokens.some(function (t) { return t[0] === "ˈ" || t[0] === "ˌ"; }), nVow = tokens.filter(function (t) { return t[1]; }).length;
+      tokens.forEach(function (t, ix) {
+        if (t[0] !== "\u0001") return;
+        var j = ix - 1, stressed = false;
+        while (j >= 0 && !tokens[j][1] && tokens[j][0] !== "." && tokens[j][0] !== "ˈ" && tokens[j][0] !== "ˌ") j--;
+        if (j >= 0 && (tokens[j][0] === "ˈ" || tokens[j][0] === "ˌ")) stressed = true;
+        else if (!hasStress && nVow === 1) stressed = true;
+        var q = ix + 1; while (q < tokens.length && (tokens[q][0] === "." || tokens[q][0] === "ˈ" || tokens[q][0] === "ˌ")) q++;
+        var nx = tokens[q];
+        t[0] = stressed ? "ɵ" : (!nx || nx[1]) ? "ʉw" : "ə";
+      });
+      tokens.forEach(function (t, ix) {
+        if (t[0] !== "əː" || nVow < 2) return;
+        var j = ix - 1, stressed = false;
+        while (j >= 0 && !tokens[j][1] && tokens[j][0] !== "." && tokens[j][0] !== "ˈ" && tokens[j][0] !== "ˌ") j--;
+        if (j >= 0 && (tokens[j][0] === "ˈ" || tokens[j][0] === "ˌ")) stressed = true;
+        if (!stressed) t[0] = "ə";
+      });
+      var r = tokens.map(function (t) { return t[0]; }).join("").replace(/\./g, "");
+      r = r.replace(/([td])j(?=ʉw)/g, function (m, c) { return c === "t" ? "tʃ" : "dʒ"; }); // yod-coalescence: tune, duty, actual, graduation
+      r = r.replace(/ɪjɪj/g, "ɪj").replace(/ʉwʉw/g, "ʉw");
+      if (!/[ˈˌ]/.test(r) && (r.match(/ɪj|ɛj|ɑj|oj|əw|ʉw|aw|[aɛɪɔʌɵəɑo]ː?/g) || []).length === 1) r = "ˈ" + r; // palabra de una sílaba: tónica marcada, como en CUBE
+      return r ? "/" + r + "/" : "";
+    }
+    function ssbWord(groups) { // grupos de Wiktionary → { items: [{ label, ipas }], omitted, nonEu, ssb } (items vacío si no hay nada que convertir)
+      var ch = ssbChoose(groups), items = [], seen = {};
+      ch.items.forEach(function (g) {
+        var ipas = [];
+        g.ipas.slice().sort(function (a, b) { return (a.charAt(0) === "/" ? 0 : 1) - (b.charAt(0) === "/" ? 0 : 1); }).forEach(function (p) {
+          if (p.charAt(0) === "[" && ipas.length) return; // la fonética estrecha de Wiktionary ([kʰæt]) no se convierte si ya hay fonémica
+          var c = ssbConvert(p); if (c && !seen[c] && !/[ʊæɒɜɚɝʉː]ː|ʉː|[ʊæɒɜɚɝ]/.test(c)) { seen[c] = 1; ipas.push(c); }
+        });
+        if (ipas.length > 1 && ipas.some(function (x) { return /ˈ/.test(x); })) ipas = ipas.filter(function (x) { return /ˈ/.test(x); });
+        if (ipas.length) items.push({ label: /^(?:(?:verb|noun|adjective|adverb|preposition|pronoun|conjunction|interjection|determiner|numeral|auxiliary)(?: · )?)+$/i.test(g.label || "") ? g.label : "", ipas: ipas.slice(0, 2) });
+      });
+      return { items: items, omitted: [], nonEu: false, ssb: true };
+    }
+
     // ---- transcripción fonética (IPA) de la palabra, consultada en el Wiktionary en el momento ----
     // Se pide la página de la palabra (en.wiktionary.org, la misma API de siempre), se busca la sección del idioma estudiado y, dentro, las
     // transcripciones de «Pronunciation» (<span class="IPA">: fonémicas entre barras /…/ y fonéticas entre corchetes […]), cada una con la
@@ -7630,27 +8397,73 @@
             var pg = await ipaPage(vs[k], langName);
             if (pg) { exists = true; if (pg.lang) { hit = pg; used = vs[k]; } }
           }
-          var ch = hit ? ipaChoose(code, hit.groups) : { items: [], omitted: [], nonEu: false };
-          res.push({ form: forms[i], title: used, found: !!hit, exists: exists, items: ch.items, omitted: ch.omitted, nonEu: ch.nonEu });
+          var ch = hit ? (code === "en" ? ssbWord(hit.groups) : ipaChoose(code, hit.groups)) : { items: [], omitted: [], nonEu: false };
+          var r = { form: forms[i], title: used, found: !!hit, exists: exists, items: ch.items, omitted: ch.omitted, nonEu: ch.nonEu, ssb: !!ch.ssb, alt: null };
+          if (!r.items.length) { try { r.alt = await ipaAlt(forms[i], code, langName); } catch (err2) { r.alt = null; } }
+          res.push(r);
         }
         ipaCache[key] = { res: res };
       } catch (err) { ipaCache[key] = { err: err }; }
       ipaRefresh(id);
     }
+    // Si Wiktionary no trae la transcripción de la forma (una frase, una forma flexionada, un compuesto largo…) se prueba palabra a palabra
+    // con Wiktionary y, donde falte, con las reglas de pronunciación del idioma (ipaRules). Se avisa de que no es la de un diccionario.
+    var ipaWordCache = {};
+    function ipaTokens(form) { // las palabras de una forma, sin signos de puntuación ni números
+      return String(form || "").replace(/[¿?¡!.,;:()«»"“”…\[\]\/]/g, " ").split(/\s+/).filter(function (t) { return /\p{L}/u.test(t); });
+    }
+    function ipaBare(p) { return String(p).replace(/^[\/\[]|[\/\]]$/g, ""); }
+    function ipaUnstress(p, multi) { // en una frase, las palabras de una sola sílaba no llevan tónica marcada
+      return multi && (p.match(/[aeiouyɛɔəɐɨɘɪʊœøɑɒæ]+/g) || []).length <= 1 ? p.replace(/[ˈˌ]/g, "") : p;
+    }
+    async function ipaWordWikt(word, code, langName) { // la transcripción preferida de una palabra suelta en Wiktionary ("" si no la trae)
+      var key = code + "\u0001" + word.toLowerCase();
+      if (key in ipaWordCache) return ipaWordCache[key];
+      var vs = wiktVariants(word, code), out = "";
+      for (var k = 0; k < vs.length && !out; k++) {
+        var pg = await ipaPage(vs[k], langName);
+        if (pg && pg.lang) { var ch = code === "en" ? ssbWord(pg.groups) : ipaChoose(code, pg.groups); if (!ch.nonEu && ch.items.length && ch.items[0].ipas.length) out = ch.items[0].ipas[0]; }
+      }
+      ipaWordCache[key] = out;
+      return out;
+    }
+    async function ipaAlt(form, code, langName) { // { text, kind: words | mixed | rules } o null si no se puede (p. ej. el inglés, que no se deduce de la ortografía)
+      var toks = ipaTokens(form), words = [], nw = 0, nr = 0, i, j;
+      if (!toks.length) return null;
+      for (i = 0; i < toks.length; i++) {
+        var subs = toks[i].split(/[-'’]/).filter(function (x) { return /\p{L}/u.test(x); }), parts = [];
+        for (j = 0; j < subs.length; j++) {
+          var w = "";
+          if ((toks.length > 1 && toks.length <= 8) || subs.length > 1) { try { w = await ipaWordWikt(subs[j], code, langName); } catch (err) { w = ""; } }
+          if (w) { parts.push(ipaUnstress(ipaBare(w), toks.length > 1)); nw++; }
+          else { var rr = ipaRules(subs[j], code); if (!rr) return null; parts.push(ipaUnstress(rr, toks.length > 1)); nr++; }
+        }
+        words.push(parts.join(""));
+      }
+      return { text: "/" + words.join(" ") + "/", kind: !nr ? "words" : !nw ? "rules" : "mixed" };
+    }
     function ipaPanel(e) {
       if (!S.ipaOpen[e.id]) return "";
       var c = ipaCache[ipaKey(e)];
-      if (!c || c.busy) return '<div class="ipa-box" aria-live="polite"><span class="ipa-lab">Consultando el Wiktionary…</span></div>';
-      if (c.err) return '<div class="ipa-box" aria-live="polite"><span class="ipa-lab ipa-err">⚠ No se pudo consultar: ' + esc(netWhy("el Wiktionary", c.err)) + '.</span> <button type="button" class="link-btn" data-ipa-retry="' + esc(e.id) + '">Reintentar</button></div>';
-      var name = LANG_BY[S.lang].name.toLowerCase();
+      if (!c || c.busy) return '<div class="ipa-box" aria-live="polite"><span class="ipa-lab">Consultando Wiktionary…</span></div>';
+      if (c.err) return '<div class="ipa-box" aria-live="polite"><span class="ipa-lab ipa-err">⚠ No se pudo consultar: ' + esc(netWhy("Wiktionary", c.err)) + '.</span> <button type="button" class="link-btn" data-ipa-retry="' + esc(e.id) + '">Reintentar</button></div>';
+      var name = LANG_BY[S.lang].name.toLowerCase(), multi = c.res.length > 1;
       var body = c.res.map(function (f) {
         var url = "https://en.wiktionary.org/wiki/" + encodeURIComponent(f.title) + (f.found ? "#" + IPA_LANG[S.lang] : "");
-        var src = ' <a class="ipa-src" href="' + url + '" target="_blank" rel="noopener" title="Abrir la entrada en el Wiktionary">Wiktionary</a>';
+        var src = ' <span class="ipa-src">(<a href="' + url + '" target="_blank" rel="noopener" title="Abrir la entrada en Wiktionary">Wiktionary</a>)</span>' +
+          (S.lang === "en" ? ' <span class="ipa-src">(<a href="http://seas.elte.hu/cube/index.pl?s=' + encodeURIComponent(f.form) + '&amp;fullw=1" target="_blank" rel="noopener" title="Comprobarla en CUBE, el diccionario de Geoff Lindsey">CUBE</a>)</span>' : "");
+        var ssbTag = S.lang === "en" ? '<span class="ipa-lab" title="Standard Southern British en el sistema de Geoff Lindsey (el de CUBE), convertido desde el RP de Wiktionary">SSB</span> ' : "";
+        var head = multi ? '<b class="ipa-w">' + esc(f.form) + "</b> " : ""; // la palabra solo se repite si hay varias formas que distinguir
         if (!f.items.length) {
-          return '<div class="ipa-form"><b class="ipa-w">' + esc(f.form) + '</b> <span class="ipa-lab">' + (!f.exists ? "el Wiktionary no tiene esta palabra" : !f.found ? "el Wiktionary no la tiene en " + esc(name) : "el Wiktionary no trae su transcripción") + "</span>" + src + "</div>";
+          var why = !f.exists ? (ipaTokens(f.form).length > 1 ? "Wiktionary no tiene la expresión entera" : "Wiktionary no tiene esta palabra") : !f.found ? "Wiktionary no la tiene en " + esc(name) : "Wiktionary no trae su transcripción";
+          if (f.alt) {
+            var how = f.alt.kind === "words" ? "palabra a palabra" : f.alt.kind === "mixed" ? "palabra a palabra, en parte por reglas" : "aproximada, por reglas";
+            return '<div class="ipa-form">' + head + ssbTag + '<span class="ipa-sym" title="' + (f.alt.kind === "words" ? "transcripción compuesta con las de cada palabra" : "transcripción aproximada, no es la de un diccionario") + '">' + esc(f.alt.text) + '</span> <span class="ipa-note">' + how + " · " + why + "</span>" + src + "</div>";
+          }
+          return '<div class="ipa-form">' + head + '<span class="ipa-lab">' + why + "</span>" + src + "</div>";
         }
-        return '<div class="ipa-form"><b class="ipa-w">' + esc(f.form) + "</b> " +
-          (f.nonEu ? '<span class="ipa-warn">sin acento europeo en el Wiktionary; solo hay:</span> ' : "") +
+        return '<div class="ipa-form">' + head +
+          (f.nonEu ? '<span class="ipa-warn">sin acento europeo en Wiktionary; solo hay:</span> ' : "") + (f.ssb ? ssbTag : "") +
           f.items.map(function (g) {
             return '<span class="ipa-it">' + (g.label ? '<span class="ipa-lab">' + esc(g.label) + "</span> " : "") +
               g.ipas.map(function (p) { return '<span class="ipa-sym" title="' + (p.charAt(0) === "/" ? "transcripción fonémica" : "transcripción fonética") + '">' + esc(p) + "</span>"; }).join(" ") + "</span>";
