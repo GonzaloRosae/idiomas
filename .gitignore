@@ -1,10 +1,5 @@
-# Solo se versionan las dos apps; el resto de esta carpeta (PDFs, notas, comparativas…) queda fuera
-/*
-!/.gitignore
-!/Vocabulando/
-!/Conjugario/
-!/Declinario/
-!/index.html
+# Esta carpeta solo contiene los proyectos (Vocabulando, Conjugario, Declinario…): todo lo que haya aquí se versiona
+# salvo lo que se indica abajo, así que una carpeta de proyecto nueva entra sola.
 
 # basura de Windows y temporales de escritura
 desktop.ini
