@@ -6,8 +6,8 @@
   ?f=NAME    -> sirve ese archivo (de la carpeta de pruebas) en lugar del index.html del proyecto
 """
 import http.server, os, urllib.parse, io
-PROJECT = r"C:\Users\gonza\Documentos\V\Idiomas\(-) General\Conjugario\index.html"
 HERE = os.path.dirname(os.path.abspath(__file__))
+PROJECT = os.path.join(HERE, "..", "index.html")
 QL_CSP = "default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'none'"
 NOAPI = """<script>
 try{Object.defineProperty(window,'localStorage',{get(){throw new DOMException('The operation is insecure.','SecurityError')}})}catch(e){}
