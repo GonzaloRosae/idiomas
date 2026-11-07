@@ -3205,6 +3205,7 @@
   <main id="view"></main>
 </div>
 <div id="toast" class="toast"></div>
+<input type="file" id="dirIn" webkitdirectory multiple hidden />
 
 <script>
 (function(){
@@ -5697,7 +5698,7 @@
         // copia para deshacer solo de los idiomas que van a cambiar (no de todos los abiertos en la sesión)
         var snap = {};
         codes.forEach(function (c) { if (DATA.languages[c]) snap[c] = JSON.stringify(DATA.languages[c]); });
-        if (fn(bucket(cur)) === false) { bindLang(); return false; }
+        if (fn(cur ? bucket(cur) : null) === false) { bindLang(); return false; }
         bindLang();
         var ok = true;
         for (var j = 0; j < codes.length; j++) { if (!(await persistLang(codes[j]))) ok = false; }
@@ -5880,6 +5881,23 @@
       var ok = download("vocabulando-" + S.lang + "-" + stamp() + ".json", stringifyLang(S.lang), "application/json");
       toast(ok ? "Copia descargada" : "El navegador bloqueó la descarga.", !ok);
     }
+    // una sola descarga con todos los idiomas (lo que importJSON reparte de nuevo): para navegadores que no escriben en carpetas
+    var K_BACKUP = "vocabulando:lastBackup";
+    function exportAll() {
+      var langs = {}, n = 0;
+      LANGS.forEach(function (l) { var b = peekBucket(l.code); if (b && b.deck.length) { langs[l.code] = b; n++; } });
+      if (!n) { toast("Aún no hay palabras que guardar."); return; }
+      var ok = download("vocabulando-todo-" + stamp() + ".json", JSON.stringify({ app: "vocabulando", version: 2, savedAt: new Date().toISOString(), languages: langs }), "application/json");
+      if (ok) lsSet(K_BACKUP, String(Date.now()));
+      toast(ok ? "Copia descargada (" + n + (n === 1 ? " idioma" : " idiomas") + ")" : "El navegador bloqueó la descarga.", !ok);
+      renderBanners();
+    }
+    function backupNote() {
+      var t = parseInt(lsGet(K_BACKUP), 10);
+      if (!t) return "Aún no has guardado ninguna copia.";
+      var d = Math.floor((Date.now() - t) / 86400000);
+      return "Última copia: " + (d < 1 ? "hoy" : d === 1 ? "ayer" : "hace " + d + " días") + ".";
+    }
     function csvCell(s) { s = String(s == null ? "" : s); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
     function exportCSV() {
       var rows = [["palabra_es", "palabra_" + S.lang, "frase_es", "frase_" + S.lang, "genero", "genero_es"]];
@@ -5888,47 +5906,61 @@
       var ok = download("vocabulando-" + S.lang + "-" + stamp() + ".csv", "﻿" + csv, "text/csv;charset=utf-8");
       toast(ok ? "CSV descargado" : "El navegador bloqueó la descarga.", !ok);
     }
-    // acepta: copia o archivo de un idioma (v2, lleva "lang"), el archivo único de la versión anterior ("languages": se reparte
-    // entre los archivos de cada idioma) y las copias antiguas sin idioma (→ el idioma abierto)
-    async function importJSON(file) {
+    // acepta: copia o archivo de un idioma (v2, lleva "lang"), el archivo con todos los idiomas ("languages": se reparte entre ellos)
+    // y las copias antiguas sin idioma (→ el que diga el nombre del archivo, italiano.json…, o si no el idioma abierto).
+    // Admite varios archivos a la vez y también los de una carpeta elegida entera (sin mirar sus subcarpetas).
+    function langOfFile(name) { var n = String(name || "").toLowerCase(); for (var i = 0; i < LANGS.length; i++) if (n === LANGS[i].file + ".json") return LANGS[i].code; return null; }
+    async function importJSON(files) {
       try {
-        var data = JSON.parse(await file.text()), plan = {};
-        if (data && data.languages && typeof data.languages === "object") {
-          Object.keys(data.languages).forEach(function (c) { if (LANG_BY[c] && data.languages[c]) plan[c] = data.languages[c]; });
-        } else {
-          var incoming = Array.isArray(data) ? data : (data && Array.isArray(data.deck) ? data.deck : null);
-          if (incoming) plan[data && LANG_BY[data.lang] ? data.lang : S.lang] = { deck: incoming, review: data && data.review, stats: data && data.stats, log: data && data.log };
+        files = Array.prototype.slice.call(files && files.name ? [files] : (files || []));
+        var plan = {};
+        for (var fi = 0; fi < files.length; fi++) {
+          var f = files[fi], rel = f.webkitRelativePath || "";
+          if (rel && (rel.split("/").length > 2 || !/\.json$/i.test(f.name))) continue; // de una carpeta: solo sus .json, no los de las subcarpetas
+          var data = null;
+          try { data = JSON.parse(await f.text()); } catch (e) { continue; }
+          var got = [];
+          if (data && data.languages && typeof data.languages === "object") {
+            Object.keys(data.languages).forEach(function (c) { if (LANG_BY[c] && data.languages[c]) got.push([c, data.languages[c]]); });
+          } else {
+            var incoming = Array.isArray(data) ? data : (data && Array.isArray(data.deck) ? data.deck : null);
+            var c0 = data && LANG_BY[data.lang] ? data.lang : (langOfFile(f.name) || S.lang);
+            if (incoming && c0) got.push([c0, { deck: incoming, review: data && data.review, stats: data && data.stats, log: data && data.log }]);
+          }
+          got.forEach(function (g) { (plan[g[0]] = plan[g[0]] || []).push(g[1]); });
         }
         var codes = Object.keys(plan);
-        if (!codes.length) { toast("El archivo no tiene un mazo válido.", true); return; }
+        if (!codes.length) { toast(files.length > 1 ? "No hay ningún mazo válido en lo que has elegido." : "El archivo no tiene un mazo válido.", true); return; }
         var added = 0, skipped = 0, updated = 0, any = false, nothing = false;
         // Fusión sin pérdidas: se añade lo que falta y, de las tarjetas que ya existen, gana el repaso más reciente (así sirve para
         // pasar el progreso de un dispositivo a otro). Una palabra con la misma pareja que otra de distinto id se considera repetida.
         var ok = await commit(function () {
           codes.forEach(function (c) {
-            var b = bucket(c), src = normBucket(plan[c]);
-            var pair = function (e) { return normDup(e.esWord) + "|" + normDup(e.deWord); };
-            var byId = {}, byPair = {}, drop = {};
-            b.deck.forEach(function (e) { byId[e.id] = 1; byPair[pair(e)] = e.id; });
-            src.deck = src.deck.filter(function (e) {
-              var p = pair(e);
-              if (!byId[e.id] && byPair[p] && byPair[p] !== e.id) { skipped++; drop[e.id] = 1; return false; }
-              if (!byId[e.id]) byPair[p] = e.id;
-              return true;
+            plan[c].forEach(function (incomingBucket) {
+              var b = bucket(c), src = normBucket(incomingBucket);
+              var pair = function (e) { return normDup(e.esWord) + "|" + normDup(e.deWord); };
+              var byId = {}, byPair = {}, drop = {};
+              b.deck.forEach(function (e) { byId[e.id] = 1; byPair[pair(e)] = e.id; });
+              src.deck = src.deck.filter(function (e) {
+                var p = pair(e);
+                if (!byId[e.id] && byPair[p] && byPair[p] !== e.id) { skipped++; drop[e.id] = 1; return false; }
+                if (!byId[e.id]) byPair[p] = e.id;
+                return true;
+              });
+              Object.keys(src.review).forEach(function (k) { if (drop[k.split(":")[0]]) delete src.review[k]; });
+              var upd = 0;
+              Object.keys(src.review).forEach(function (k) { if (b.review[k] && cardTime(src.review[k]) > cardTime(b.review[k])) upd++; });
+              var merged = mergeBucket(b, src), addedC = merged.deck.length - b.deck.length;
+              var changed = addedC > 0 || upd > 0 || merged.stats.reviewsTotal !== b.stats.reviewsTotal || merged.log.length !== b.log.length;
+              if (!changed) return;
+              DATA.languages[c] = merged; added += addedC; updated += upd; any = true;
             });
-            Object.keys(src.review).forEach(function (k) { if (drop[k.split(":")[0]]) delete src.review[k]; });
-            var upd = 0;
-            Object.keys(src.review).forEach(function (k) { if (b.review[k] && cardTime(src.review[k]) > cardTime(b.review[k])) upd++; });
-            var merged = mergeBucket(b, src), addedC = merged.deck.length - b.deck.length;
-            var changed = addedC > 0 || upd > 0 || merged.stats.reviewsTotal !== b.stats.reviewsTotal || merged.log.length !== b.log.length;
-            if (!changed) return;
-            DATA.languages[c] = merged; added += addedC; updated += upd; any = true;
           });
           if (!any) { nothing = true; return false; }
         }, codes);
-        if (nothing) { toast("No hay nada nuevo: ya estaba todo en el mazo" + (skipped ? " (" + skipped + " repetida" + (skipped === 1 ? "" : "s") + ")" : "") + "."); render(); return; }
+        if (nothing) { toast("No hay nada nuevo: ya estaba todo en el mazo" + (skipped ? " (" + skipped + " repetida" + (skipped === 1 ? "" : "s") + ")" : "") + "."); render(); if (!S.lang) buildPicker(); return; }
         if (!ok) { toast("No se pudo guardar. Reintenta.", true); return; }
-        render();
+        render(); if (!S.lang) buildPicker();
         var parts = [];
         if (added) parts.push(added + " añadida" + (added === 1 ? "" : "s"));
         if (updated) parts.push(updated + " repaso" + (updated === 1 ? "" : "s") + " actualizado" + (updated === 1 ? "" : "s"));
@@ -6466,8 +6498,8 @@
         txt = "<b>No se pudo escribir en la carpeta " + nm + ".</b> Mientras tanto tus cambios solo se guardan en este navegador.";
         acts = b("reconnect", "Reconectar", true) + b("pick-folder", "Elegir otra");
       } else {
-        txt = "<b>Este navegador no puede guardar en una carpeta.</b> Usa Chrome o Edge de escritorio (Mac o Windows), o descarga copias de seguridad desde Actividad. Safari guarda los datos en el propio navegador y puede borrarlos si pasas mucho tiempo sin visitar la web: en el iPad usa «Añadir a pantalla de inicio»; en el Mac, «Añadir al Dock».";
-        acts = '<button class="databar-x" data-act="bar-off" aria-label="Cerrar aviso">×</button>';
+        txt = "<b>Este navegador no puede guardar en una carpeta</b>, así que tus datos se quedan en él (Safari puede borrarlos si pasas mucho tiempo sin abrir la web). Carga tus mazos desde la carpeta y guarda una copia de vez en cuando. " + backupNote() + " Chrome y Edge de escritorio sí los guardan solos en la carpeta.";
+        acts = b("load-files", "Cargar mazos", true) + b("save-all", "Guardar copia") + '<button class="databar-x" data-act="bar-off" aria-label="Cerrar aviso">×</button>';
       }
       return '<div class="databar"><div class="databar-txt">' + txt + '</div><div class="databar-act">' + acts + "</div></div>";
     }
@@ -7042,7 +7074,7 @@
         "<p>Tus palabras, frases y el estado de cada repaso se guardan en una <b>carpeta de tu disco que eliges tú</b>, con un archivo por idioma: " + esc(files) + ". Cada palabra nueva o repaso se escribe al instante. Son archivos de texto (JSON): puedes copiarlos como copia de seguridad o guardarlos en una carpeta de OneDrive.</p>" +
         "<p>El navegador solo conserva una copia de apoyo, de modo que <b>borrar la caché no pierde nada</b>: vuelves a elegir la carpeta y todo reaparece. Esto funciona en Chrome y Edge de escritorio; el permiso sobre la carpeta puede pedirse de nuevo al abrir una sesión nueva. En Actividad puedes cambiar de carpeta, exportar e importar copias.</p>" +
         "<h3>En Safari (Mac, iPad) y en el móvil</h3>" +
-        "<p>Safari no puede guardar en una carpeta: tus datos se quedan en el propio navegador y Safari puede borrarlos si no visitas la web en mucho tiempo. En el iPad o el móvil, abre la web publicada y usa «Añadir a pantalla de inicio»: funciona sin conexión y Safari no borra sus datos por falta de uso. En el Mac, lo más cómodo es usar Chrome o Edge (guardan en una carpeta); con Safari, añade la web al Dock (Archivo › Añadir al Dock, desde Safari 17) y haz copias con Exportar JSON de vez en cuando. Para pasar tu progreso entre dispositivos usa Exportar JSON e Importar JSON en Actividad: al importar se fusiona (se quedan los repasos más recientes), no se pierde nada. También puedes importar listas de palabras pegando texto o un CSV.</p>" +
+        "<p>Safari no puede guardar en una carpeta: tus datos se quedan en el propio navegador y Safari puede borrarlos si no visitas la web en mucho tiempo. En el iPad o el móvil, abre la web publicada y usa «Añadir a pantalla de inicio»: funciona sin conexión y Safari no borra sus datos por falta de uso. En el Mac, lo más cómodo es usar Chrome o Edge (guardan en una carpeta); con Safari, añade la web al Dock (Archivo › Añadir al Dock, desde Safari 17), pulsa «Cargar mazos» en el aviso de arriba y elige tu carpeta de mazos para traer tus idiomas, y «Guardar copia» de vez en cuando (un solo archivo con todos). Para pasar tu progreso entre dispositivos usa Guardar copia (o Exportar JSON) e Importar JSON en Actividad: al importar se fusiona (se quedan los repasos más recientes), no se pierde nada. También puedes importar listas de palabras pegando texto o un CSV.</p>" +
         "<h3>Qué sale de tu navegador</h3>" +
         "<p>Vocabulando no usa ningún servidor propio. Solo se consulta internet para ayudarte: el <b>Wikcionario</b> (la palabra en español que escribes, y la palabra del idioma para el género y, al pulsar «IPA», para su transcripción; si no la trae, se calcula una aproximada con reglas de pronunciación, sin consultar nada más) y, únicamente cuando pulsas sus botones (o importas una entrada con el <b>+</b>, que traduce su frase), <b>Tatoeba</b> y <b>MyMemory</b> (frases; si Tatoeba falla, ejemplos del Wikcionario). Las consultas automáticas se pueden apagar en Actividad.</p>" +
         '<div class="diag"><button type="button" class="btn btn-ghost btn-sm" id="diagBtn">Probar conexión</button><div id="diagOut" class="diag-out" aria-live="polite"></div></div>' +
@@ -9067,11 +9099,14 @@
       if (F.supported) {
         if (st === "needs-permission" || st === "error") btns += '<button class="btn btn-primary btn-sm" data-act="reconnect">Reconectar</button>';
         btns += '<button class="btn btn-ghost" data-act="pick-folder">' + (F.dir ? "Elegir otra carpeta" : "Elegir carpeta") + "</button>";
+      } else {
+        btns += '<button class="btn btn-primary btn-sm" data-act="load-files">Cargar mazos de una carpeta</button><button class="btn btn-ghost" data-act="save-all">Guardar copia de todos los idiomas</button>';
       }
       return '<section class="panel">' +
         '<h2 class="panel-title">Carpeta de datos</h2>' +
         '<p class="data-line"><i class="sdot' + (ok ? " ok" : "") + '"></i><span>' + label + "</span></p>" +
-        '<p class="act-sub" style="margin-top:0">Cada idioma tiene su propio archivo (italiano.json, frances.json…) en esa carpeta, y se abre solo al entrar en el idioma. Tus palabras y el estado de cada repaso viven ahí, no en la caché del navegador: borrarla no los afecta. Cada alta o repaso se escribe al instante. Copia la carpeta de vez en cuando (o ponla en OneDrive).</p>' +
+        (st === "unsupported" ? "" : '<p class="act-sub" style="margin-top:0">Cada idioma tiene su propio archivo (italiano.json, frances.json…) en esa carpeta, y se abre solo al entrar en el idioma. Tus palabras y el estado de cada repaso viven ahí, no en la caché del navegador: borrarla no los afecta. Cada alta o repaso se escribe al instante. Copia la carpeta de vez en cuando (o ponla en OneDrive).</p>') +
+        (st === "unsupported" ? '<p class="act-sub" style="margin-top:0">Este navegador no puede escribir en una carpeta: tus datos se guardan en él. «Cargar mazos» lee los archivos de tu carpeta (italiano.json, frances.json…) y los fusiona con lo que tengas aquí; «Guardar copia» descarga un solo archivo con todos tus idiomas, que luego puedes importar aquí o en Chrome. ' + backupNote() + "</p>" : "") +
         (btns ? '<div class="backup-row">' + btns + "</div>" : "") +
         "</section>";
     }
@@ -9085,7 +9120,7 @@
         '<button class="btn btn-ghost" id="impBtn">Importar JSON</button>' +
         '<button class="btn btn-ghost" id="impListBtn">Importar lista</button>' +
         "</div>" +
-        '<input type="file" id="impFile" accept=".json,application/json" hidden />' +
+        '<input type="file" id="impFile" accept=".json,application/json" multiple hidden />' +
         '<div class="list-imp" id="listImp" hidden>' +
         '<p class="act-sub" style="margin-top:0">Una palabra por línea: <b>español ; ' + langName() + '</b> y, si quieres, <b>; frase en español ; frase en ' + langName() + '</b>. Vale separar con punto y coma, tabulador o barra | (también sirve el CSV de «Exportar CSV»). Las palabras repetidas se omiten.</p>' +
         '<textarea id="listText" class="in" rows="6" spellcheck="false" autocomplete="off" placeholder="la casa ; (la palabra en ' + langName() + ')"></textarea>' +
@@ -9121,6 +9156,8 @@
       if (!a) return;
       var act = a.getAttribute("data-act");
       if (act === "bar-off") { S.bannerOff = true; renderBanners(); return; }
+      if (act === "load-files") { var di = document.getElementById("dirIn"); if (di) { di.onchange = function () { var fs = Array.prototype.slice.call(di.files || []); di.value = ""; if (fs.length) importJSON(fs); }; di.click(); } return; }
+      if (act === "save-all") { exportAll(); return; }
       if (act === "pick-folder") await pickFolder();
       else if (act === "reconnect") await reconnect();
     });
@@ -9243,7 +9280,7 @@
       if (t.closest("#listFile")) { var lf = document.getElementById("listFileIn"); if (lf) { lf.onchange = function () { if (lf.files && lf.files[0]) { var f0 = lf.files[0]; lf.value = ""; f0.text().then(function (tx) { document.getElementById("listText").value = tx; checkList(); }); } }; lf.click(); } return; }
       if (t.closest("#listCheck")) { checkList(); return; }
       if (t.closest("#listAdd")) { addList(); return; }
-      if (t.closest("#impBtn")) { var fi = document.getElementById("impFile"); if (fi) { fi.onchange = function () { if (fi.files && fi.files[0]) { var f = fi.files[0]; fi.value = ""; importJSON(f); } }; fi.click(); } return; }
+      if (t.closest("#impBtn")) { var fi = document.getElementById("impFile"); if (fi) { fi.onchange = function () { if (fi.files && fi.files.length) { var fs = Array.prototype.slice.call(fi.files); fi.value = ""; importJSON(fs); } }; fi.click(); } return; }
       var rb = t.closest("[data-rate]");
       if (rb && S.current) { await rateCurrent(rb.getAttribute("data-rate"), rb); return; }
     });
