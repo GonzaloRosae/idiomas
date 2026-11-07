@@ -438,13 +438,15 @@
   .empty .link-btn { display: inline-block; margin-top: 8px; }
 
   /* ---- racha general y resumen del selector ---- */
-  .pick-streak { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: calc(8 * var(--u)) calc(30 * var(--u)); margin-top: calc(26 * var(--u)); font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: calc(18 * var(--u)); color: var(--p-muted); }
-  .pick-streak b { font-family: "Fredoka", sans-serif; font-weight: 700; font-size: calc(30 * var(--u)); color: inherit; line-height: 1; }
-  .pick-streak .ps-main { color: var(--p-accent); }
-  .pick-streak .ps-flame svg { width: calc(30 * var(--u)); height: calc(30 * var(--u)); color: var(--p-accent); vertical-align: middle; }
-  .pick-streak .ps-item.is-done { color: var(--p-accent); }
-  .lc-stat { margin-top: calc(10 * var(--u)); font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: calc(16 * var(--u)); line-height: 1.4; color: var(--p-muted); }
-  .lc-stat.has-due { color: var(--p-accent); }
+  .pick-streak { --flame: #E4491C; display: inline-flex; align-items: center; gap: calc(4 * var(--u)); padding: calc(5 * var(--u)) calc(26 * var(--u)) calc(5 * var(--u)) calc(12 * var(--u)); background: var(--p-card); border: calc(4 * var(--u)) solid var(--p-line); border-radius: 999px; box-shadow: calc(6 * var(--u)) calc(6 * var(--u)) 0 var(--p-shadow); color: var(--flame); cursor: default; }
+  body.theme-dark .pick-streak { --flame: #FF8A4C; }
+  .pick-streak .ps-flame { flex: none; width: calc(92 * var(--u)); height: calc(92 * var(--u)); margin: calc(-16 * var(--u)) calc(-2 * var(--u)) calc(-16 * var(--u)) calc(-4 * var(--u)); filter: drop-shadow(calc(3 * var(--u)) calc(3 * var(--u)) 0 var(--p-shadow)); }
+  .pick-streak .ps-txt { display: flex; flex-direction: column; align-items: flex-start; }
+  .pick-streak b { font-family: "Fredoka", sans-serif; font-weight: 700; font-size: calc(52 * var(--u)); line-height: 1; letter-spacing: -.01em; }
+  .pick-streak small { margin-top: calc(2 * var(--u)); font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: calc(15 * var(--u)); line-height: 1; letter-spacing: .08em; text-transform: uppercase; color: var(--p-muted); }
+  .pick-streak.is-zero { color: var(--p-muted); }
+  .pick-streak.is-zero .ps-flame .fo { fill: var(--p-muted); opacity: .5; }
+  .pick-streak.is-zero .ps-flame .fi { fill: var(--p-card); opacity: .9; }
   .goal-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 16px; font-size: 14px; }
   .goal-row label { color: var(--ink); }
   .goal-row + .act-sub { margin-top: 16px; }   /* el texto explicativo no va pegado a la meta */
@@ -1712,20 +1714,24 @@
     margin-top: 0;
   }
 
-  .pick-eyebrow {
-    margin: 0;
-    text-align: center;
-    font-family: "IBM Plex Mono", monospace;
-    font-weight: 500;
-    font-size: calc(17 * var(--u));
-    line-height: 1.5;
-    letter-spacing: .15em;
-    text-transform: uppercase;
-    color: var(--p-accent);
+  .pick-head {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    column-gap: calc(24 * var(--u));
+  }
+
+  .pick-head .pick-streak {
+    grid-column: 1;
+    justify-self: start;
+  }
+
+  .pick-head .pick-h2 {
+    grid-column: 2;
   }
 
   .pick-h2 {
-    margin: calc(8.5 * var(--u)) 0 0;
+    margin: 0;
     text-align: center;
     font-family: "Fredoka", sans-serif;
     font-weight: 700;
@@ -1738,7 +1744,7 @@
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: calc(24 * var(--u));
-    margin-top: calc(43.3 * var(--u));
+    margin-top: calc(38 * var(--u));
   }
 
   .lang-card {
@@ -1805,15 +1811,65 @@
     color: var(--p-muted);
   }
 
-  .lc-cta {
+  .lc-stats {
+    align-self: stretch;
     margin-top: auto;
-    padding-top: calc(18 * var(--u));
-    font-family: "IBM Plex Mono", monospace;
-    font-weight: 500;
-    font-size: calc(17.8 * var(--u));
-    line-height: 1.5;
-    letter-spacing: 0;
-    color: var(--p-accent);
+    padding-top: calc(24 * var(--u));
+    display: flex;
+    flex-direction: column;
+    gap: calc(10 * var(--u));
+  }
+
+  .lc-row {
+    display: flex;
+    align-items: center;
+    gap: calc(12 * var(--u));
+    font-weight: 700;
+    font-size: calc(19 * var(--u));
+    line-height: 1.2;
+    color: var(--p-muted);
+  }
+
+  .lc-row.is-due {
+    color: var(--p-ink);
+  }
+
+  .lc-badge {
+    flex: none;
+    box-sizing: border-box;
+    min-width: calc(46 * var(--u));
+    height: calc(46 * var(--u));
+    padding: 0 calc(12 * var(--u));
+    display: inline-grid;
+    place-items: center;
+    border: calc(3 * var(--u)) solid var(--p-line);
+    border-radius: 999px;
+    background: var(--p-bg);
+    color: var(--p-ink);
+    box-shadow: calc(3 * var(--u)) calc(3 * var(--u)) 0 var(--p-shadow);
+    font-family: "Fredoka", sans-serif;
+    font-weight: 700;
+    font-size: calc(24 * var(--u));
+    line-height: 1;
+  }
+
+  .lc-badge svg {
+    width: calc(24 * var(--u));
+    height: calc(24 * var(--u));
+  }
+
+  .lc-row.is-due .lc-badge {
+    background: var(--p-accent);
+    color: var(--p-on-accent);
+  }
+
+  .lc-row.is-ok .lc-badge {
+    background: var(--easy);
+    color: #fff;
+  }
+
+  .lc-row.is-zero .lc-badge {
+    color: var(--p-muted);
   }
 
   .pick-foot {
@@ -2738,6 +2794,16 @@
     .pick-grid {
       grid-template-columns: repeat(2, 1fr);
     }
+
+    .pick-head {
+      grid-template-columns: 1fr;
+      row-gap: 18px;
+    }
+
+    .pick-head .pick-streak,
+    .pick-head .pick-h2 {
+      grid-column: 1;
+    }
   }
 
   @media (max-width:640px) {
@@ -2828,7 +2894,7 @@
     }
 
     .lc-flag {
-      grid-row: 1 / 5;
+      grid-row: 1 / 4;
       width: 84px;
       height: 57px;
       margin: 0;
@@ -2845,9 +2911,49 @@
       font-size: 16px;
     }
 
-    .lc-cta {
-      padding-top: 6px;
+    .lc-stats {
+      padding-top: 10px;
+      gap: 6px;
+    }
+
+    .lc-row {
+      gap: 9px;
       font-size: 15px;
+    }
+
+    .lc-badge {
+      min-width: 34px;
+      height: 34px;
+      padding: 0 9px;
+      border-width: 2.5px;
+      box-shadow: 2px 2px 0 var(--p-shadow);
+      font-size: 19px;
+    }
+
+    .lc-badge svg {
+      width: 19px;
+      height: 19px;
+    }
+
+    .pick-streak {
+      padding: 3px 18px 3px 8px;
+      border-width: 3px;
+      box-shadow: 4px 4px 0 var(--p-shadow);
+    }
+
+    .pick-streak .ps-flame {
+      width: 60px;
+      height: 60px;
+      margin: -10px -2px -10px -3px;
+      filter: drop-shadow(2px 2px 0 var(--p-shadow));
+    }
+
+    .pick-streak b {
+      font-size: 38px;
+    }
+
+    .pick-streak small {
+      font-size: 12px;
     }
   }
 
@@ -3057,9 +3163,10 @@
   </header>
   <div class="data-slot"></div>
   <main class="pick-panel">
-    <p class="pick-eyebrow">Elección de idioma</p>
-    <h2 class="pick-h2">¿Qué idioma vas a practicar?</h2>
-    <div class="pick-streak" id="pickStreak"></div>
+    <div class="pick-head">
+      <div class="pick-streak" id="pickStreak"></div>
+      <h2 class="pick-h2">¿Qué idioma vas a practicar?</h2>
+    </div>
     <div class="pick-grid" id="langGrid"></div>
   </main>
   <footer class="pick-foot">
@@ -6220,15 +6327,18 @@
     }
 
     function buildPicker() {
-      var ps = document.getElementById("pickStreak"); if (ps) ps.innerHTML = pickStreakHtml();
+      pickStreakFill();
       document.getElementById("langGrid").innerHTML = LANGS.map(function (l) {
-        var sm = langSummary(l.code);
+        var sm = langSummary(l.code), rows = "";
+        if (sm.n) rows += sm.due
+          ? '<span class="lc-row is-due"><span class="lc-badge">' + sm.due + "</span>por repasar</span>"
+          : '<span class="lc-row is-ok"><span class="lc-badge">' + ICON_OK + "</span>al día</span>";
+        rows += '<span class="lc-row' + (sm.n ? "" : " is-zero") + '"><span class="lc-badge">' + sm.n + "</span>" + (sm.n === 1 ? "palabra" : "palabras") + "</span>";
         return '<a class="lang-card" href="#' + l.code + '">' +
           '<span class="lc-flag">' + flagBig(l.code) + "</span>" +
           '<span class="lc-name">' + l.name + "</span>" +
           '<span class="lc-native">' + l.native + "</span>" +
-          '<span class="lc-stat' + (sm.due ? " has-due" : "") + '">' + (sm.n ? (sm.due ? sm.due + " por repasar" : "Al día") + " · " + sm.n + (sm.n === 1 ? " palabra" : " palabras") : "Aún sin palabras") + "</span>" +
-          '<span class="lc-cta">Practicar ' + l.code.toUpperCase() + " →</span></a>";
+          '<span class="lc-stats">' + rows + "</span></a>";
       }).join("");
     }
 
@@ -7310,7 +7420,12 @@
     }
 
     // ---- racha general (todos los idiomas juntos), resumen del selector, escribir la respuesta y pausar ----
-    var ICON_FLAME = gsvg('<path d="M12 3c.6 3.2 4.2 5 4.2 9a4.2 4.2 0 0 1-8.4 0c0-1.7.7-2.9 1.6-3.9.2 1.2.9 1.9 1.7 2 .5-2.3.3-4.5.9-7.1z"/>');
+    var ICON_OK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>';
+    var PICK_FLAME = '<svg class="ps-flame" viewBox="0 0 24 24" aria-hidden="true"><defs>' +
+      '<linearGradient id="psFlameO" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFA21F"/><stop offset="1" stop-color="#E5272B"/></linearGradient>' +
+      '<linearGradient id="psFlameI" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE65C"/><stop offset="1" stop-color="#FFA11F"/></linearGradient></defs>' +
+      '<path class="fo" fill="url(#psFlameO)" d="M12 2.6c.7 3.6 6.3 6.4 6.3 12.4a6.3 6.3 0 0 1-12.6 0c0-2.6 1.1-4.4 2.5-5.8.3 1.9 1.3 3 2.4 3.3C10 9.4 10.9 5.7 12 2.6z"/>' +
+      '<path class="fi" fill="url(#psFlameI)" d="M12 21.6a3.5 3.5 0 0 1-3.5-3.5c0-2 1.5-3 2.1-4.7.9.9 1.4 1.8 1.4 2.8.8-.3 1.3-1 1.4-1.9 1 1 1.1 2.1 1.1 3.8A3.5 3.5 0 0 1 12 21.6z"/></svg>';
     var ICON_PAUSE = gsvg('<rect x="6.5" y="5" width="3.6" height="14" rx="1"/><rect x="13.9" y="5" width="3.6" height="14" rx="1"/>');
     var ICON_PLAY = gsvg('<path d="M7.5 5.5v13l11-6.5z"/>');
     var ICON_IMP = gsvg('<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>');
@@ -7371,11 +7486,12 @@
       if (!b || !b.deck.length) return { n: 0, due: 0, news: 0 };
       return bucketPlan(b, code);
     }
-    function pickStreakHtml() {
-      var s = streakInfo();
-      return '<span class="ps-flame">' + ICON_FLAME + '</span><span class="ps-main"><b>' + s.cur + "</b> " + (s.cur === 1 ? "día" : "días") + " de racha</span>" +
-        '<span class="ps-item ps-today' + (s.done ? " is-done" : "") + '">Hoy <b>' + s.count + "</b> / " + s.goal + (s.done ? " ✓" : "") + "</span>" +
-        '<span class="ps-item">Mejor <b>' + s.best + "</b></span>";
+    function pickStreakFill() { // la racha, en la esquina del selector: llama grande y los días
+      var el = document.getElementById("pickStreak"); if (!el) return;
+      var s = streakInfo(), u = s.cur === 1 ? "día" : "días", lbl = s.cur + " " + u + " de racha";
+      el.className = "pick-streak" + (s.cur ? "" : " is-zero");
+      el.title = lbl; el.setAttribute("role", "img"); el.setAttribute("aria-label", lbl);
+      el.innerHTML = PICK_FLAME + '<span class="ps-txt"><b>' + s.cur + "</b><small>" + u + "</small></span>";
     }
     function goalSelect() {
       var vals = GOALS.slice();

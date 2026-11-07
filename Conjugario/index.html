@@ -121,7 +121,7 @@ body{
 .topbar .right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 /* ---------- bienvenida ---------- */
 .hero{text-align:center;padding:38px 26px 32px;margin-top:14px}
-.hero .big{font-family:var(--display);font-weight:600;font-size:38px;line-height:1.15;margin:6px 0 28px}
+.hero .big{font-family:var(--display);font-weight:600;font-size:38px;line-height:1.15;margin:0 0 28px}
 .hero .lead{margin:0 auto 26px;text-align:center}
 /* columnas fijas (nunca auto-fit): con 8 idiomas siempre reparte 4+4, 2+2+2+2 o 1 por fila,
    jamás una última fila coja */
@@ -138,7 +138,6 @@ body{
   margin-bottom:12px;display:block;overflow:hidden}
 .choice .cname{font-family:var(--display);font-weight:600;font-size:22px}
 .choice .cnative{font-size:13px;color:var(--ink-soft)}
-.choice .cgo{font-family:var(--mono);font-size:12.5px;color:var(--deep);margin-top:10px}
 /* ---------- pestañas principales ---------- */
 .tabs{display:flex;gap:12px;margin:6px 0 18px}
 .tab{
@@ -575,7 +574,7 @@ footer{margin-top:26px;font-family:var(--mono);font-size:11.5px;color:var(--ink-
 .nojs{display:none;max-width:640px;margin:8px auto 0;text-align:left;font-size:16px;line-height:1.55}
 /* sin la marca «js» (el script de <head> no se ejecutó) se ve el aviso y se oculta lo que no sirve sin JavaScript */
 html:not(.js) .nojs{display:block}
-html:not(.js) .themewrap,html:not(.js) #welcome .hero .eyebrow,html:not(.js) #welcome .hero .big,html:not(.js) footer{display:none!important}
+html:not(.js) .themewrap,html:not(.js) #welcome .hero .big,html:not(.js) footer{display:none!important}
 .nojs .nojsTitle{font-family:var(--display);font-weight:600;font-size:24px;line-height:1.2;margin:0 0 10px}
 .nojs p{margin:0 0 10px}
 /* ======================================================================================================
@@ -755,8 +754,10 @@ body.vcb .chip.gold:hover{border-color:var(--gold-fg)}
 .goldnote .gstar svg{width:100%;height:100%;display:block}
 :root{--gold-text:#7A5200}
 :root[data-theme="dark"]{--gold-text:#F6D777}
-.choice .cstar{display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-family:var(--mono);font-size:12.5px;color:var(--ink-soft)}
-.choice .cstar.on{color:var(--gold-text);font-weight:600}
+.choice .cstats{align-self:stretch;margin-top:auto;padding-top:14px;display:flex;flex-direction:column;gap:7px}
+.choice .crow{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:var(--ink-soft)}
+.choice .cbadge{display:inline-flex;align-items:center;gap:5px;min-height:30px;padding:0 13px;border:var(--bd-s);border-radius:999px;background:var(--foam);color:var(--ink-soft);font-family:var(--mono);font-size:13px;font-weight:600;line-height:1;box-shadow:var(--sh-xs)}
+.choice .crow.on .cbadge{background:linear-gradient(135deg,var(--gold-a),var(--gold-b));border-color:var(--gold-bd);color:var(--gold-fg)}
 .retrynote{font-size:13px;color:var(--ink-soft);margin:0 0 12px}
 body.vcb .mode{border:1px solid var(--line);background:var(--chipbg);box-shadow:none;border-radius:10px;font-family:var(--text);font-weight:600;color:var(--ink)}
 body.vcb .mode:hover{border-color:var(--accent)}
@@ -985,7 +986,6 @@ body.vcb footer{font-family:var(--mono);font-size:11px;letter-spacing:.04em;colo
   <!-- pantalla de bienvenida -->
   <div id="welcome">
     <div class="card main hero">
-      <p class="eyebrow">Elección de idioma</p>
       <div class="big">¿Qué idioma vas a practicar?</div>
       <div class="choices" id="choices"></div>
       <div class="nojs" role="alert">
@@ -4255,7 +4255,8 @@ function progLang(code){   /* tiempos dorados de un idioma y tiempos que tiene *
   LANGS[code].tenses.forEach(t => { if(!isUnlocked(t)) return; tot++; if(progEntry(code, t.id)) n++; });
   return { n, tot };
 }
-function progStarsHtml(code){ const c = progLang(code); return '<span class="cstar' + (c.n ? ' on' : '') + '">★ ' + c.n + ' de ' + c.tot + '</span>'; }
+function progStarsHtml(code){ const c = progLang(code), tip = c.n + ' de ' + c.tot + ' tiempos dorados';
+  return '<span class="cstats"><span class="crow' + (c.n ? ' on' : '') + '" title="' + tip + '" aria-label="' + tip + '"><span class="cbadge">★ ' + c.n + '/' + c.tot + '</span>tiempos</span></span>'; }
 function initLangState(code){
   const stats = {};
   LANGS[code].tenses.forEach(t => stats[t.id] = {
@@ -11834,8 +11835,7 @@ function buildWelcome(){
     b.innerHTML = FLAGS[code] +
       '<span class="cname">'+esc(lg.name)+'</span>' +
       '<span class="cnative">'+esc(lg.native)+'</span>' +
-      progStarsHtml(code) +
-      '<span class="cgo">Practicar '+esc(lg.code)+' →</span>';
+      progStarsHtml(code);
     b.onclick = () => chooseLang(code);
     box.appendChild(b);
   });
