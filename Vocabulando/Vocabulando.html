@@ -93,11 +93,12 @@
   .brand-sub {
     font-family: "IBM Plex Mono", monospace;
     font-size: 11px;
-    letter-spacing: .14em;
+    letter-spacing: .1em;
     text-transform: uppercase;
     color: var(--muted);
     margin-top: 6px;
     display: block;
+    white-space: nowrap;
   }
 
   .tabs {
@@ -8878,7 +8879,7 @@
         vals.map(function (n) { return '<option value="' + n + '"' + (cur === n ? " selected" : "") + ">" + (n ? n : "Sin límite") + "</option>"; }).join("") + "</select>";
     }
     function limitsHtml() {
-      return '<div class="newlim"><span class="newlim-t">Nuevas al día</span>' +
+      return '<div class="newlim"><span class="newlim-t">Nuevas al día:</span>' +
         '<label class="newlim-i" for="newWords">Palabras</label>' + limitSelect("newWords", S.newWords, "palabras") +
         '<label class="newlim-i" for="newSents">Frases</label>' + limitSelect("newSents", S.newSents, "frases") + "</div>";
     }
