@@ -6,8 +6,8 @@
   "start_url": "./Vocabulando.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0B171D",
-  "theme_color": "#2748D6",
+  "background_color": "#1B0E12",
+  "theme_color": "#721124",
   "icons": [
     { "src": "logo/vocabulando-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "logo/vocabulando.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }

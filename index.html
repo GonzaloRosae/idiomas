@@ -1,25 +1,249 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Idiomas</title>
-  <style>
-    body { font: 17px/1.5 system-ui, sans-serif; background: #E7EAF0; color: #14202E; margin: 0; min-height: 100vh; display: grid; place-items: center; }
-    main { padding: 24px; max-width: 420px; width: 100%; }
-    h1 { font-size: 28px; margin: 0 0 20px; }
-    a { display: block; background: #fff; border: 1px solid #D4DAE3; border-radius: 14px; padding: 18px 20px; margin-bottom: 12px; color: inherit; text-decoration: none; font-weight: 600; }
-    a small { display: block; font-weight: 400; color: #64707F; }
-    a:hover { border-color: #2748D6; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+/* tema claro/oscuro: se decide antes de pintar para evitar el parpadeo; la elección guardada (compartida con las demás webs) manda, y si no hay, el sistema */
+(function(){
+  var t = null;
+  try{ t = localStorage.getItem('idiomas:theme'); }catch(e){}
+  if(t !== 'dark' && t !== 'light'){
+    t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+<title>Idiomas</title>
+<link rel="icon" type="image/svg+xml" sizes="any" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Cdefs%3E%3ClinearGradient%20id='g'%20x1='0'%20y1='0'%20x2='1'%20y2='1'%3E%3Cstop%20offset='0'%20stop-color='%238A152C'/%3E%3Cstop%20offset='1'%20stop-color='%235A0D1C'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width='64'%20height='64'%20rx='15'%20fill='url(%23g)'/%3E%3Cpath%20d='M25%2019%20V45.5'%20fill='none'%20stroke='%23FFFFFF'%20stroke-width='7.2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3Ccircle%20cx='49'%20cy='44.2'%20r='4.9'%20fill='%23FFB020'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
+<style>
+:root{
+  --sky:#EE9FB2; --deep:#8A1A33; --pale:#F6DDE3; --foam:#FBEEF1;
+  --ink:#33121A; --ink-soft:#7A4A55; --amber:#FFB020; --coral:#FF6B5A; --mint:#22B573;
+  --paper:#FFFFFF;
+  --amber-50:#FFF8E8; --amber-400:#FFB020; --amber-900:#6B4300;
+  --bd:3px solid var(--line);
+  --bd-s:2.5px solid var(--line);
+  --sh:6px 6px 0 rgba(51,18,26,.16);
+  --sh-s:4px 4px 0 rgba(51,18,26,.16);
+  --sh-l:10px 10px 0 rgba(51,18,26,.16);
+  --sh-xs:2px 2px 0 rgba(51,18,26,.16);
+  --line:#33121A;                              /* color de los bordes gruesos */
+  --dots:rgba(138,26,51,.14);                 /* trama del fondo */
+  --hair:rgba(51,18,26,.18);                   /* separadores discontinuos */
+  --hair-2:rgba(51,18,26,.28);                 /* separador de puntos */
+  --track:rgba(51,18,26,.16);                  /* pistas de las barras de fase */
+  --ok-bg:#DFF6EA; --bad-bg:#FFE9E6;          /* acierto / fallo */
+  --hl:#FFF3D6;                                /* resalte de terminaciones */
+  --ph:#BE9BA4;                                /* texto de ayuda en los campos */
+  --locked-bg:#F3EFF0; --locked-fg:#BE9BA4; --locked-bd:#D6CCCE;
+  --tip-mono:rgba(255,255,255,.55);
+  color-scheme:light;
+  --r-btn:14px; --r-card:20px; --r-main:26px;
+  --display:'Fredoka','Trebuchet MS',sans-serif;
+  --text:'Nunito','Segoe UI',sans-serif;
+  --mono:'DM Mono','SFMono-Regular',ui-monospace,monospace;
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --deep:#E8788F; --pale:#3A1A22; --foam:#1B0E12; --paper:#26151A;
+  --ink:#F7E9EC; --ink-soft:#CFA5AF; --line:#C98D9B;
+  --coral:#FF8070; --mint:#34D399;
+  --amber-50:#2A2110; --amber-400:#C98A12; --amber-900:#FFD58A;
+  --sh:6px 6px 0 rgba(0,0,0,.55); --sh-s:4px 4px 0 rgba(0,0,0,.55);
+  --sh-l:10px 10px 0 rgba(0,0,0,.55); --sh-xs:2px 2px 0 rgba(0,0,0,.55);
+  --dots:rgba(240,139,160,.08); --hair:rgba(247,233,236,.16); --hair-2:rgba(247,233,236,.28);
+  --track:rgba(247,233,236,.14);
+  --ok-bg:#12372B; --bad-bg:#3A1C19; --hl:#3A2E12; --ph:#9B868A;
+  --locked-bg:#211317; --locked-fg:#897478; --locked-bd:#4D2A33;
+  --tip-mono:rgba(255,255,255,.09);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+button{color:inherit}
+body{
+  font-family:var(--text);color:var(--ink);background-color:var(--foam);
+  background-image:radial-gradient(var(--dots) 1.6px, transparent 1.6px);
+  background-size:22px 22px;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh;padding:0 0 56px;
+}
+.wrap{max-width:1000px;margin:0 auto;padding:0 18px}
+.topbar{display:flex;align-items:center;gap:14px;padding:22px 0 16px}
+.brand h1{font-family:var(--display);font-weight:700;font-size:26px;margin:0;letter-spacing:-.2px;text-transform:uppercase}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--deep);text-transform:uppercase;margin:0 0 2px}
+.topbar .right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.themebtn{width:44px;height:44px;flex:none;border:var(--bd);border-radius:999px;background:var(--paper);color:var(--ink);
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;box-shadow:var(--sh-s);transition:transform .12s,box-shadow .12s}
+@media (hover:hover){.themebtn:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+.themebtn:active{transform:translate(2px,2px);box-shadow:var(--sh-xs)}
+.themebtn:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.themebtn svg{width:21px;height:21px;display:block}
+.themebtn .i-sun{display:none}
+:root[data-theme="dark"] .themebtn .i-moon{display:none}
+:root[data-theme="dark"] .themebtn .i-sun{display:block}
+.card{background:var(--paper);border:var(--bd);border-radius:var(--r-main);box-shadow:var(--sh);padding:22px}
+.hero{text-align:center;padding:38px 26px 30px;margin-top:14px}
+.hero .big{font-family:var(--display);font-weight:600;font-size:38px;line-height:1.15;margin:0 0 10px}
+.hero .lead{margin:0 auto 22px;color:var(--ink-soft);font-size:15px;max-width:60ch}
+.pick{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 14px;margin:0 auto 6px}
+.pick-l{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft)}
+.chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.lchip{display:inline-flex;align-items:center;gap:8px;border:var(--bd-s);border-radius:999px;background:var(--paper);color:var(--ink);
+  font-family:var(--text);font-weight:700;font-size:13.5px;padding:7px 14px 7px 9px;cursor:pointer;box-shadow:var(--sh-s);
+  transition:transform .12s,box-shadow .12s,background .12s}
+.lchip.all{padding-left:14px}
+.lchip .code{font-family:var(--mono);font-weight:500;font-size:12px;letter-spacing:.06em}
+.lchip .flag{width:24px;height:16px;flex:none;border:0;border-radius:3px;box-shadow:0 0 0 1px rgba(40,14,22,.2);display:block}
+.lchip[aria-pressed="true"]{background:var(--sky)}
+:root[data-theme="dark"] .lchip[aria-pressed="true"]{--ink:#33121A;color:var(--ink)}
+@media (hover:hover){.lchip:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+.lchip:active{transform:translate(2px,2px);box-shadow:var(--sh-xs)}
+.lchip:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.hint{min-height:20px;margin:10px 0 22px;font-size:13px;color:var(--ink-soft)}
+.apps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;text-align:left}
+.app{
+  display:grid;grid-template-columns:auto 1fr;gap:4px 18px;align-items:center;
+  background:var(--paper);border:var(--bd);border-radius:var(--r-card);box-shadow:var(--sh);
+  padding:22px;color:inherit;text-decoration:none;transition:transform .16s,box-shadow .16s;
+}
+@media (hover:hover){.app:hover{transform:translate(-2px,-4px) rotate(-.5deg);box-shadow:var(--sh-l)}}
+.app:active{transform:translate(2px,2px);box-shadow:var(--sh-xs)}
+.app:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.app .logo{width:76px;height:76px;flex:none;display:block;border-radius:18px;box-shadow:var(--sh-s)}
+.app .txt{display:flex;flex-direction:column;gap:3px;min-width:0}
+.app .nm{font-family:var(--display);font-weight:700;font-size:28px;line-height:1.1;letter-spacing:-.2px}
+.app .tg{font-size:14.5px;line-height:1.35;color:var(--ink-soft)}
+.app .tags{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.tag{font-family:var(--mono);font-size:11.5px;border:var(--bd-s);border-radius:999px;padding:4px 11px;background:var(--foam);box-shadow:var(--sh-xs);white-space:nowrap}
+.app .go{grid-column:1 / -1;justify-self:end;margin-top:6px;font-family:var(--display);font-weight:600;font-size:15px;color:var(--deep)}
+footer{margin-top:26px;font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media (max-width:760px){
+  .hero{padding:26px 16px 22px}
+  .hero .big{font-size:28px}
+  .apps{grid-template-columns:1fr}
+  .app .nm{font-size:25px}
+}
+@media (prefers-reduced-motion:reduce){.app,.lchip,.themebtn{transition:none}}
+</style>
 </head>
 <body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">
+      <p class="eyebrow">Sala de idiomas</p>
+      <h1>Idiomas</h1>
+    </div>
+    <div class="right">
+      <button class="themebtn" id="themeBtn" type="button" aria-pressed="false" aria-label="Modo oscuro" title="Activar el modo oscuro">
+        <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
+      </button>
+    </div>
+  </div>
   <main>
-    <h1>Idiomas</h1>
-    <a href="Vocabulando/Vocabulando.html">Vocabulando<small>Vocabulario y frases con repaso espaciado</small></a>
-    <a href="Conjugario/index.html">Conjugario<small>Conjugaciones</small></a>
-    <a href="Declinario/index.html">Declinario<small>Declinaciones y pronombres</small></a>
-    <a href="Mundario/index.html">Mundario<small>Números, hora, países, capitales y divisas</small></a>
+    <section class="card hero">
+      <h2 class="big">¿Qué quieres practicar?</h2>
+      <p class="lead">Cuatro webs que se complementan, con los mismos ocho idiomas: francés, italiano, portugués, catalán, polaco, inglés, alemán y griego.</p>
+      <div class="pick" role="group" aria-label="Idioma con el que abrir las webs">
+        <span class="pick-l">Abrir en</span>
+        <div class="chips" id="chips"></div>
+      </div>
+      <p class="hint" id="hint" aria-live="polite"></p>
+      <div class="apps">
+      <a class="app" href="Vocabulando/Vocabulando.html" data-base="Vocabulando/Vocabulando.html">
+        <svg class="logo" viewBox="0 0 64 64" role="img" aria-hidden="true" focusable="false"><defs><linearGradient id="hub-vocabulando" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8A152C"/><stop offset="1" stop-color="#5A0D1C"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#hub-vocabulando)"/><path d="M14.5 19 L27 45.5 L39.5 19" fill="none" stroke="#FFFFFF" stroke-width="7.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="49" cy="44.2" r="4.9" fill="#FFB020"/></svg>
+        <span class="txt"><span class="nm">Vocabulando</span><span class="tg">Vocabulario y frases con repaso espaciado</span></span>
+        <span class="tags"><span class="tag">Tarjetas con repaso espaciado</span><span class="tag">Frases de ejemplo</span><span class="tag">Un mazo por idioma</span></span>
+        <span class="go">Abrir →</span>
+      </a>
+      <a class="app" href="Conjugario/index.html" data-base="Conjugario/index.html">
+        <svg class="logo" viewBox="0 0 64 64" role="img" aria-hidden="true" focusable="false"><defs><linearGradient id="hub-conjugario" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8A152C"/><stop offset="1" stop-color="#5A0D1C"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#hub-conjugario)"/><path d="M35.36 22.54 A13 13 0 1 0 35.36 42.46" fill="none" stroke="#FFFFFF" stroke-width="7.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="49" cy="44.2" r="4.9" fill="#FFB020"/></svg>
+        <span class="txt"><span class="nm">Conjugario</span><span class="tg">Conjugaciones, tiempo a tiempo</span></span>
+        <span class="tags"><span class="tag">Tablas de conjugación</span><span class="tag">Prácticas</span><span class="tag">Test final</span></span>
+        <span class="go">Abrir →</span>
+      </a>
+      <a class="app" href="Declinario/index.html" data-base="Declinario/index.html">
+        <svg class="logo" viewBox="0 0 64 64" role="img" aria-hidden="true" focusable="false"><defs><linearGradient id="hub-declinario" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8A152C"/><stop offset="1" stop-color="#5A0D1C"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#hub-declinario)"/><path d="M17.5 19 H26 A13.25 13.25 0 0 1 26 45.5 H17.5 Z" fill="none" stroke="#FFFFFF" stroke-width="7.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="49" cy="44.2" r="4.9" fill="#FFB020"/></svg>
+        <span class="txt"><span class="nm">Declinario</span><span class="tg">Declinaciones y pronombres</span></span>
+        <span class="tags"><span class="tag">Casos y artículos</span><span class="tag">Pronombres</span><span class="tag">Test final</span></span>
+        <span class="go">Abrir →</span>
+      </a>
+      <a class="app" href="Mundario/index.html" data-base="Mundario/index.html">
+        <svg class="logo" viewBox="0 0 64 64" role="img" aria-hidden="true" focusable="false"><defs><linearGradient id="hub-mundario" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8A152C"/><stop offset="1" stop-color="#5A0D1C"/></linearGradient></defs><rect width="64" height="64" rx="15" fill="url(#hub-mundario)"/><path d="M13.5 45 V20 L24.75 34 L36 20 V45" fill="none" stroke="#FFFFFF" stroke-width="7.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="49" cy="44.2" r="4.9" fill="#FFB020"/></svg>
+        <span class="txt"><span class="nm">Mundario</span><span class="tg">Números, hora, países, capitales y divisas</span></span>
+        <span class="tags"><span class="tag">Frases útiles</span><span class="tag">Calendario y colores</span><span class="tag">10 temas</span></span>
+        <span class="go">Abrir →</span>
+      </a>
+      </div>
+    </section>
   </main>
+  <footer>
+    <span>Idiomas · sala de idiomas</span>
+    <span>Tus datos se guardan en este navegador</span>
+  </footer>
+</div>
+<script>
+(function(){
+  var KEY = 'idiomas:theme', root = document.documentElement, btn = document.getElementById('themeBtn');
+  var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null, chosen = false;
+  function saved(){ try{ var v = localStorage.getItem(KEY); return (v === 'dark' || v === 'light') ? v : null; }catch(e){ return null; } }
+  function apply(theme){
+    var dark = theme === 'dark';
+    root.setAttribute('data-theme', dark ? 'dark' : 'light');
+    btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+    btn.title = dark ? 'Volver al modo claro' : 'Activar el modo oscuro';
+  }
+  apply(root.getAttribute('data-theme'));
+  btn.addEventListener('click', function(){
+    var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    chosen = true; apply(next);
+    try{ localStorage.setItem(KEY, next); }catch(e){ /* sin almacenamiento: vale para esta sesión */ }
+  });
+  function onSystem(e){ if(!chosen && !saved()) apply(e.matches ? 'dark' : 'light'); }
+  if(mq){ if(mq.addEventListener) mq.addEventListener('change', onSystem); else if(mq.addListener) mq.addListener(onSystem); }
+  window.addEventListener('storage', function(e){ if(e.key === KEY && (e.newValue === 'dark' || e.newValue === 'light')) apply(e.newValue); });
+})();
+(function(){
+  /* idioma con el que se abrirán las webs: va en la dirección (#fr, #pt…) y cada web entra directamente en él */
+  const FLAGS = {
+    en:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#012169"/><path d="M0 0 60 40M60 0 0 40" stroke="#fff" stroke-width="9"/><path d="M0 0 60 40M60 0 0 40" stroke="#C8102E" stroke-width="4"/><path d="M30 0V40M0 20H60" stroke="#fff" stroke-width="14"/><path d="M30 0V40M0 20H60" stroke="#C8102E" stroke-width="8"/></svg>',
+    fr:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#fff"/><rect width="20" height="40" fill="#0055A4"/><rect x="40" width="20" height="40" fill="#EF4135"/></svg>',
+    it:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#fff"/><rect width="20" height="40" fill="#008C45"/><rect x="40" width="20" height="40" fill="#CD212A"/></svg>',
+    de:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#DD0000"/><rect width="60" height="13.34" fill="#000"/><rect y="26.67" width="60" height="13.34" fill="#FFCE00"/></svg>',
+    pt:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#DA291C"/><rect width="24" height="40" fill="#046A38"/><g fill="none" stroke="#FFE800" stroke-width="1.6"><circle cx="24" cy="20" r="8.5"/><ellipse cx="24" cy="20" rx="3.6" ry="8.5"/><path d="M15.5 20h17M24 11.5v17"/></g><path d="M24 13.6l-4.6 3v6.8l4.6 3 4.6-3v-6.8z" fill="#fff" stroke="#DA291C" stroke-width="1.6"/></svg>',
+    pl:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#fff"/><rect y="20" width="60" height="20" fill="#DC143C"/></svg>',
+    ca:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#FCDD09"/><g fill="#DA121A"><rect y="4.44" width="60" height="4.44"/><rect y="13.33" width="60" height="4.44"/><rect y="22.22" width="60" height="4.44"/><rect y="31.11" width="60" height="4.44"/></g></svg>',
+    el:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#0D5EAF"/><g fill="#fff"><rect y="4.44" width="60" height="4.44"/><rect y="13.33" width="60" height="4.44"/><rect y="22.22" width="60" height="4.44"/><rect y="31.11" width="60" height="4.44"/></g><rect width="22.22" height="22.22" fill="#0D5EAF"/><path d="M11.11 0V22.22M0 11.11H22.22" stroke="#fff" stroke-width="4.44"/></svg>'
+  };
+  var ORDER = ['fr','it','pt','ca','pl','en','de','el'];
+  var NAME = { fr:'francés', it:'italiano', pt:'portugués', ca:'catalán', pl:'polaco', en:'inglés', de:'alemán', el:'griego' };
+  var box = document.getElementById('chips'), hint = document.getElementById('hint');
+  var apps = Array.prototype.slice.call(document.querySelectorAll('.app'));
+  function set(code){
+    Array.prototype.forEach.call(box.children, function(b){ b.setAttribute('aria-pressed', b.getAttribute('data-lang') === code ? 'true' : 'false'); });
+    apps.forEach(function(a){ a.href = a.getAttribute('data-base') + (code ? '#' + code : ''); });
+    hint.textContent = code ? 'Las cuatro webs se abrirán directamente en ' + NAME[code] + '.' : 'Cada web te preguntará el idioma al abrirla.';
+  }
+  function chip(code, html, label){
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'lchip' + (code ? '' : ' all'); b.setAttribute('data-lang', code); b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = html; if(label){ b.setAttribute('aria-label', label); b.title = label; }
+    b.onclick = function(){ set(code); };
+    box.appendChild(b);
+  }
+  chip('', 'Cualquiera', 'Cualquier idioma');
+  ORDER.forEach(function(c){ chip(c, FLAGS[c] + '<span class="code">' + c.toUpperCase() + '</span>', NAME[c].charAt(0).toUpperCase() + NAME[c].slice(1)); });
+  set('');
+})();
+</script>
 </body>
 </html>
