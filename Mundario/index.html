@@ -1101,7 +1101,7 @@ const CAL_NOTES = {
 
 const TOPICS = [
 { id:'num', name:'Números', group:'Cifras',
-  lead:'Dos partes: los cardinales (uno, dos, tres…) y los ordinales (primero, segundo, tercero…).',
+  lead:'Tres partes: los cardinales (uno, dos, tres…), los ordinales (primero, segundo, tercero…) y las cantidades (porcentajes, fracciones, decimales y precios).',
   sections:[
 { id:'card', name:'Cardinales', gender:false,
   lead:'Del 0 al 100 y los más útiles después (centenas, mil y millón), más unos cuantos «difíciles»: 21, 35, 72, 99, 101.',
@@ -1179,6 +1179,27 @@ séptimo/séptima|septième|settimo/settima|sétimo/sétima|setè/setena|siódmy
 octavo/octava|huitième|ottavo/ottava|oitavo/oitava|vuitè/vuitena|ósmy/ósma|eighth|achte|όγδοος/όγδοη
 noveno/novena|neuvième|nono/nona|nono/nona|novè/novena|dziewiąty/dziewiąta|ninth|neunte|ένατος/ένατη
 décimo/décima|dixième|decimo/decima|décimo/décima|desè/desena|dziesiąty/dziesiąta|tenth|zehnte|δέκατος/δέκατη
+`},
+{ id:'cant', name:'Cantidades', gender:false,
+  lead:'Porcentajes, fracciones, decimales y precios: cómo se leen en voz alta.',
+  notes:{
+    fr:'Los decimales llevan coma («trois virgule cinq») y el porcentaje se dice «pour cent». «Un quart» es un cuarto; «la moitié», la mitad.',
+    it:'Los decimales llevan coma («tre virgola cinque»). La mitad se dice «la metà» (y «mezzo» como adjetivo).',
+    pt:'Los decimales llevan coma («três vírgula cinco»). En los precios va «e»: três euros e cinquenta.',
+    ca:'Los decimales llevan coma («tres coma cinc»). En los precios se usa «amb»: tres euros amb cinquanta.',
+    pl:'Los decimales llevan coma («trzy przecinek pięć»). Las fracciones se leen con ordinales femeninos: jedna trzecia, trzy czwarte.',
+    en:'Los decimales llevan punto, no coma: 3.5 = «three point five». En los precios se suele omitir «and»: three euros fifty.',
+    de:'Los decimales llevan coma («drei Komma fünf»). Las fracciones acaban en «-tel» (ein Drittel, ein Viertel), pero la mitad es «die Hälfte» (y «halb» como adjetivo).',
+    el:'Los decimales llevan coma («τρία κόμμα πέντε»). Las fracciones se forman con el ordinal neutro: ένα τρίτο, ένα τέταρτο.'
+  },
+  rows:`
+50 % · cincuenta por ciento|cinquante pour cent|cinquanta per cento|cinquenta por cento|cinquanta per cent|pięćdziesiąt procent|fifty percent~fifty per cent|fünfzig Prozent|πενήντα τοις εκατό
+½ · la mitad|la moitié|la metà|a metade|la meitat|połowa|half~a half|die Hälfte|το μισό
+⅓ · un tercio|un tiers|un terzo|um terço|un terç|jedna trzecia|a third~one third|ein Drittel|ένα τρίτο
+¼ · un cuarto|un quart|un quarto|um quarto|un quart|jedna czwarta~ćwierć|a quarter~one quarter~a fourth|ein Viertel|ένα τέταρτο
+¾ · tres cuartos|trois quarts|tre quarti|três quartos|tres quarts|trzy czwarte|three quarters~three fourths|drei Viertel|τρία τέταρτα
+3,5 · tres coma cinco|trois virgule cinq|tre virgola cinque|três vírgula cinco|tres coma cinc|trzy przecinek pięć~trzy i pięć dziesiątych|three point five|drei Komma fünf|τρία κόμμα πέντε
+3,50 € · tres euros con cincuenta|trois euros cinquante|tre euro e cinquanta|três euros e cinquenta~três euros e cinquenta cêntimos|tres euros amb cinquanta~tres euros amb cinquanta cèntims|trzy euro pięćdziesiąt~trzy euro i pięćdziesiąt centów|three euros fifty~three euros and fifty cents~three fifty|drei Euro fünfzig~drei Euro und fünfzig Cent|τρία ευρώ και πενήντα λεπτά~τρία ευρώ και πενήντα~τρία ευρώ πενήντα
 `}
   ] },
 
@@ -1212,7 +1233,10 @@ por la tarde|l'après-midi|il pomeriggio~di pomeriggio|à tarde|a la tarda|po po
 por la noche|le soir~la nuit|la sera~la notte|à noite|a la nit|wieczorem~w nocy|in the evening~at night|abends~nachts~am Abend|το βράδυ~τη νύχτα
 `},
 
-{ id:'dias', name:'Días', group:'Tiempo', gender:false,
+{ id:'cal', name:'Calendario', group:'Tiempo',
+  lead:'Los días de la semana, los meses, las estaciones y cómo se dice una fecha.',
+  sections:[
+{ id:'dias', name:'Días', gender:false,
   lead:'Los siete días de la semana.', notes:CAL_NOTES,
   rows:`
 lunes|lundi|lunedì|segunda-feira|dilluns|poniedziałek|Monday|Montag|Δευτέρα
@@ -1223,9 +1247,8 @@ viernes|vendredi|venerdì|sexta-feira|divendres|piątek|Friday|Freitag|Παρα�
 sábado|samedi|sabato|sábado|dissabte|sobota|Saturday|Samstag~Sonnabend|Σάββατο
 domingo|dimanche|domenica|domingo|diumenge|niedziela|Sunday|Sonntag|Κυριακή
 `},
-
-{ id:'meses', name:'Meses y estaciones', group:'Tiempo', gender:false,
-  lead:'Los doce meses del año y las cuatro estaciones.', notes:CAL_NOTES,
+{ id:'meses', name:'Meses', gender:false,
+  lead:'Los doce meses del año.',
   rows:`
 enero|janvier|gennaio|janeiro|gener|styczeń|January|Januar~Jänner|Ιανουάριος
 febrero|février|febbraio|fevereiro|febrer|luty|February|Februar|Φεβρουάριος
@@ -1239,11 +1262,39 @@ septiembre|septembre|settembre|setembro|setembre|wrzesień|September|September|�
 octubre|octobre|ottobre|outubro|octubre|październik|October|Oktober|Οκτώβριος
 noviembre|novembre|novembre|novembro|novembre|listopad|November|November|Νοέμβριος
 diciembre|décembre|dicembre|dezembro|desembre|grudzień|December|Dezember|Δεκέμβριος
+`},
+{ id:'estac', name:'Estaciones', gender:false,
+  lead:'Las cuatro estaciones.',
+  rows:`
 primavera|le printemps|la primavera|a primavera|la primavera|wiosna|spring|der Frühling|η άνοιξη
 verano|l'été|l'estate|o verão|l'estiu|lato|summer|der Sommer|το καλοκαίρι
 otoño|l'automne|l'autunno|o outono|la tardor|jesień|autumn~fall|der Herbst|το φθινόπωρο
 invierno|l'hiver|l'inverno|o inverno|l'hivern|zima|winter|der Winter|ο χειμώνας
 `},
+{ id:'fechas', name:'Fechas', gender:false,
+  lead:'Cómo se dice una fecha y un año, y las preguntas y palabras de siempre: hoy, ayer, mañana.',
+  notes:{
+    fr:'Solo el día 1 lleva ordinal («le premier mai»); los demás, cardinal («le cinq mai»), sin «de». Los años: «deux mille vingt-six»; hasta 1999 también «dix-neuf cent…».',
+    it:'El día 1 lleva ordinal («il primo maggio») y los demás, cardinal («il cinque maggio»), sin «de». Los años se escriben en una sola palabra: duemilaventisei.',
+    pt:'Se dice con «de»: «o cinco de maio». El día 1 es «primeiro». Los años llevan «e» tras el mil: «dois mil e vinte e seis».',
+    ca:'Se dice con «de»: «el cinc de maig». El día 1 es «l\'u de maig» (o «el primer de maig»). Años: «dos mil vint-i-sis».',
+    pl:'El mes va en genitivo (maja, stycznia…). Los años se leen con ordinales: 2026 = «dwa tysiące dwudziesty szósty».',
+    en:'Con ordinal: «the fifth of May» (Reino Unido) o «May fifth» (EE. UU.). Los años de cuatro cifras se leen en dos pares: 1999 = nineteen ninety-nine; 2026 = twenty twenty-six.',
+    de:'Con ordinal y artículo: «der fünfte Mai»; «am fünften Mai» = el 5 de mayo. Los años se leen sin «mil» hasta 1999 (neunzehnhundert…); desde 2000, «zweitausend…».',
+    el:'Se usa el cardinal y el mes en genitivo: «πέντε Μαΐου». El día 1 lleva ordinal: «πρώτη Μαΐου». Los años se leen con cardinales: «δύο χιλιάδες είκοσι έξι».'
+  },
+  rows:`
+el cinco de mayo · 5/5|le cinq mai|il cinque maggio|o cinco de maio~cinco de maio|el cinc de maig|piąty maja~piątego maja|the fifth of May~May the fifth~May fifth|der fünfte Mai~am fünften Mai|πέντε Μαΐου~η πέμπτη Μαΐου
+el primero de mayo · 1/5|le premier mai|il primo maggio|o primeiro de maio~primeiro de maio|l'u de maig~el primer de maig|pierwszy maja~pierwszego maja|the first of May~May the first~May first|der erste Mai~am ersten Mai|πρώτη Μαΐου~η πρώτη Μαΐου~πρώτο Μαΐου
+1999 · mil novecientos noventa y nueve|mille neuf cent quatre-vingt-dix-neuf~dix-neuf cent quatre-vingt-dix-neuf|millenovecentonovantanove|mil novecentos e noventa e nove|mil nou-cents noranta-nou|tysiąc dziewięćset dziewięćdziesiąty dziewiąty|nineteen ninety-nine|neunzehnhundertneunundneunzig|χίλια εννιακόσια ενενήντα εννέα~χίλια εννιακόσια ενενήντα εννιά
+2026 · dos mil veintiséis|deux mille vingt-six|duemilaventisei|dois mil e vinte e seis|dos mil vint-i-sis|dwa tysiące dwudziesty szósty|twenty twenty-six~two thousand twenty-six~two thousand and twenty-six|zweitausendsechsundzwanzig|δύο χιλιάδες είκοσι έξι
+¿Qué día es hoy?|Quel jour sommes-nous ?~On est quel jour ?~Quel jour est-on aujourd'hui ?|Che giorno è oggi?|Que dia é hoje?|Quin dia és avui?|Jaki jest dzisiaj dzień?|What day is it today?|Welcher Tag ist heute?|Τι μέρα είναι σήμερα;
+¿Qué fecha es hoy?|Quelle est la date aujourd'hui ?|Che data è oggi?~Quanti ne abbiamo oggi?|Qual é a data de hoje?~Que dia do mês é hoje?|Quina data és avui?~A quants som avui?|Którego dzisiaj mamy?~Jaka jest dzisiaj data?|What's the date today?~What is the date today?|Welches Datum haben wir heute?~Der Wievielte ist heute?|Τι ημερομηνία είναι σήμερα;
+hoy|aujourd'hui|oggi|hoje|avui|dzisiaj|today|heute|σήμερα
+ayer|hier|ieri|ontem|ahir|wczoraj|yesterday|gestern|χθες~εχθές
+mañana · el día siguiente|demain|domani|amanhã|demà|jutro|tomorrow|morgen|αύριο
+`}
+  ] },
 
 { id:'colores', name:'Colores', group:'Básicos', gender:true,
   lead:'Los colores básicos, con su femenino cuando cambia, y «claro» y «oscuro» para matizarlos (azul claro, verde oscuro).',
@@ -1276,6 +1327,103 @@ turquesa|turquoise|turchese|turquesa|turquesa|turkusowy/turkusowa|turquoise|tür
 claro/clara · para un color|clair/claire|chiaro/chiara|claro/clara|clar/clara|jasny/jasna|light|hell|ανοιχτός/ανοιχτή
 oscuro/oscura · para un color|foncé/foncée~sombre|scuro/scura|escuro/escura|fosc/fosca|ciemny/ciemna|dark|dunkel|σκούρος/σκούρη
 `},
+
+{ id:'frases', name:'Frases útiles', group:'Básicos',
+  lead:'Lo que más se usa al viajar o al conocer a alguien, en cuatro partes: cortesía, presentarse, direcciones y preguntar.',
+  sections:[
+{ id:'cortesia', name:'Cortesía', gender:false,
+  lead:'Saludos, despedidas y fórmulas de cortesía.',
+  notes:{
+    fr:'«Bonjour» vale hasta la tarde y «bonsoir» al caer la noche. «S\'il vous plaît» es de usted; «s\'il te plaît», de tú.',
+    it:'«Ciao» vale para hola y adiós; «salve» es más neutro. «Prego» es «de nada» (y también «adelante»).',
+    pt:'«Obrigado» lo dice un hombre y «obrigada» una mujer. «Tchau» es informal; «adeus», más solemne.',
+    ca:'«Si us plau» se escribe en dos palabras (o «sisplau»). «Adéu» sirve para despedirse a cualquier hora.',
+    pl:'«Cześć» vale para hola y adiós entre amigos; «dzień dobry» y «do widzenia» son la versión formal. «Proszę» sirve para «por favor» y «de nada».',
+    en:'Se usan «please» y «thank you» bastante más que en español.',
+    de:'«Bitte» sirve para «por favor» y «de nada». «Tschüss» es informal; «auf Wiedersehen», formal.',
+    el:'«Παρακαλώ» sirve para «por favor» y «de nada». «Γεια σου» (a un amigo) y «γεια σας» (a varios o con respeto) valen para hola y adiós.'
+  },
+  rows:`
+hola|salut~bonjour|ciao~salve|olá|hola|cześć|hello~hi|hallo|γεια σου~γεια
+adiós|au revoir|arrivederci~ciao|adeus~tchau|adéu|do widzenia~pa|goodbye~bye|auf Wiedersehen~tschüss|αντίο~γεια σου
+buenos días|bonjour|buongiorno|bom dia|bon dia|dzień dobry|good morning|guten Morgen|καλημέρα
+buenas tardes|bonjour~bon après-midi|buonasera~buon pomeriggio|boa tarde|bona tarda|dzień dobry|good afternoon|guten Tag|καλησπέρα
+buenas noches · al despedirse|bonne nuit|buonanotte|boa noite|bona nit|dobranoc|good night|gute Nacht|καληνύχτα
+por favor|s'il vous plaît~s'il te plaît|per favore~per piacere|por favor|si us plau~sisplau|proszę|please|bitte|παρακαλώ
+gracias|merci|grazie|obrigado~obrigada|gràcies|dziękuję~dzięki|thank you~thanks|danke|ευχαριστώ
+de nada|de rien|prego~di niente|de nada~não tem de quê|de res|nie ma za co~proszę|you're welcome~you are welcome~no problem|bitte~gern geschehen~keine Ursache|παρακαλώ~τίποτα
+perdón · para pedir paso o disculparse|pardon~excusez-moi|scusi~scusa~permesso|desculpe~com licença|perdó~disculpi|przepraszam|excuse me~sorry|Entschuldigung~Entschuldigen Sie|συγγνώμη~με συγχωρείτε
+lo siento|je suis désolé~désolé|mi dispiace|desculpe~lamento|ho sento|przepraszam|I'm sorry~I am sorry~sorry|es tut mir leid|λυπάμαι
+sí|oui|sì|sim|sí|tak|yes|ja|ναι
+no|non|no|não|no|nie|no|nein|όχι
+`},
+{ id:'presentarse', name:'Presentarse', gender:false,
+  lead:'Para presentarte y hablar de ti: nombre, procedencia, edad e idiomas.',
+  notes:{
+    fr:'La edad se «tiene»: j\'ai vingt ans. Al preguntar, «tu» o «vous» cambian la frase: comment vous appelez-vous ?',
+    it:'La edad se «tiene»: ho venti anni. «Piacere» equivale a «encantado».',
+    pt:'En Portugal se trata de «tu» o de «você»; «chamo-me» lleva guion.',
+    ca:'La edad se «tiene»: tinc vint anys.',
+    pl:'La edad se «tiene» (mam dwadzieścia lat) y «años» cambia con el número: 20 lat, 22 lata. Tras «jestem» (soy), la nacionalidad va en instrumental: jestem Hiszpanem, jestem Hiszpanką.',
+    en:'La edad se «es»: I\'m twenty (years old), no «I have twenty years».',
+    de:'La edad se «es»: ich bin zwanzig Jahre alt. «Heißen» = llamarse; al preguntar, «du» o «Sie».',
+    el:'«Με λένε» significa literalmente «me llaman». La edad se «es»: είμαι είκοσι χρονών.'
+  },
+  rows:`
+me llamo|je m'appelle|mi chiamo|chamo-me|em dic|mam na imię~nazywam się|my name is|ich heiße~mein Name ist|με λένε
+¿cómo te llamas?|comment tu t'appelles ?~comment t'appelles-tu ?|come ti chiami?|como te chamas?|com et dius?|jak masz na imię?~jak się nazywasz?|what's your name?~what is your name?|wie heißt du?|πώς σε λένε;
+mucho gusto|enchanté~enchantée|piacere~molto piacere|prazer~muito prazer|encantat~encantada~molt de gust|miło mi~miło mi cię poznać|nice to meet you~pleased to meet you|freut mich~angenehm|χαίρω πολύ
+¿de dónde eres?|tu viens d'où ?~d'où viens-tu ?~tu es d'où ?|di dove sei?|de onde és?|d'on ets?|skąd jesteś?|where are you from?|woher kommst du?~woher bist du?|από πού είσαι;
+vengo de España|je viens d'Espagne|vengo dalla Spagna|venho de Espanha~sou de Espanha|vinc d'Espanya~sóc d'Espanya|pochodzę z Hiszpanii~jestem z Hiszpanii|I come from Spain~I'm from Spain~I am from Spain|ich komme aus Spanien~ich bin aus Spanien|έρχομαι από την Ισπανία~είμαι από την Ισπανία
+soy español · o española|je suis espagnol~je suis espagnole|sono spagnolo~sono spagnola|sou espanhol~sou espanhola|sóc espanyol~sóc espanyola|jestem Hiszpanem~jestem Hiszpanką|I'm Spanish~I am Spanish|ich bin Spanier~ich bin Spanierin|είμαι Ισπανός~είμαι Ισπανίδα
+tengo veinte años · 20|j'ai vingt ans|ho venti anni~ho vent'anni|tenho vinte anos|tinc vint anys|mam dwadzieścia lat|I'm twenty years old~I am twenty years old~I'm twenty|ich bin zwanzig Jahre alt~ich bin zwanzig|είμαι είκοσι χρονών~είμαι είκοσι ετών~έχω είκοσι χρόνια
+¿cuántos años tienes?|quel âge as-tu ?~tu as quel âge ?|quanti anni hai?|quantos anos tens?|quants anys tens?|ile masz lat?|how old are you?|wie alt bist du?|πόσο χρονών είσαι;~πόσων χρονών είσαι;
+hablo español|je parle espagnol|parlo spagnolo|falo espanhol|parlo espanyol|mówię po hiszpańsku|I speak Spanish|ich spreche Spanisch|μιλάω ισπανικά~μιλώ ισπανικά
+¿hablas inglés?|tu parles anglais ?~parles-tu anglais ?|parli inglese?|falas inglês?|parles anglès?|mówisz po angielsku?|do you speak English?|sprichst du Englisch?|μιλάς αγγλικά;
+no entiendo|je ne comprends pas|non capisco|não percebo~não entendo|no ho entenc~no entenc|nie rozumiem|I don't understand~I do not understand|ich verstehe nicht|δεν καταλαβαίνω
+más despacio, por favor|plus lentement, s'il vous plaît~plus doucement, s'il te plaît|più lentamente, per favore~più piano, per favore|mais devagar, por favor|més a poc a poc, si us plau|wolniej, proszę|more slowly, please~slower, please|langsamer, bitte|πιο αργά, παρακαλώ
+`},
+{ id:'direcciones', name:'Direcciones', gender:false,
+  lead:'Para preguntar y entender cómo llegar, y los puntos cardinales.',
+  notes:{
+    fr:'«À gauche», «à droite», «tout droit». Los puntos cardinales llevan artículo (le nord) y se escriben en minúscula.',
+    pl:'«Północ» significa norte y también medianoche; «południe», sur y también mediodía.',
+    de:'Con verbo de movimiento se dice «nach links», «nach rechts»; «geradeaus» es todo recto. Los puntos cardinales llevan artículo: der Norden.',
+    el:'Los puntos cardinales llevan artículo (ο βορράς, ο νότος, η ανατολή, η δύση). Para «al norte de» se usan las formas βόρεια, νότια, ανατολικά y δυτικά.'
+  },
+  rows:`
+¿dónde está…?|où est…?|dov'è…?~dove è…?|onde fica…?~onde é…?|on és…?|gdzie jest…?|where is…?|wo ist…?|πού είναι…;
+a la izquierda|à gauche|a sinistra|à esquerda|a l'esquerra|w lewo~na lewo~po lewej|on the left~to the left|links~nach links|αριστερά~στα αριστερά
+a la derecha|à droite|a destra|à direita|a la dreta|w prawo~na prawo~po prawej|on the right~to the right|rechts~nach rechts|δεξιά~στα δεξιά
+todo recto|tout droit|dritto~sempre dritto|sempre em frente~em frente|tot recte|prosto|straight ahead~straight on|geradeaus|ευθεία~πάντα ευθεία
+cerca|près~près d'ici|vicino|perto|a prop|blisko|near~close|nah~in der Nähe|κοντά
+lejos|loin|lontano|longe|lluny|daleko|far|weit|μακριά
+el norte|le nord|il nord|o norte|el nord|północ|north~the north|der Norden~Norden|ο βορράς~βορράς
+el sur|le sud|il sud|o sul|el sud|południe|south~the south|der Süden~Süden|ο νότος~νότος
+el este|l'est|l'est|o este~o leste|l'est|wschód|east~the east|der Osten~Osten|η ανατολή~ανατολή
+el oeste|l'ouest|l'ovest|o oeste|l'oest|zachód|west~the west|der Westen~Westen|η δύση~δύση
+`},
+{ id:'preguntar', name:'Preguntar', gender:false,
+  lead:'Las palabras interrogativas: qué, quién, dónde, cuándo, cómo, por qué, cuánto y cuál.',
+  notes:{
+    fr:'Se puede preguntar con «est-ce que», invirtiendo el sujeto (où vas-tu ?) o, hablando, poniendo la palabra al final (tu vas où ?).',
+    pt:'«Porquê» va solo o al final de la pregunta; al principio se dice «porque (é que)…».',
+    pl:'Con una palabra interrogativa no hace falta «czy» (el «¿acaso?» de las preguntas de sí o no): «gdzie jesteś?».',
+    en:'Después de la palabra interrogativa va el auxiliar y luego el sujeto: where do you live?',
+    de:'El verbo va justo después de la palabra interrogativa: wo wohnst du?',
+    el:'Las palabras interrogativas llevan tilde (πού, πότε, πώς) para distinguirlas de las que no preguntan.'
+  },
+  rows:`
+qué|quoi~que|che cosa~cosa~che|o quê~que|què|co|what|was|τι
+quién|qui|chi|quem|qui|kto|who|wer|ποιος~ποια
+dónde|où|dove|onde|on|gdzie|where|wo|πού
+cuándo|quand|quando|quando|quan|kiedy|when|wann|πότε
+cómo|comment|come|como|com|jak|how|wie|πώς
+por qué|pourquoi|perché|porquê~porque|per què|dlaczego|why|warum|γιατί
+cuánto|combien|quanto|quanto|quant|ile|how much~how many|wie viel~wie viele|πόσο~πόσοι~πόσα
+cuál|quel~quelle|quale|qual|quin~quina|który~która~które|which|welcher~welche~welches|ποιος~ποια~ποιο
+`}
+  ] },
 
 { id:'paises', name:'Países', group:'Mundo', gender:false,
   lead:'Los países de Europa y del resto del mundo que más salen, con el artículo que lleva cada uno en su idioma (si no lo escribes, se acepta igualmente, pero se te avisa).',
@@ -1614,7 +1762,7 @@ const ART = {
   pl:null, en:/^(the )/, de:/^(der |die |das )/, el:/^(ο |η |το |οι |τα )/
 };
 function base(s){   /* minúsculas, un solo tipo de apóstrofo y de espacio; guiones y puntuación cuentan como espacio */
-  return String(s).toLowerCase().replace(/[’`´]/g, "'").replace(/[‐-―-]+/g, ' ').replace(/·/g, '').replace(/[.,;:!?¿¡"]/g, ' ').replace(/\s+/g, ' ').trim();
+  return String(s).toLowerCase().replace(/[’`´]/g, "'").replace(/[‐-―-]+/g, ' ').replace(/·/g, '').replace(/[.,;:!?¿¡"…]/g, ' ').replace(/\s+/g, ' ').trim();
 }
 function stripAcc(t){ return t.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ł/g, 'l').replace(/ß/g, 'ss').replace(/ς/g, 'σ'); }
 function lax(s, code){   /* sin artículo, sin acentos, sin apóstrofos ni espacios */
@@ -1707,6 +1855,7 @@ function renderLearn(){
 
 /* ---------- vista «Practicar» ---------- */
 const MODES = [['type', 'Escribe la traducción'], ['choice', 'Elige la correcta'], ['test', 'Test final ★']];
+function laxSet(it, code){ const s = {}; [it.cells[code].m, it.cells[code].f].forEach(arr => arr.forEach(x => { s[lax(x, code)] = 1; })); return s; }
 function makeQ(t, it, kind){
   const code = state.lang;
   let g = 0, glabel = '';
@@ -1717,8 +1866,9 @@ function makeQ(t, it, kind){
   const answer = formsOf(it, code, g);
   const q = { t, it, g, kind, code, answer, shown: answer[0], es: esText(it, g), sub: it.sub, glabel };
   if(kind === 'choice'){
-    const opts = [];
-    shuffle((it.sec ? t.items.filter(x => x.sec === it.sec) : t.items).filter(x => x !== it)).forEach(x => { const s = esText(x, g); if(opts.length < 3 && s !== q.es && opts.indexOf(s) < 0) opts.push(s); });
+    const opts = [], mine = laxSet(it, code);
+    const clash = x => Object.keys(laxSet(x, code)).some(k => mine[k]);   /* otra ficha con una forma igual (ποιος: quién y cuál) */
+    shuffle((it.sec ? t.items.filter(x => x.sec === it.sec) : t.items).filter(x => x !== it && !clash(x))).forEach(x => { const s = esText(x, g); if(opts.length < 3 && s !== q.es && opts.indexOf(s) < 0) opts.push(s); });
     q.options = shuffle(opts.concat(q.es));
   }
   return q;
@@ -2021,13 +2171,13 @@ function infoHtml(){
   const nFichas = TOPICS.reduce((n, t) => n + t.items.length, 0);
   return '<div class="modal-top"><h2 class="modal-title" id="infoTitle">Cómo funciona Mundario</h2><button type="button" class="modal-x" id="infoClose" aria-label="Cerrar">×</button></div>' +
     '<div class="info-body">' +
-    '<p>Mundario reúne lo que hay que saber en cada idioma y no es del todo gramática, ni vocabulario, ni conjugación: números (cardinales y ordinales), hora, calendario, colores, países, gentilicios, capitales, divisas e idiomas. Son ' + TOPICS.length + ' temas y ' + nFichas + ' fichas, en 8 idiomas: francés, italiano, portugués, catalán, polaco, inglés, alemán y griego. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Mundario» vuelves a ella.' + (sib ? ' El botón con el logo (junto al del tema) te lleva a Vocabulando, Conjugario o Declinario, en el mismo idioma.' : '') + '</p>' +
+    '<p>Mundario reúne lo que hay que saber en cada idioma y no es del todo gramática, ni vocabulario, ni conjugación: números (cardinales, ordinales y cantidades), hora, calendario y fechas, colores, frases útiles, países, gentilicios, capitales, divisas e idiomas. Son ' + TOPICS.length + ' temas y ' + nFichas + ' fichas, en 8 idiomas: francés, italiano, portugués, catalán, polaco, inglés, alemán y griego. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Mundario» vuelves a ella.' + (sib ? ' El botón con el logo (junto al del tema) te lleva a Vocabulando, Conjugario o Declinario, en el mismo idioma.' : '') + '</p>' +
     '<h3>Aprender</h3>' +
     '<p>Cada tema tiene su tabla (español a la izquierda, el idioma a la derecha) y, encima, un aviso con lo que más confunde en ese idioma. El botón del altavoz lee la forma en voz alta (hace falta una voz instalada en tu dispositivo). «Tapar las respuestas» oculta la columna del idioma: pulsa una fila para ver su respuesta y comprueba de cabeza.</p>' +
     '<h3>Practicar</h3><ul>' +
     '<li><b>Escribe la traducción:</b> te doy la ficha en español y la escribes en el idioma. Lo que falles vuelve a salir pronto.</li>' +
     '<li><b>Elige la correcta:</b> te doy la forma en el idioma y eliges su significado entre cuatro. Puedes pulsar 1, 2, 3 o 4.</li>' +
-    '<li><b>Temas con partes:</b> «Números» tiene dos (cardinales y ordinales). Encima de las preguntas eliges practicar todo o solo una parte; el test final mezcla las dos a partes iguales.</li>' +
+    '<li><b>Temas con partes:</b> ' + TOPICS.filter(t => t.sections).map(t => '«' + t.name + '»').join(', ').replace(/, ([^,]*)$/, ' y $1') + ' se dividen en partes (por ejemplo, Números en cardinales, ordinales y cantidades). Encima de las preguntas eliges practicar todo o solo una parte; el test final reparte las preguntas entre todas a partes iguales.</li>' +
     '<li><b>Test final:</b> ' + TEST_QN + ' preguntas (unas se escriben y otras se eligen; en los temas más cortos, una por ficha). Con ' + TEST_APROBADO + ' % de aciertos o más, el tema queda en <b>dorado ★</b> y se guarda. Si no llegas, no se guarda nada.</li></ul>' +
     '<h3>Acentos, artículos y mayúsculas</h3>' +
     '<p>No importan las mayúsculas, los guiones ni los signos de puntuación. Si aciertas sin un acento, sin el artículo o sin el apóstrofo, se acepta y se te enseña cómo se escribe. Donde hay varias formas válidas (por ejemplo «Es ist halb vier» o «Es ist drei Uhr dreißig»), vale cualquiera de ellas.</p>' +
