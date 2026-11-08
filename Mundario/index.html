@@ -1234,7 +1234,7 @@ por la noche|le soir~la nuit|la sera~la notte|à noite|a la nit|wieczorem~w nocy
 `},
 
 { id:'cal', name:'Calendario', group:'Tiempo',
-  lead:'Los días de la semana, los meses, las estaciones y cómo se dice una fecha.',
+  lead:'Los días de la semana, los meses, las estaciones, los años y cómo se dice una fecha.',
   sections:[
 { id:'dias', name:'Días', gender:false,
   lead:'Los siete días de la semana.', notes:CAL_NOTES,
@@ -1271,23 +1271,44 @@ verano|l'été|l'estate|o verão|l'estiu|lato|summer|der Sommer|το καλοκ�
 otoño|l'automne|l'autunno|o outono|la tardor|jesień|autumn~fall|der Herbst|το φθινόπωρο
 invierno|l'hiver|l'inverno|o inverno|l'hivern|zima|winter|der Winter|ο χειμώνας
 `},
-{ id:'fechas', name:'Fechas', gender:false,
-  lead:'Cómo se dice una fecha y un año, y las preguntas y palabras de siempre: hoy, ayer, mañana.',
+{ id:'anos', name:'Años', gender:false,
+  lead:'Cómo se lee un año en voz alta, de 1492 a 2026.',
   notes:{
-    fr:'Solo el día 1 lleva ordinal («le premier mai»); los demás, cardinal («le cinq mai»), sin «de». Los años: «deux mille vingt-six»; hasta 1999 también «dix-neuf cent…».',
-    it:'El día 1 lleva ordinal («il primo maggio») y los demás, cardinal («il cinque maggio»), sin «de». Los años se escriben en una sola palabra: duemilaventisei.',
-    pt:'Se dice con «de»: «o cinco de maio». El día 1 es «primeiro». Los años llevan «e» tras el mil: «dois mil e vinte e seis».',
-    ca:'Se dice con «de»: «el cinc de maig». El día 1 es «l\'u de maig» (o «el primer de maig»). Años: «dos mil vint-i-sis».',
-    pl:'El mes va en genitivo (maja, stycznia…). Los años se leen con ordinales: 2026 = «dwa tysiące dwudziesty szósty».',
-    en:'Con ordinal: «the fifth of May» (Reino Unido) o «May fifth» (EE. UU.). Los años de cuatro cifras se leen en dos pares: 1999 = nineteen ninety-nine; 2026 = twenty twenty-six.',
-    de:'Con ordinal y artículo: «der fünfte Mai»; «am fünften Mai» = el 5 de mayo. Los años se leen sin «mil» hasta 1999 (neunzehnhundert…); desde 2000, «zweitausend…».',
-    el:'Se usa el cardinal y el mes en genitivo: «πέντε Μαΐου». El día 1 lleva ordinal: «πρώτη Μαΐου». Los años se leen con cardinales: «δύο χιλιάδες είκοσι έξι».'
+    fr:'Hasta 1999 también se dice por centenas: «dix-neuf cent quatre-vingt-dix-neuf». Desde el 2000: «deux mille vingt-six». «Cent» lleva «s» solo si no va seguido de otra cifra (neuf cents).',
+    it:'Los años se escriben en una sola palabra: millenovecentonovantanove, duemilaventisei.',
+    pt:'Se pone «e» antes de las decenas y de los cientos redondos: «dois mil e vinte e seis», «mil e novecentos».',
+    ca:'Se leen con cardinales y guiones: «mil nou-cents noranta-nou», «dos mil vint-i-sis».',
+    pl:'Los años se leen con ordinales: «dwa tysiące dwudziesty szósty»; el 2000 es «dwutysięczny». Para decir «en 2026» el año va en locativo y lleva «roku»: w dwa tysiące dwudziestym szóstym roku.',
+    en:'Los años de cuatro cifras se leen en dos pares: 1999 = nineteen ninety-nine; 1789 = seventeen eighty-nine. Desde 2010 vale «twenty ten» o «two thousand ten»; hasta 2009 se dice «two thousand (and) nine».',
+    de:'Hasta 1999 se dice por centenas: «neunzehnhundertneunundneunzig»; desde el 2000, con «mil»: «zweitausendsechsundzwanzig». Hablando también se oye «zwanzigzwanzig» (2020).',
+    el:'Se leen con cardinales: «δύο χιλιάδες είκοσι έξι». Los años anteriores a 2000 empiezan por «χίλια» (1000): «χίλια εννιακόσια ενενήντα εννέα».'
+  },
+  rows:`
+1492 · mil cuatrocientos noventa y dos|mille quatre cent quatre-vingt-douze~quatorze cent quatre-vingt-douze|millequattrocentonovantadue|mil quatrocentos e noventa e dois|mil quatre-cents noranta-dos|tysiąc czterysta dziewięćdziesiąty drugi|fourteen ninety-two|vierzehnhundertzweiundneunzig|χίλια τετρακόσια ενενήντα δύο
+1789 · mil setecientos ochenta y nueve|mille sept cent quatre-vingt-neuf~dix-sept cent quatre-vingt-neuf|millesettecentoottantanove|mil setecentos e oitenta e nove|mil set-cents vuitanta-nou|tysiąc siedemset osiemdziesiąty dziewiąty|seventeen eighty-nine|siebzehnhundertneunundachtzig|χίλια επτακόσια ογδόντα εννέα
+1900 · mil novecientos|mille neuf cents~dix-neuf cents|millenovecento|mil e novecentos|mil nou-cents|tysiąc dziewięćsetny|nineteen hundred|neunzehnhundert|χίλια εννιακόσια
+1975 · mil novecientos setenta y cinco|mille neuf cent soixante-quinze~dix-neuf cent soixante-quinze|millenovecentosettantacinque|mil novecentos e setenta e cinco|mil nou-cents setanta-cinc|tysiąc dziewięćset siedemdziesiąty piąty|nineteen seventy-five|neunzehnhundertfünfundsiebzig|χίλια εννιακόσια εβδομήντα πέντε
+1999 · mil novecientos noventa y nueve|mille neuf cent quatre-vingt-dix-neuf~dix-neuf cent quatre-vingt-dix-neuf|millenovecentonovantanove|mil novecentos e noventa e nove|mil nou-cents noranta-nou|tysiąc dziewięćset dziewięćdziesiąty dziewiąty|nineteen ninety-nine|neunzehnhundertneunundneunzig|χίλια εννιακόσια ενενήντα εννέα~χίλια εννιακόσια ενενήντα εννιά
+2000 · dos mil|deux mille|duemila|dois mil|dos mil|dwutysięczny~dwa tysiące|two thousand|zweitausend|δύο χιλιάδες
+2010 · dos mil diez|deux mille dix|duemiladieci|dois mil e dez|dos mil deu|dwa tysiące dziesiąty|twenty ten~two thousand ten~two thousand and ten|zweitausendzehn~zwanzigzehn|δύο χιλιάδες δέκα
+2020 · dos mil veinte|deux mille vingt|duemilaventi|dois mil e vinte|dos mil vint|dwa tysiące dwudziesty|twenty twenty~two thousand twenty~two thousand and twenty|zweitausendzwanzig~zwanzigzwanzig|δύο χιλιάδες είκοσι
+2026 · dos mil veintiséis|deux mille vingt-six|duemilaventisei|dois mil e vinte e seis|dos mil vint-i-sis|dwa tysiące dwudziesty szósty|twenty twenty-six~two thousand twenty-six~two thousand and twenty-six|zweitausendsechsundzwanzig|δύο χιλιάδες είκοσι έξι
+`},
+{ id:'fechas', name:'Fechas', gender:false,
+  lead:'Cómo se dice una fecha, y las preguntas y palabras de siempre: hoy, ayer, mañana.',
+  notes:{
+    fr:'Solo el día 1 lleva ordinal («le premier mai»); los demás, cardinal («le cinq mai»), sin «de».',
+    it:'El día 1 lleva ordinal («il primo maggio») y los demás, cardinal («il cinque maggio»), sin «de».',
+    pt:'Se dice con «de»: «o cinco de maio». El día 1 es «primeiro».',
+    ca:'Se dice con «de»: «el cinc de maig». El día 1 es «l\'u de maig» (o «el primer de maig»).',
+    pl:'El mes va en genitivo (maja, stycznia…): «piąty maja».',
+    en:'Con ordinal: «the fifth of May» (Reino Unido) o «May fifth» (EE. UU.).',
+    de:'Con ordinal y artículo: «der fünfte Mai»; «am fünften Mai» = el 5 de mayo.',
+    el:'Se usa el cardinal y el mes en genitivo: «πέντε Μαΐου». El día 1 lleva ordinal: «πρώτη Μαΐου».'
   },
   rows:`
 el cinco de mayo · 5/5|le cinq mai|il cinque maggio|o cinco de maio~cinco de maio|el cinc de maig|piąty maja~piątego maja|the fifth of May~May the fifth~May fifth|der fünfte Mai~am fünften Mai|πέντε Μαΐου~η πέμπτη Μαΐου
 el primero de mayo · 1/5|le premier mai|il primo maggio|o primeiro de maio~primeiro de maio|l'u de maig~el primer de maig|pierwszy maja~pierwszego maja|the first of May~May the first~May first|der erste Mai~am ersten Mai|πρώτη Μαΐου~η πρώτη Μαΐου~πρώτο Μαΐου
-1999 · mil novecientos noventa y nueve|mille neuf cent quatre-vingt-dix-neuf~dix-neuf cent quatre-vingt-dix-neuf|millenovecentonovantanove|mil novecentos e noventa e nove|mil nou-cents noranta-nou|tysiąc dziewięćset dziewięćdziesiąty dziewiąty|nineteen ninety-nine|neunzehnhundertneunundneunzig|χίλια εννιακόσια ενενήντα εννέα~χίλια εννιακόσια ενενήντα εννιά
-2026 · dos mil veintiséis|deux mille vingt-six|duemilaventisei|dois mil e vinte e seis|dos mil vint-i-sis|dwa tysiące dwudziesty szósty|twenty twenty-six~two thousand twenty-six~two thousand and twenty-six|zweitausendsechsundzwanzig|δύο χιλιάδες είκοσι έξι
 ¿Qué día es hoy?|Quel jour sommes-nous ?~On est quel jour ?~Quel jour est-on aujourd'hui ?|Che giorno è oggi?|Que dia é hoje?|Quin dia és avui?|Jaki jest dzisiaj dzień?|What day is it today?|Welcher Tag ist heute?|Τι μέρα είναι σήμερα;
 ¿Qué fecha es hoy?|Quelle est la date aujourd'hui ?|Che data è oggi?~Quanti ne abbiamo oggi?|Qual é a data de hoje?~Que dia do mês é hoje?|Quina data és avui?~A quants som avui?|Którego dzisiaj mamy?~Jaka jest dzisiaj data?|What's the date today?~What is the date today?|Welches Datum haben wir heute?~Der Wievielte ist heute?|Τι ημερομηνία είναι σήμερα;
 hoy|aujourd'hui|oggi|hoje|avui|dzisiaj|today|heute|σήμερα
@@ -2171,7 +2192,7 @@ function infoHtml(){
   const nFichas = TOPICS.reduce((n, t) => n + t.items.length, 0);
   return '<div class="modal-top"><h2 class="modal-title" id="infoTitle">Cómo funciona Mundario</h2><button type="button" class="modal-x" id="infoClose" aria-label="Cerrar">×</button></div>' +
     '<div class="info-body">' +
-    '<p>Mundario reúne lo que hay que saber en cada idioma y no es del todo gramática, ni vocabulario, ni conjugación: números (cardinales, ordinales y cantidades), hora, calendario y fechas, colores, frases útiles, países, gentilicios, capitales, divisas e idiomas. Son ' + TOPICS.length + ' temas y ' + nFichas + ' fichas, en 8 idiomas: francés, italiano, portugués, catalán, polaco, inglés, alemán y griego. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Mundario» vuelves a ella.' + (sib ? ' El botón con el logo (junto al del tema) te lleva a Vocabulando, Conjugario o Declinario, en el mismo idioma.' : '') + '</p>' +
+    '<p>Mundario reúne lo que hay que saber en cada idioma y no es del todo gramática, ni vocabulario, ni conjugación: números (cardinales, ordinales y cantidades), hora, calendario (con años y fechas), colores, frases útiles, países, gentilicios, capitales, divisas e idiomas. Son ' + TOPICS.length + ' temas y ' + nFichas + ' fichas, en 8 idiomas: francés, italiano, portugués, catalán, polaco, inglés, alemán y griego. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Mundario» vuelves a ella.' + (sib ? ' El botón con el logo (junto al del tema) te lleva a Vocabulando, Conjugario o Declinario, en el mismo idioma.' : '') + '</p>' +
     '<h3>Aprender</h3>' +
     '<p>Cada tema tiene su tabla (español a la izquierda, el idioma a la derecha) y, encima, un aviso con lo que más confunde en ese idioma. El botón del altavoz lee la forma en voz alta (hace falta una voz instalada en tu dispositivo). «Tapar las respuestas» oculta la columna del idioma: pulsa una fila para ver su respuesta y comprueba de cabeza.</p>' +
     '<h3>Practicar</h3><ul>' +
