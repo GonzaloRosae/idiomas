@@ -7069,7 +7069,10 @@
     // tramos [inicio, fin] de la frase que corresponden a la palabra (plurales y conjugaciones incluidos), con el artículo que la precede
     function hlRanges(text, deWord, code) {
       var parts = [];
-      sentForms(deWord, code).forEach(function (f) { plain(f).split(/\s+/).forEach(function (w) { if (w && parts.indexOf(w) < 0) parts.push(w); }); });
+      // una glosa con varias partes («el arreglo, la observación») se trata parte a parte, cada una sin su artículo: si no, «la» y «el» contarían como palabras de la entrada
+      String(deWord || "").split(/\s*,\s*/).forEach(function (chunk) {
+        sentForms(chunk, code).forEach(function (f) { plain(f).split(/\s+/).forEach(function (w) { if (w && parts.indexOf(w) < 0) parts.push(w); }); });
+      });
       if (!parts.length) return [];
       var re = /[\p{L}\p{N}][\p{L}\p{N}'’\-]*/gu, m, toks = [], out = [], arts = ART_PLAIN[code];
       while ((m = re.exec(text))) toks.push({ s: m.index, e: m.index + m[0].length, t: m[0] });
