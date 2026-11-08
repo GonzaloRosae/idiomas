@@ -895,13 +895,15 @@ body.vcb footer{font-family:var(--mono);font-size:11px;letter-spacing:.04em;colo
     var APPS = [
       {id:'vocabulando', name:'Vocabulando', sub:'Vocabulario y frases', url:'../Vocabulando/Vocabulando.html'},
       {id:'conjugario',  name:'Conjugario',  sub:'Conjugaciones',        url:'../Conjugario/index.html'},
-      {id:'declinario',  name:'Declinario',  sub:'Declinaciones y pronombres', url:'../Declinario/index.html'}
+      {id:'declinario',  name:'Declinario',  sub:'Declinaciones y pronombres', url:'../Declinario/index.html'},
+      {id:'mundario',    name:'Mundario',    sub:'Números, hora, países y más', url:'../Mundario/index.html'}
     ];
     var ST = " fill='none' stroke='#FFFFFF' stroke-width='7.2' stroke-linecap='round' stroke-linejoin='round'";
     var GLYPH = {
       vocabulando: "<path d='M14.5 19 L27 45.5 L39.5 19'" + ST + "/>",
       conjugario:  "<path d='M35.36 22.54 A13 13 0 1 0 35.36 42.46'" + ST + "/>",
-      declinario:  "<path d='M17.5 19 H26 A13.25 13.25 0 0 1 26 45.5 H17.5 Z'" + ST + "/>"
+      declinario:  "<path d='M17.5 19 H26 A13.25 13.25 0 0 1 26 45.5 H17.5 Z'" + ST + "/>",
+      mundario:    "<path d='M13.5 45 V20 L24.75 34 L36 20 V45'" + ST + "/>"
     };
     var nLogo = 0;
     function logo(id){
@@ -11988,7 +11990,7 @@ function infoHtml(){
   const sib = $('appWrap') && !$('appWrap').hidden;
   return '<div class="modal-top"><h2 class="modal-title" id="infoTitle">Cómo funciona Conjugario</h2><button type="button" class="modal-x" id="infoClose" aria-label="Cerrar">×</button></div>' +
     '<div class="info-body">' +
-    '<p>Conjugario es una sala de práctica de conjugación en 8 idiomas: francés, italiano, portugués, catalán, polaco, inglés, alemán y griego. Eliges un idioma y trabajas tiempo verbal a tiempo verbal, con dos pestañas: Teoría y Prácticas. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Conjugario» vuelves a ella.' + (sib ? ' El botón con el logo (junto al del tema) te lleva a Vocabulando (vocabulario y frases) o a Declinario (declinaciones y pronombres), en el mismo idioma.' : '') + '</p>' +
+    '<p>Conjugario es una sala de práctica de conjugación en 8 idiomas: francés, italiano, portugués, catalán, polaco, inglés, alemán y griego. Eliges un idioma y trabajas tiempo verbal a tiempo verbal, con dos pestañas: Teoría y Prácticas. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Conjugario» vuelves a ella.' + (sib ? ' El botón con el logo (junto al del tema) te lleva a Vocabulando (vocabulario y frases), a Declinario (declinaciones y pronombres) o a Mundario (números, hora, países…), en el mismo idioma.' : '') + '</p>' +
     '<h3>Teoría</h3><ul>' +
     '<li>Cada tiempo tiene su ficha: para qué se usa, cómo se forma (reglas con las terminaciones resaltadas y tablas con verbos modelo), unos trucos y cuatro frases de ejemplo. Los tiempos se eligen en los botones redondeados de debajo de las pestañas.</li>' +
     '<li>En las frases de ejemplo intentas adivinar el verbo; después pulsas el ojo para ver la frase en el idioma y el altavoz para oírla. El audio usa solo voces con acento europeo (portugués de Portugal, inglés británico, francés de Francia…); si tu dispositivo no tiene una, no se reproduce y la app te lo avisa y te explica cómo instalarla.</li>' +

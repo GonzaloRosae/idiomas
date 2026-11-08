@@ -3257,13 +3257,15 @@
   var APPS = [
     {id:'vocabulando', name:'Vocabulando', sub:'Vocabulario y frases', url:'../Vocabulando/Vocabulando.html'},
     {id:'conjugario',  name:'Conjugario',  sub:'Conjugaciones',        url:'../Conjugario/index.html'},
-    {id:'declinario',  name:'Declinario',  sub:'Declinaciones y pronombres', url:'../Declinario/index.html'}
+    {id:'declinario',  name:'Declinario',  sub:'Declinaciones y pronombres', url:'../Declinario/index.html'},
+    {id:'mundario',    name:'Mundario',    sub:'Números, hora, países y más', url:'../Mundario/index.html'}
   ];
   var ST = " fill='none' stroke='#FFFFFF' stroke-width='7.2' stroke-linecap='round' stroke-linejoin='round'";
   var GLYPH = {
     vocabulando: "<path d='M14.5 19 L27 45.5 L39.5 19'" + ST + "/>",
     conjugario:  "<path d='M35.36 22.54 A13 13 0 1 0 35.36 42.46'" + ST + "/>",
-    declinario:  "<path d='M17.5 19 H26 A13.25 13.25 0 0 1 26 45.5 H17.5 Z'" + ST + "/>"
+    declinario:  "<path d='M17.5 19 H26 A13.25 13.25 0 0 1 26 45.5 H17.5 Z'" + ST + "/>",
+    mundario:    "<path d='M13.5 45 V20 L24.75 34 L36 20 V45'" + ST + "/>"
   };
   var nLogo = 0;
   function logo(id){
@@ -7088,7 +7090,7 @@
       var files = LANGS.map(function (l) { return fileName(l.code); }).join(", ");
       return '<div class="modal-top"><h2 class="modal-title" id="infoTitle">Cómo funciona Vocabulando</h2><button type="button" class="modal-x" id="infoClose" aria-label="Cerrar">×</button></div>' +
         '<div class="info-body">' +
-        "<p>Vocabulando es un cuaderno de vocabulario con tarjetas de repaso espaciado. Cada idioma tiene su propio mazo de palabras y frases, con sus repasos y estadísticas. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Vocabulando» vuelves a ella." + (sibShow ? " El botón con el logo (junto al del tema) te lleva a Conjugario (conjugaciones) o a Declinario (declinaciones y pronombres), en el mismo idioma." : "") + "</p>" +
+        "<p>Vocabulando es un cuaderno de vocabulario con tarjetas de repaso espaciado. Cada idioma tiene su propio mazo de palabras y frases, con sus repasos y estadísticas. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Vocabulando» vuelves a ella." + (sibShow ? " El botón con el logo (junto al del tema) te lleva a Conjugario (conjugaciones), a Declinario (declinaciones y pronombres) o a Mundario (números, hora, países…), en el mismo idioma." : "") + "</p>" +
         "<h3>Crear</h3><ul>" +
         "<li>Escribe la palabra en español: debajo del campo del idioma aparecen <b>traducciones sugeridas</b> del Wikcionario. Púlsalas para rellenar el campo, o escribe tú la palabra.</li>" +
         "<li>Cada campo de palabra lleva a la izquierda un botón de <b>género</b> (♂ ♀ neutro, ambiguo o ninguno), también el del español. Se detecta solo por el artículo («der Spiegel», «el coche») o consultando el Wikcionario, y también puedes elegirlo tú. La palabra se colorea —y también donde aparece en la frase—: azul masculino, rojo femenino, verde neutro, morado ambiguo; así ves de un vistazo si el género coincide en los dos idiomas. Si guardas un sustantivo sin su artículo se te avisa: se memoriza mejor con él.</li>" +
