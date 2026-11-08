@@ -1,0 +1,2073 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+/* Marca que el JavaScript funciona (sin ella se muestra el aviso «necesita JavaScript») y, si algo falla al arrancar
+   o después, enseña el motivo en #bootError en vez de dejar la pantalla vacía. */
+(function(){
+  try{ document.documentElement.className += ' js'; }catch(e){}
+  var first = null;
+  window.__booted = false;                      /* el script principal lo pone a true al terminar */
+  function device(){
+    var ua = navigator.userAgent || '', m = ua.match(/(Version|CriOS|FxiOS|EdgiOS|Chrome|Firefox)\/[\d.]+/), out = m ? m[0] : '';
+    var ios = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var os = ua.match(/OS (\d+[_\d]*) like Mac OS X/);
+    if(ios) out = (out ? out + ' · ' : '') + (/iPhone|iPod/.test(ua) ? 'iPhone' : 'iPad') + (os ? ' iOS ' + os[1].replace(/_/g, '.') : '');
+    return out;
+  }
+  function show(){
+    var box = document.getElementById('bootError');
+    if(!box || first === null) return;
+    var title = document.getElementById('bootErrorTitle'), det = document.getElementById('bootErrorText');
+    if(title) title.textContent = window.__booted ? 'Ha ocurrido un error inesperado.' : 'La página no ha podido arrancar bien.';
+    var v = device();
+    if(det) det.textContent = first + (v ? ' · ' + v : '');
+    box.hidden = false;
+  }
+  function note(msg){
+    msg = String(msg || '');
+    if(first !== null || !msg || msg === 'Script error.' || /ResizeObserver/.test(msg)) return;
+    first = msg.slice(0, 300);
+    show();
+  }
+  window.addEventListener('error', function(e){
+    note((e && e.message ? e.message : 'Error') + (e && e.lineno ? ' (línea ' + e.lineno + ')' : ''));
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    var r = e && e.reason;
+    note('Promesa rechazada: ' + (r && r.message ? r.message : r));
+  });
+  document.addEventListener('DOMContentLoaded', show);
+  /* vigilante: si al terminar de cargar el script principal no llegó al final (archivo incompleto, visor que lo bloquea…) */
+  window.addEventListener('load', function(){
+    if(!window.__booted) note('El script principal no llegó a ejecutarse por completo (¿archivo incompleto o visor que bloquea JavaScript?)');
+  });
+  document.addEventListener('click', function(e){
+    var t = e && e.target;
+    if(t && t.id === 'bootErrorClose'){ var b = document.getElementById('bootError'); if(b) b.hidden = true; }
+  });
+})();
+</script>
+<script>
+/* tema claro/oscuro: se decide antes de pintar para evitar el parpadeo; la elección guardada manda, y si no hay, el sistema */
+(function(){
+  var t = null;
+  try{ t = localStorage.getItem('idiomas:theme'); if(t !== 'dark' && t !== 'light') t = localStorage.getItem('mundario-theme'); }catch(e){}
+  if(t !== 'dark' && t !== 'light'){
+    t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
+<title>Mundario</title>
+<link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,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">
+<link rel="icon" type="image/svg+xml" sizes="any" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Cdefs%3E%3ClinearGradient%20id='g'%20x1='0'%20y1='0'%20x2='1'%20y2='1'%3E%3Cstop%20offset='0'%20stop-color='%235B7BF4'/%3E%3Cstop%20offset='1'%20stop-color='%232748D6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect%20width='64'%20height='64'%20rx='15'%20fill='url(%23g)'/%3E%3Cpath%20d='M13.5%2045%20V20%20L24.75%2034%20L36%2020%20V45'%20fill='none'%20stroke='%23FFFFFF'%20stroke-width='7.2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3E%3Ccircle%20cx='49'%20cy='44.2'%20r='4.9'%20fill='%23FFB020'/%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
+<style>
+:root{
+  --sky:#7FD9EA; --deep:#0E8FB0; --pale:#D5F1F9; --foam:#E9F7FC;
+  --ink:#12303B; --ink-soft:#4A6B77; --amber:#FFB020; --coral:#FF6B5A; --mint:#22B573;
+  --paper:#FFFFFF;
+  --amber-50:#FFF8E8; --amber-400:#FFB020; --amber-900:#6B4300;
+  --bd:3px solid var(--line);
+  --bd-s:2.5px solid var(--line);
+  --sh:6px 6px 0 rgba(18,48,59,.16);
+  --sh-s:4px 4px 0 rgba(18,48,59,.16);
+  --sh-l:10px 10px 0 rgba(18,48,59,.16);
+  --sh-xs:2px 2px 0 rgba(18,48,59,.16);
+  --line:#12303B;                              /* color de los bordes gruesos */
+  --dots:rgba(14,143,176,.16);                 /* trama del fondo */
+  --hair:rgba(18,48,59,.18);                   /* separadores discontinuos */
+  --hair-2:rgba(18,48,59,.28);                 /* separador de puntos */
+  --track:rgba(18,48,59,.16);                  /* pistas de las barras de fase */
+  --ok-bg:#DFF6EA; --bad-bg:#FFE9E6;          /* acierto / fallo */
+  --hl:#FFF3D6;                                /* resalte de terminaciones */
+  --ph:#9db3bc;                                /* texto de ayuda en los campos */
+  --locked-bg:#EDF3F5; --locked-fg:#9db3bc; --locked-bd:#c7d6db;
+  --tip-mono:rgba(255,255,255,.55);
+  color-scheme:light;
+  --r-btn:14px; --r-card:20px; --r-main:26px;
+  --display:'Fredoka','Trebuchet MS',sans-serif;
+  --text:'Nunito','Segoe UI',sans-serif;
+  --mono:'DM Mono','SFMono-Regular',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+button{color:inherit}
+button,a,label.switch,input.ans,textarea.ans,.exhueco{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:var(--text); color:var(--ink); background-color:var(--foam);
+  background-image:radial-gradient(var(--dots) 1.6px, transparent 1.6px);
+  background-size:22px 22px;
+  -webkit-font-smoothing:antialiased;
+  padding:0 0 64px;
+}
+.wrap{max-width:1000px;margin:0 auto;padding:0 18px}
+/* ---------- barra superior ---------- */
+.topbar{display:flex;align-items:center;gap:14px;padding:22px 0 16px;flex-wrap:wrap}
+.brand h1{font-family:var(--display);font-weight:700;font-size:26px;margin:0;letter-spacing:-.2px;text-transform:uppercase}
+.brandbtn{border:none;background:none;padding:0;margin:0;cursor:pointer;font:inherit;color:inherit;letter-spacing:inherit;text-transform:inherit;text-align:left;border-radius:8px}
+.brandbtn:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--deep);text-transform:uppercase;margin:0 0 2px}
+.topbar .right{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+/* ---------- bienvenida ---------- */
+.hero{text-align:center;padding:38px 26px 32px;margin-top:14px}
+.hero .big{font-family:var(--display);font-weight:600;font-size:38px;line-height:1.15;margin:0 0 28px}
+.hero .lead{margin:0 auto 26px;text-align:center}
+/* columnas fijas (nunca auto-fit): con 8 idiomas siempre reparte 4+4, 2+2+2+2 o 1 por fila,
+   jamás una última fila coja */
+.choices{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;max-width:960px;margin:0 auto}
+.choice{
+  background:var(--paper);border:var(--bd);border-radius:var(--r-card);box-shadow:var(--sh);
+  padding:20px;cursor:pointer;display:flex;flex-direction:column;align-items:flex-start;gap:4px;
+  transition:transform .16s,box-shadow .16s;font-family:var(--text);text-align:left;
+}
+@media (hover:hover){.choice:hover{transform:translate(-2px,-4px) rotate(-.6deg);box-shadow:var(--sh-l)}}
+.choice:active{transform:translate(2px,2px) rotate(0);box-shadow:var(--sh-xs)}
+.choice:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.flag{width:74px;height:50px;border:var(--bd-s);border-radius:9px;box-shadow:var(--sh-s);
+  margin-bottom:12px;display:block;overflow:hidden}
+.choice .cname{font-family:var(--display);font-weight:600;font-size:22px}
+.choice .cnative{font-size:13px;color:var(--ink-soft)}
+/* ---------- pestañas principales ---------- */
+.tabs{display:flex;gap:12px;margin:6px 0 18px}
+.tab{
+  font-family:var(--display);font-weight:600;font-size:16px;letter-spacing:.02em;
+  border:var(--bd);border-radius:var(--r-btn);background:var(--paper);color:var(--ink);
+  padding:12px 26px;cursor:pointer;box-shadow:var(--sh-s);transition:transform .12s,box-shadow .12s;
+  text-transform:uppercase;
+}
+.tab[aria-selected="true"]{background:var(--sky)}
+@media (hover:hover){.tab:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+.tab:active{transform:translate(2px,2px);box-shadow:var(--sh-xs)}
+.tab:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+/* ---------- sub-pestañas de tiempos ---------- */
+.subtabs{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 14px;scrollbar-width:thin}
+.chip{
+  flex:none;display:inline-flex;align-items:center;gap:8px;
+  border:var(--bd-s);border-radius:999px;background:var(--paper);color:var(--ink);
+  font-family:var(--text);font-weight:700;font-size:13.5px;padding:9px 16px;cursor:pointer;
+  box-shadow:var(--sh-s);transition:transform .12s,box-shadow .12s;white-space:nowrap;
+}
+.chip[aria-selected="true"]{background:var(--sky)}
+@media (hover:hover){.chip:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+.chip:active{transform:translate(2px,2px);box-shadow:var(--sh-xs)}
+.chip:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.chip .done{
+  width:19px;height:19px;border:2px solid var(--ink);border-radius:999px;background:var(--mint);
+  color:var(--ink);font-size:11px;display:none;align-items:center;justify-content:center;font-weight:800;
+}
+.chip.mastered .done{display:flex}
+.chip.locked{background:var(--locked-bg);color:var(--locked-fg);cursor:not-allowed;box-shadow:none;border-color:var(--locked-bd)}
+.chip.locked:hover{transform:none;box-shadow:none}
+.chip.locked .lockicon{opacity:.7}
+/* ---------- tarjetas ---------- */
+.card{background:var(--paper);border:var(--bd);border-radius:var(--r-card);box-shadow:var(--sh);padding:22px;margin-bottom:18px}
+.card.main{border-radius:var(--r-main)}
+.card h2{font-family:var(--display);font-weight:600;font-size:24px;margin:0 0 4px}
+.card h3{font-family:var(--display);font-weight:600;font-size:17px;margin:0 0 8px}
+.lead{margin:0 0 18px;color:var(--ink-soft);font-size:14px;max-width:64ch}
+.subhead{margin:0 0 14px;color:var(--ink-soft);font-size:13.5px;background:var(--foam);
+  border-left:3px solid var(--deep);padding:8px 12px;border-radius:0 10px 10px 0}
+/* siempre 4 frases de ejemplo: dos columnas fijas → 2+2, nunca 3+1 */
+.grid3{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.rule{background:var(--foam);border:var(--bd-s);border-radius:var(--r-card);padding:14px 16px;box-shadow:var(--sh-s)}
+.rule .t{font-family:var(--display);font-weight:600;font-size:15px;margin-bottom:6px}
+.rule .e{font-family:var(--mono);font-size:12.5px;color:var(--deep);line-height:1.9;word-spacing:.05em}
+.rule .e b{font-weight:700;color:var(--ink)}
+.rule .x{font-size:13px;color:var(--ink-soft);margin-top:8px}
+.sample{background:var(--pale);border:var(--bd-s);border-radius:var(--r-card);padding:14px 16px;box-shadow:var(--sh-s)}
+.sample .es{font-family:var(--display);font-weight:500;font-size:16.5px;line-height:1.45}
+.sample .tgtrow{display:flex;align-items:flex-start;gap:8px;margin-top:9px;padding-top:9px;border-top:2px dotted var(--hair-2)}
+.sample .tgt{font-size:14px;color:var(--ink-soft);flex:1;min-width:0}
+.sample .tgt.hidden-tr{visibility:hidden}
+/* tips */
+.tip{background:var(--amber-50);border:2.5px solid var(--amber-400);border-radius:var(--r-card);
+  padding:14px 16px;box-shadow:var(--sh-s);color:var(--amber-900);margin-bottom:18px}
+.tip .tiphead{display:flex;align-items:center;gap:8px;font-family:var(--display);font-weight:700;
+  font-size:13.5px;margin-bottom:6px;color:var(--amber-900);text-transform:uppercase;letter-spacing:.03em}
+.tip .tipbulb{width:22px;height:22px;flex:none}
+.tip b{font-weight:800}
+.tip ol{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:9px}
+.tip ol li{line-height:1.5;font-size:13.5px}
+.tip ol li::marker{font-weight:800}
+.tip .mono{background:var(--tip-mono);padding:1px 5px;border-radius:5px}
+.mono{font-family:var(--mono)}
+/* ---------- iconos / botones circulares ---------- */
+.iconbtn{width:30px;height:30px;flex:none;border:var(--bd-s);border-radius:999px;background:var(--paper);
+  cursor:pointer;display:inline-flex;align-items:center;justify-content:center;box-shadow:var(--sh-s);
+  transition:transform .12s,box-shadow .12s,background .12s;padding:0;color:var(--ink)}
+.iconbtn[hidden]{display:none}
+@media (hover:hover){.iconbtn:hover{transform:translate(-1px,-1px);box-shadow:var(--sh)}}
+.iconbtn:active{transform:translate(1px,1px);box-shadow:none}
+.iconbtn:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.iconbtn.small{width:26px;height:26px}
+.iconbtn.on{background:var(--sky)}
+.iconbtn svg{width:15px;height:15px;display:block}
+/* pareja altavoz + botoncito de velocidad, siempre juntos */
+.ttswrap{display:inline-flex;align-items:center;gap:5px;flex:none}
+.ttswrap[hidden]{display:none}
+.spdbtn{width:auto;min-width:38px;padding:0 10px;font-family:var(--mono);font-weight:800;font-size:11px;letter-spacing:.01em;white-space:nowrap}
+.spdbtn.small{min-width:34px;font-size:10px;padding:0 8px}
+/* ---------- colapsables ---------- */
+.cgroup{border:var(--bd-s);border-radius:var(--r-card);background:var(--foam);box-shadow:var(--sh-s);
+  margin-bottom:12px;overflow:hidden}
+.cghead{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;cursor:pointer;
+  padding:14px 16px;font-family:var(--display);font-weight:600;font-size:15.5px;color:var(--ink);text-align:left}
+.cghead:focus-visible{outline:3px solid var(--amber);outline-offset:-3px}
+.cghead .chev{flex:none;width:16px;height:16px;transition:transform .18s;margin-left:auto}
+.cgroup.open .chev{transform:rotate(180deg)}
+.cgsub{font-family:var(--mono);font-weight:400;font-size:11.5px;color:var(--deep);letter-spacing:.04em}
+.cgbody{padding:0 16px 16px}
+.cgbody[hidden]{display:none}
+.endline{font-family:var(--mono);font-size:13px;color:var(--deep);line-height:2;margin-bottom:10px}
+.endline b{font-weight:700;color:var(--ink);background:var(--hl);padding:1px 4px;border-radius:5px}
+/* ---------- tabla de conjugación ---------- */
+.conj{display:flex;flex-direction:column;gap:8px}
+.conj .head{display:grid;gap:10px;align-items:center;font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--deep);padding:0 4px}
+.row{display:grid;gap:10px;align-items:center}
+.row .pron{font-family:var(--text);font-weight:800;font-size:14px;color:var(--ink);text-align:right;padding-right:2px}
+.cellwrap{position:relative;display:flex;align-items:center;gap:9px;min-width:0;flex-wrap:wrap}
+input.ans{
+  width:min(100%,172px);flex:0 0 auto;
+  font-family:var(--text);font-weight:600;font-size:16px;color:var(--ink);
+  background:var(--paper);border:var(--bd-s);border-radius:var(--r-btn);padding:10px 13px;
+  box-shadow:var(--sh-s);transition:transform .12s,box-shadow .12s,background .12s;
+}
+input.ans::placeholder{color:var(--ph);font-weight:400}
+input.ans:focus{outline:none;transform:translate(-2px,-2px);box-shadow:var(--sh);border-color:var(--ink)}
+input.ans:focus-visible{outline:none}
+input.ans.ok{background:var(--ok-bg);border-color:var(--mint)}
+input.ans.bad{background:var(--bad-bg);border-color:var(--coral)}
+input.ans.exans{width:100%;max-width:100%;flex:1 1 auto;display:block}
+input.ans.exansv{width:min(100%,380px);max-width:100%;flex:0 0 auto;display:block}
+textarea.ans{width:100%;min-height:64px;resize:vertical;font-family:var(--text);font-weight:600;font-size:16px;
+  color:var(--ink);background:var(--paper);border:var(--bd-s);border-radius:var(--r-btn);padding:12px 13px;
+  box-shadow:var(--sh-s)}
+textarea.ans.ok{background:var(--ok-bg);border-color:var(--mint)}
+textarea.ans.bad{background:var(--bad-bg);border-color:var(--coral)}
+.fix{font-family:var(--mono);font-size:12.5px;color:var(--coral);margin:0;min-width:0;
+  word-break:break-word;overflow-wrap:anywhere;line-height:1.35}
+.fix b{color:var(--ink);font-weight:500}
+.fix.soft{color:var(--ink-soft)}
+.conj.model .row .pron{font-size:12.5px;font-weight:700;color:var(--ink-soft)}
+.conj.model .staticwrap{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.conj.model .static{font-size:13.5px;padding:7px 10px;background:var(--paper)}
+.conj.model .head{font-size:9.5px}
+.static{
+  font-family:var(--text);font-weight:600;font-size:15px;background:var(--foam);
+  border:var(--bd-s);border-radius:var(--r-btn);padding:9px 13px;box-shadow:var(--sh-s);
+}
+.rowhint{font-family:var(--mono);font-size:11px;color:var(--ink-soft);text-align:right;padding-right:2px}
+/* ---------- botones ---------- */
+.controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:20px}
+.btn{
+  font-family:var(--display);font-weight:600;font-size:15px;border:var(--bd);border-radius:var(--r-btn);
+  text-decoration:none;
+  padding:12px 20px;cursor:pointer;background:var(--paper);color:var(--ink);box-shadow:var(--sh-s);
+  transition:transform .12s,box-shadow .12s;
+}
+@media (hover:hover){.btn:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+.btn:active{transform:translate(2px,2px);box-shadow:var(--sh-xs)}
+.btn:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.btn.primary{background:var(--amber)}
+.btn.sky{background:var(--sky)}
+.btn.small{font-size:13px;padding:9px 14px;border-width:2.5px}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);margin-left:auto}
+/* ---------- interruptor (switch) ---------- */
+.switch{display:inline-flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-soft);cursor:pointer;-webkit-user-select:none;user-select:none}
+.switch input{position:absolute;opacity:0;width:1px;height:1px}
+.switch .track{width:40px;height:23px;border:2px solid var(--ink);border-radius:999px;background:var(--paper);
+  position:relative;flex:none;transition:background .15s;box-shadow:var(--sh-s)}
+.switch .track::after{content:'';position:absolute;top:1.5px;left:1.5px;width:16px;height:16px;border-radius:999px;
+  background:var(--ink);transition:transform .15s}
+.switch input:checked + .track{background:var(--mint)}
+.switch input:checked + .track::after{transform:translateX(17px)}
+.switch input:focus-visible + .track{outline:3px solid var(--amber);outline-offset:2px}
+/* ---------- etiquetas ---------- */
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.pill{
+  display:inline-flex;align-items:center;gap:7px;border:var(--bd-s);border-radius:999px;
+  padding:6px 13px;font-size:12.5px;font-weight:700;background:var(--paper);box-shadow:var(--sh-s);
+}
+.pill.sky{background:var(--sky)}
+.pill.pale{background:var(--pale)}
+.pill.mint{background:var(--mint);color:var(--ink)}
+.pill .code{font-family:var(--mono);font-weight:500;font-size:12px}
+/* ---------- modos ---------- */
+.modes{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+.mode{
+  display:inline-flex;align-items:center;gap:8px;
+  border:var(--bd-s);border-radius:var(--r-btn);background:var(--paper);padding:10px 15px;cursor:pointer;
+  font-family:var(--text);font-weight:700;font-size:13.5px;box-shadow:var(--sh-s);
+  transition:transform .12s,box-shadow .12s;
+}
+.mode[aria-selected="true"]{background:var(--pale)}
+@media (hover:hover){.mode:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+.mode:active{transform:translate(2px,2px);box-shadow:var(--sh-xs)}
+.mode:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.mode.small2{padding:8px 13px;font-size:12.5px}
+/* tick de «ya respondido», igual que el de un tiempo dominado en sus pestañas */
+.mode .done{
+  width:18px;height:18px;border:2px solid var(--ink);border-radius:999px;background:var(--mint);
+  color:var(--ink);font-size:10.5px;display:none;align-items:center;justify-content:center;font-weight:800;
+}
+.mode.answered .done{display:flex}
+/* ---------- enunciados ---------- */
+.prompt{background:var(--sky);border:var(--bd);border-radius:var(--r-card);padding:16px 18px;margin-bottom:18px;box-shadow:var(--sh)}
+.prompt .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);opacity:.72}
+.prompt .v{font-family:var(--display);font-weight:600;font-size:26px;margin-top:2px}
+.prompt .sub{font-size:13.5px;margin-top:4px}
+.sentence{font-family:var(--display);font-weight:500;font-size:21px;line-height:2.1;display:flex;flex-wrap:wrap;align-items:baseline;gap:8px}
+.sentence input.ans{width:min(100%,172px);font-family:var(--text);font-size:16px}
+.sentence .glue{margin-left:-5px}
+.hintchip{font-family:var(--mono);font-size:12px;background:var(--pale);border:var(--bd-s);border-radius:999px;padding:3px 10px;box-shadow:var(--sh-s);white-space:nowrap}
+.banner{border:var(--bd);border-radius:var(--r-card);padding:13px 17px;font-weight:700;font-size:14px;box-shadow:var(--sh-s);margin-top:18px;display:none}
+.banner.show{display:block}
+.banner.good{background:var(--ok-bg)}
+.banner.bad{background:var(--bad-bg)}
+.banner .sub{font-weight:400;font-size:13px;color:var(--ink-soft);margin-top:3px}
+/* ---------- progreso ---------- */
+.bar{height:14px;background:var(--paper);border:var(--bd-s);border-radius:999px;overflow:hidden;box-shadow:var(--sh-s)}
+.bar span,.bar i{display:block;height:100%;background:var(--sky);width:0%;transition:width .35s,background-color .3s}
+.progline{display:flex;align-items:center;gap:14px;margin-top:6px}
+.progline .num{font-family:var(--mono);font-size:12.5px;color:var(--ink-soft);white-space:nowrap}
+/* ---------- verbos irregulares: grid 2x3 ---------- */
+/* align-items:start: cada tarjeta crece con su propio contenido al expandirse,
+   sin que el grid estire las demás de la fila y deje hueco en blanco */
+.irrgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+.irrcard{border:var(--bd-s);border-radius:var(--r-card);background:var(--foam);box-shadow:var(--sh-s);overflow:hidden}
+.irrhead{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;cursor:pointer;
+  padding:14px 15px;text-align:left}
+.irrhead .name{font-family:var(--display);font-weight:700;font-size:17px}
+.irrhead .comp{font-size:12px;color:var(--ink-soft);display:block}
+.irrhead .chev{flex:none;width:15px;height:15px;margin-left:auto;transition:transform .18s}
+.irrcard.open .chev{transform:rotate(180deg)}
+.irrbody{padding:0 15px 15px}
+.irrbody[hidden]{display:none}
+.irrrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 0;border-top:1px dashed var(--hair)}
+.irrrow:first-child{border-top:none}
+.irrrow .p{font-size:12px;color:var(--ink-soft);width:90px;flex:none}
+.irrrow .f{font-family:var(--text);font-weight:600;font-size:14px;flex:1;min-width:0;word-break:break-word;overflow-wrap:anywhere}
+/* ---------- transcripción / dictado ---------- */
+.dictbox{background:var(--pale);border:var(--bd-s);border-radius:var(--r-card);padding:16px 18px;box-shadow:var(--sh-s);
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.playbtn{width:56px;height:56px;flex:none;border:var(--bd);border-radius:16px;background:var(--amber);
+  box-shadow:var(--sh-s);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .12s}
+@media (hover:hover){.playbtn:hover{transform:translate(-2px,-2px)}}
+.playbtn:active{transform:translate(1px,1px)}
+.playbtn svg{width:22px;height:22px}
+.dictmeta{flex:1;min-width:180px}
+.dictmeta .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--deep)}
+.dictmeta .t{font-family:var(--display);font-weight:600;font-size:16px;margin:3px 0 4px}
+.dictmeta .d{font-size:13.5px;color:var(--ink-soft);margin-top:2px;margin-bottom:10px}
+.diffline{margin-top:10px;padding:12px 14px;background:var(--foam);border:var(--bd-s);border-radius:var(--r-card)}
+.diffline .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--deep);margin-bottom:6px}
+.diffline .w-ok{color:var(--mint);font-weight:800}
+.diffline .w-bad{color:var(--coral);font-weight:800}
+.explainbox{margin-top:14px;padding:14px 16px;background:var(--foam);border:var(--bd-s);border-radius:var(--r-card)}
+.explainbox .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--deep);margin-bottom:8px}
+.explainbox .rmini{font-size:13px;margin-bottom:6px;line-height:1.6}
+.explainbox .rmini b{font-weight:800}
+.explainbox .tipmini{display:flex;gap:8px;align-items:flex-start;margin-top:10px;padding-top:10px;
+  border-top:1px dashed var(--hair);font-size:13px;color:var(--amber-900)}
+.explainbox .tipmini svg{width:16px;height:16px;flex:none;margin-top:1px}
+/* ---------- test final ---------- */
+.testcta{margin-bottom:18px}
+.testready{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:var(--amber-50);
+  border:2.5px solid var(--amber-400);border-radius:var(--r-card);padding:16px 18px;box-shadow:var(--sh-s)}
+.testready .cap{font-size:28px;flex:none}
+.testready .txt{flex:1;min-width:180px}
+.testready .k{font-family:var(--display);font-weight:700;font-size:15px}
+.testready .d{font-size:13px;color:var(--ink-soft);margin-top:2px}
+/* franja de bloques del test, al estilo de niveles: uno por mecánica */
+.testlevels{display:flex;gap:8px;margin:14px 0 0}
+.testlevels .seg{flex:1;min-width:0;text-align:center}
+.testlevels .seg .ln{height:4px;border-radius:2px;background:var(--track)}
+.testlevels .seg.done .ln{background:var(--mint)}
+.testlevels .seg.current .ln{background:var(--sky)}
+.testlevels .seg .lbl{margin-top:6px;font-size:10.5px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.testlevels .seg.current .lbl{color:var(--ink);font-weight:800}
+/* la pregunta en sí: mucho más grande y separada de la franja de arriba */
+.testq{font-family:var(--display);font-weight:700;font-size:22px;line-height:1.5;color:var(--ink);margin:28px 0 20px}
+.testq b{font-weight:800}
+.testq .blank{display:inline-block;min-width:2.6em;border-bottom:3px solid var(--ink);text-align:center}
+.testlisten{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:-6px 0 6px}
+.testlistenctx{font-size:13.5px;color:var(--ink-soft)}
+.testopts{display:flex;flex-direction:column;gap:9px;margin-top:16px}
+.optbtn{display:block;width:100%;text-align:left;font-family:var(--text);font-weight:700;font-size:15.5px;
+  color:var(--ink);padding:12px 15px;border:var(--bd-s);border-radius:var(--r-btn);background:var(--paper);
+  box-shadow:var(--sh-s);cursor:pointer;transition:transform .12s,box-shadow .12s}
+@media (hover:hover){.optbtn:hover:not(:disabled){transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+.optbtn:disabled{cursor:default}
+.optbtn.ok{background:var(--ok-bg);border-color:var(--mint)}
+.optbtn.bad{background:var(--bad-bg);border-color:var(--coral)}
+.testfb{margin-top:12px;font-weight:700;font-size:14px}
+.testfb.good{color:var(--mint)}
+.testfb.bad{color:var(--coral)}
+.testscore{font-family:var(--display);font-weight:700;font-size:48px;margin:6px 0}
+.testreview{margin-top:16px;padding:14px 16px;background:var(--foam);border:var(--bd-s);border-radius:var(--r-card);text-align:left}
+.testreview .testreviewrow{font-size:13.5px;margin-top:8px;line-height:1.6}
+.testreview .ok2{color:var(--mint);font-weight:800}
+.testreview .bad2{color:var(--coral)}
+/* ---------- test final · formato EXAM (por fases) ---------- */
+.exphases{display:flex;gap:6px;margin-bottom:18px}
+.exphases .seg{flex:1;min-width:0}
+.exphases .seg .track{height:4px;border-radius:2px;background:var(--track);overflow:hidden}
+.exphases .seg .track i{display:block;height:100%;background:var(--sky);transition:width .3s ease}
+.exphases .seg.done .track i{background:var(--mint);width:100%}
+.exphases .seg .lbl{margin-top:6px;font-size:10.5px;font-weight:800;color:var(--ink-soft);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.exphases .seg.current .lbl{color:var(--ink)}
+.exmarca{display:inline-flex;align-items:center;border:2px solid;border-radius:999px;
+  padding:3px 11px;font-size:12px;font-weight:800}
+.exmarca.ok{color:var(--mint);border-color:var(--mint);background:var(--ok-bg)}
+.exmarca.bad{color:var(--coral);border-color:var(--coral);background:var(--bad-bg)}
+.exmarca.pend{color:var(--ink-soft);border-color:var(--ink-soft);background:var(--pale)}
+.exsent{font-size:19px;font-weight:600;line-height:1.9;margin-bottom:14px}
+.exverdict{display:flex;gap:10px;flex-wrap:wrap}
+.exvbtn{flex:1;min-width:150px;text-align:center;font-family:var(--text);font-weight:800;font-size:15px;
+  color:var(--ink);padding:12px 14px;border:var(--bd-s);border-radius:var(--r-btn);background:var(--paper);
+  box-shadow:var(--sh-s);cursor:pointer;transition:transform .12s,box-shadow .12s}
+@media (hover:hover){.exvbtn:hover:not(:disabled){transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+.excazahint{font-size:13.5px;font-weight:700;color:var(--ink-soft);margin:0 0 10px}
+.exwhy{margin:8px 0 0;font-size:14px;line-height:1.6;font-weight:600}
+.exwhy.ok{color:var(--mint)}
+.exwhy.bad{color:var(--coral)}
+.optbtn.gris{opacity:.45;box-shadow:none}
+.optbtn .exera{float:right;font-size:12.5px;font-weight:800;color:var(--mint)}
+.btn.off{opacity:.45;cursor:default;box-shadow:none}
+.btn.off:hover{transform:none;box-shadow:none}
+.expal{font:inherit;font-size:17px;font-weight:600;color:var(--ink);background:transparent;border:none;
+  border-bottom:2.5px dotted transparent;padding:2px 1px;margin:0 1px;cursor:pointer;border-radius:4px}
+@media (hover:hover){.expal:hover:not(:disabled){border-bottom-color:var(--sky);background:var(--pale)}}
+.expal.ok{background:var(--ok-bg);border-bottom-color:var(--mint)}
+.expal.bad{background:var(--bad-bg);border-bottom-color:var(--coral)}
+.expal:disabled{cursor:default}
+.exhueco{font:inherit;font-size:16px;font-weight:800;text-align:center;color:var(--ink);
+  background:var(--pale);border:none;border-bottom:2.5px solid var(--ink);border-radius:6px 6px 0 0;
+  padding:3px 6px;margin:0 2px}
+.exhueco::placeholder{color:var(--ink-soft);font-weight:600;font-size:13px;font-style:italic}
+.exhueco.ok{background:var(--ok-bg);border-bottom-color:var(--mint)}
+.exhueco.bad{background:var(--bad-bg);border-bottom-color:var(--coral);text-decoration:line-through}
+.exline{display:flex;gap:12px;margin-bottom:12px}
+.exline .who{min-width:56px;font-size:13px;font-weight:900;color:var(--deep);padding-top:6px;flex:none}
+.exline .txt{font-size:16px;font-weight:600;line-height:2.1}
+.exbanda{display:inline-block;margin-top:14px;padding:7px 16px;border-radius:999px;border-width:2.5px;
+  border-style:solid;font-weight:800;font-size:16px;background:var(--paper)}
+.exphaseline{display:flex;justify-content:space-between;font-size:14.5px;font-weight:800;margin-bottom:5px}
+.exphaseline .num{color:var(--ink-soft);font-weight:700}
+.extagrow{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.extagcount{min-width:44px;text-align:center;font-size:12.5px;font-weight:900;padding:3px 0;
+  border-radius:8px;border-width:2px;border-style:solid}
+.extagcount.ok{border-color:var(--mint);background:var(--ok-bg)}
+.extagcount.bad{border-color:var(--coral);background:var(--bad-bg)}
+.exfail{margin-top:16px;padding-top:14px}
+.exfail.sep{border-top:2px solid var(--pale)}
+.exfail .k{font-size:12px;font-weight:800;color:var(--ink-soft);margin-bottom:4px}
+.exfail .q{font-size:16px;font-weight:800;line-height:1.45;margin-bottom:8px}
+.exfail .tuya{font-size:14px;font-weight:700;color:var(--coral);text-decoration:line-through}
+.exfail .buena{font-size:16.5px;font-weight:800;color:var(--mint);margin:2px 0 6px}
+.exfail .why{font-size:13.5px;line-height:1.6;font-weight:600;color:var(--ink-soft)}
+footer{margin-top:26px;font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+/* ---------- aviso de voz no disponible ---------- */
+.voicetoast{position:fixed;left:18px;right:18px;bottom:18px;max-width:420px;margin:0 auto;z-index:999;
+  background:var(--paper);border:var(--bd);border-radius:var(--r-card);box-shadow:var(--sh);
+  padding:14px 16px;font-size:13px;color:var(--ink);display:flex;align-items:flex-start;gap:10px;
+  transform:translateY(140%);transition:transform .25s ease}
+.voicetoast.show{transform:translateY(0)}
+.voicetoast .msg{flex:1;line-height:1.4}
+.voicetoast .close{flex:none;background:none;border:none;cursor:pointer;font-size:19px;line-height:1;
+  color:var(--ink-soft);padding:0 2px}
+.voicetoast .close:hover{color:var(--ink)}
+/* ---------- botón de tema (esquina superior derecha) ---------- */
+.themewrap{margin-left:auto;flex:none}
+.themebtn{width:44px;height:44px;flex:none;border:var(--bd);border-radius:999px;background:var(--paper);color:var(--ink);
+  display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;box-shadow:var(--sh-s);
+  transition:transform .12s,box-shadow .12s}
+@media (hover:hover){.themebtn:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+.themebtn:active{transform:translate(2px,2px);box-shadow:var(--sh-xs)}
+.themebtn:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.themebtn svg{width:21px;height:21px;display:block}
+.themebtn .i-sun{display:none}
+:root[data-theme="dark"] .themebtn .i-moon{display:none}
+:root[data-theme="dark"] .themebtn .i-sun{display:block}
+.themewrap{display:flex;align-items:center;gap:10px}
+/* ---------- modo oscuro ---------- */
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --deep:#5CC7E3; --pale:#1A3440; --foam:#0B171D; --paper:#13242C;
+  --ink:#E6F2F6; --ink-soft:#9DBAC5; --line:#8FB6C4;
+  --coral:#FF8070; --mint:#34D399;
+  --amber-50:#2A2110; --amber-400:#C98A12; --amber-900:#FFD58A;
+  --sh:6px 6px 0 rgba(0,0,0,.55); --sh-s:4px 4px 0 rgba(0,0,0,.55);
+  --sh-l:10px 10px 0 rgba(0,0,0,.55); --sh-xs:2px 2px 0 rgba(0,0,0,.55);
+  --dots:rgba(127,217,234,.09); --hair:rgba(230,242,246,.16); --hair-2:rgba(230,242,246,.28);
+  --track:rgba(230,242,246,.14);
+  --ok-bg:#12372B; --bad-bg:#3A1C19; --hl:#3A2E12; --ph:#7C9AA6;
+  --locked-bg:#101F26; --locked-fg:#6A8793; --locked-bd:#2A424C;
+  --tip-mono:rgba(255,255,255,.09);
+}
+/* superficies de acento (cielo, ámbar, menta): conservan su color y llevan texto oscuro */
+:root[data-theme="dark"] :is(.tab[aria-selected="true"],.chip[aria-selected="true"],.btn.primary,.btn.sky,.pill.sky,
+  .pill.mint,.prompt,.playbtn,.iconbtn.on,.chip .done,.mode .done){--ink:#12303B;--ink-soft:#244753;color:var(--ink)}
+:root[data-theme="dark"] .switch input:checked + .track::after{background:#12303B}
+/* dentro de una superficie de acento, los botones con fondo propio vuelven a la tinta clara */
+:root[data-theme="dark"] .prompt .iconbtn:not(.on){--ink:#E6F2F6;--ink-soft:#9DBAC5}
+:root[data-theme="dark"] .prompt .k{opacity:.9}
+:root[data-theme="dark"] :is(.choice,.mode,.irrhead){color:var(--ink)}
+@media (max-width:640px){
+  .card{padding:17px}
+  .card h2{font-size:20px}
+  .hero{padding:26px 16px}
+  .hero .big{font-size:28px}
+  .sentence{font-size:18px;line-height:1.9}
+  input.ans{width:min(100%,138px)}
+  .sentence input.ans{width:min(100%,138px)}
+  .row .pron{text-align:left}
+  .tab{flex:1;padding:12px 10px;text-align:center}
+  .topbar .right{margin-left:0;width:100%}
+  .irrgrid{grid-template-columns:1fr}
+  .choices{grid-template-columns:1fr}
+  .grid3{grid-template-columns:1fr}
+}
+@media (min-width:641px) and (max-width:860px){
+  .irrgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .choices{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+/* ---------- pantallas táctiles: zonas de pulsación de ~44px ---------- */
+@media (pointer:coarse){
+  .iconbtn{width:44px;height:44px}
+  .iconbtn.small{width:40px;height:40px}
+  .iconbtn.spdbtn,.iconbtn.spdbtn.small{width:auto}
+  .spdbtn{min-width:44px}
+  .spdbtn.small{min-width:40px}
+  .ttswrap{gap:8px}
+  .expal{padding:8px 4px}
+  .chip{padding:12px 16px}
+  .btn.small{padding:12px 16px}
+  .mode.small2{padding:11px 14px}
+  .voicetoast .close{padding:10px 12px;font-size:22px}
+  .switch{min-height:44px}
+}
+@media (pointer:coarse) and (min-width:861px) and (max-width:1250px){
+  .irrgrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+/* casillas ya respondidas: iOS las atenúa; que se vean los colores de acierto/fallo */
+.exhueco:disabled{opacity:1;-webkit-text-fill-color:currentColor}
+/* ---------- aviso si la página no arranca bien / mensaje sin JavaScript ---------- */
+.bootError{margin:16px 0 0;padding:14px 16px;background:var(--bad-bg);color:var(--ink);border:var(--bd-s);border-color:var(--coral);border-radius:var(--r-card);font-size:14.5px;line-height:1.5}
+.bootError[hidden]{display:none}
+.bootError p{margin:0 0 6px}
+.bootError .bootErrorTitle{font-family:var(--display);font-weight:600;font-size:17px}
+.bootError .bootErrorDetail{font-family:var(--mono);font-size:12px;color:var(--ink-soft);word-break:break-word}
+.nojs{display:none;max-width:640px;margin:8px auto 0;text-align:left;font-size:16px;line-height:1.55}
+/* sin la marca «js» (el script de <head> no se ejecutó) se ve el aviso y se oculta lo que no sirve sin JavaScript */
+html:not(.js) .nojs{display:block}
+html:not(.js) .themewrap,html:not(.js) #welcome .hero .big,html:not(.js) footer{display:none!important}
+.nojs .nojsTitle{font-family:var(--display);font-weight:600;font-size:24px;line-height:1.2;margin:0 0 10px}
+.nojs p{margin:0 0 10px}
+/* ======================================================================================================
+   Aspecto «Vocabulando» en las pantallas de práctica (todo cuelga de body.vcb, que se pone al elegir idioma).
+   La pantalla de bienvenida no cambia: en Vocabulando también es así. Paleta, tipos y formas de Vocabulando:
+   tarjetas planas con borde fino, acento azul, Bricolage Grotesque + Inter + IBM Plex Mono.
+   ====================================================================================================== */
+.langchip[hidden]{display:none}
+body.vcb{
+  --r-btn:11px; --r-card:14px; --r-main:14px;
+  --bd:1px solid var(--line); --bd-s:1px solid var(--line);
+  --sh:0 1px 2px rgba(20,32,46,.10); --sh-s:none; --sh-xs:none; --sh-l:0 10px 30px -18px rgba(20,32,46,.4);
+  --display:'Bricolage Grotesque','Trebuchet MS',sans-serif;
+  --text:'Inter','Segoe UI',system-ui,sans-serif;
+  --mono:'IBM Plex Mono','SFMono-Regular',ui-monospace,monospace;
+  --vbg-top:#EEF1F6; --vbg:#E7EAF0;
+  --paper:#FFFFFF; --foam:#F7F9FC; --pale:#EEF1F7; --sky:#E7ECFC; --chipbg:#FFFFFF;
+  --ink:#14202E; --ink-soft:#64707F; --line:#D4DAE3;
+  --accent:#2748D6; --accent-soft:#E7ECFC; --deep:#2748D6; --amber:#2748D6; --mint:#17936F; --coral:#CC4436;
+  --ok-bg:#E4F5EE; --bad-bg:#FBE9E6; --hl:#E7ECFC; --ph:#9AA6B4; --hair:#D4DAE3; --hair-2:#C3CBD7; --track:#D4DAE3;
+  --locked-bg:#F1F4F9; --locked-fg:#9AA6B4; --locked-bd:#D4DAE3; --tip-mono:rgba(176,116,26,.12);
+  --amber-50:#FFF7EE; --amber-400:#E08A1E; --amber-900:#7A4B0A;
+  --tabs-bg:#DEE3EC; --tab-on:#FFFFFF; --switch-off:#CBD3DE;
+  font-family:var(--text); line-height:1.45;
+  background:radial-gradient(120% 90% at 50% -10%, var(--vbg-top) 0%, var(--vbg) 55%) fixed;
+}
+:root[data-theme="dark"] body.vcb{
+  --vbg-top:#18222F; --vbg:#0E141D;
+  --paper:#161E2A; --foam:#0F1721; --pale:#1C2531; --sky:#1E2A47; --chipbg:#1C2531;
+  --ink:#E7ECF3; --ink-soft:#8C99AB; --line:#28323F;
+  --accent:#5B79F0; --accent-soft:#1E2A47; --deep:#5B79F0; --amber:#5B79F0; --mint:#3FBF8E; --coral:#E56B5E;
+  --ok-bg:#14342A; --bad-bg:#3A2320; --hl:#1E2A47; --ph:#6B7788; --hair:#28323F; --hair-2:#33404F; --track:#28323F;
+  --locked-bg:#1C2531; --locked-fg:#6B7788; --locked-bd:#28323F; --tip-mono:rgba(232,169,62,.14);
+  --amber-50:#2A2213; --amber-400:#E8A93E; --amber-900:#F1D49B;
+  --tabs-bg:#1C2531; --tab-on:#2E3A49; --switch-off:#33404F;
+  --sh:0 1px 2px rgba(0,0,0,.4); --sh-l:0 10px 30px -18px rgba(0,0,0,.7);
+}
+/* el modo oscuro de antes pintaba de «tinta oscura» las superficies de acento: aquí no */
+:root[data-theme] body.vcb :is(.tab[aria-selected="true"],.chip[aria-selected="true"],.btn.primary,.btn.sky,.pill.sky,.pill.mint,.prompt,.playbtn,.iconbtn.on,.chip .done,.mode .done),
+:root[data-theme] body.vcb .prompt .iconbtn:not(.on){--ink:inherit;--ink-soft:inherit}
+:root[data-theme] body.vcb .switch input:checked + .track::after{background:#fff}
+body.vcb .wrap{padding:0 20px}
+body.vcb :is(.brandbtn,.tab,.chip,.btn,.mode,.iconbtn,.themebtn,.langchip,.appchip,.optbtn,.exvbtn,.cghead,.irrhead,.expal):focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+body.vcb :is(.tab,.chip,.btn,.mode,.iconbtn,.themebtn,.langchip,.appchip,.optbtn,.exvbtn,.playbtn):is(:hover,:active){transform:none}
+
+/* ---------- cabecera: marca, pestañas, idioma, enlace y tema, como en Vocabulando ---------- */
+body.vcb .topbar{align-items:flex-end;justify-content:space-between;gap:16px;padding:28px 0 0;margin-bottom:22px}
+body.vcb .brand{display:flex;flex-direction:column-reverse}
+body.vcb .brand h1{font-family:var(--display);font-weight:800;font-size:26px;letter-spacing:-.02em;line-height:1;text-transform:none}
+body.vcb .brandbtn::after{content:".";color:var(--accent)}
+body.vcb .brand .eyebrow{margin:6px 0 0;font-size:11px;letter-spacing:.14em}
+body.vcb .themewrap{margin-left:auto;display:flex;align-items:center;gap:10px}
+body.vcb .tabs{display:flex;gap:4px;margin:0;padding:4px;background:var(--tabs-bg);border-radius:999px}
+body.vcb .tab{border:0;background:transparent;box-shadow:none;border-radius:999px;padding:8px 16px;font-family:var(--text);font-size:14px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink-soft)}
+body.vcb .tab[aria-selected="true"]{background:var(--tab-on);color:var(--ink);box-shadow:0 1px 2px rgba(20,32,46,.12)}
+body.vcb .langchip{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 13px 0 11px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-family:var(--mono);font-size:12px;letter-spacing:.08em;cursor:pointer}
+body.vcb .langchip:hover{border-color:var(--accent)}
+body.vcb .langchip .flag{width:19px;height:13px;border:0;border-radius:2px;box-shadow:0 0 0 1px rgba(20,32,46,.14);margin:0}
+body.vcb .themebtn{width:38px;height:38px;padding:0;gap:0;justify-content:center;border:1px solid var(--line);border-radius:999px;background:var(--paper);box-shadow:none}
+body.vcb .themebtn:hover{border-color:var(--accent)}
+body.vcb .themebtn svg{width:18px;height:18px}
+
+/* ---------- etiquetas, tarjetas y textos ---------- */
+body.vcb .eyebrow{font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.14em;color:var(--ink-soft);margin:0 0 6px}
+body.vcb .card,body.vcb .card.main{background:var(--paper);border:1px solid var(--line);border-radius:var(--r-card);box-shadow:none;padding:22px}
+body.vcb .card h2{font-family:var(--display);font-weight:700;font-size:22px;letter-spacing:-.01em;margin:0 0 4px}
+body.vcb .card h3{font-family:var(--display);font-weight:700;font-size:16px;letter-spacing:-.01em}
+body.vcb .lead,body.vcb .subhead{color:var(--ink-soft)}
+body.vcb .subhead{background:var(--foam);border-left:3px solid var(--accent)}
+body.vcb .rule,body.vcb .cgroup,body.vcb .irrcard,body.vcb .diffline,body.vcb .explainbox,body.vcb .testreview{background:var(--foam);border:1px solid var(--line);border-radius:12px;box-shadow:none}
+body.vcb .rule .t,body.vcb .cghead,body.vcb .irrhead .name,body.vcb .sample .es,body.vcb .dictmeta .t{font-family:var(--display);font-weight:700}
+body.vcb .rule .e,body.vcb .endline{color:var(--accent)}
+body.vcb .endline b{color:var(--ink);background:var(--hl)}
+body.vcb .conj .head,body.vcb .dictmeta .k,body.vcb .diffline .k,body.vcb .explainbox .k,body.vcb .cgsub,body.vcb .exline .who{color:var(--ink-soft)}
+body.vcb .sample,body.vcb .dictbox{background:var(--pale);border:1px solid var(--line);border-radius:12px;box-shadow:none}
+body.vcb .sample .tgtrow{border-top:1px dashed var(--hair-2)}
+body.vcb .tip,body.vcb .testready{background:var(--amber-50);border:1px solid var(--amber-400);border-radius:12px;box-shadow:none}
+body.vcb .tip .tiphead{font-family:var(--mono);font-weight:500;font-size:11px;letter-spacing:.12em}
+body.vcb .flag{border:0;box-shadow:0 0 0 1px rgba(20,32,46,.14)}
+
+/* ---------- botones, chips, modos y controles ---------- */
+body.vcb .btn{font-family:var(--text);font-weight:600;font-size:15px;border:1px solid var(--line);border-radius:11px;background:transparent;color:var(--ink);box-shadow:none;padding:12px 18px;transition:background .15s,filter .15s,transform .08s}
+body.vcb .btn:hover{background:var(--pale)}
+body.vcb .btn:active{transform:translateY(1px);filter:brightness(.95)}
+body.vcb .btn.primary{background:var(--accent);border-color:transparent;color:#fff}
+body.vcb .btn.primary:hover{background:var(--accent);filter:brightness(1.06)}
+body.vcb .btn.sky{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
+body.vcb .btn.small{font-size:13px;padding:9px 14px}
+body.vcb .btn.off,body.vcb .btn.off:hover{opacity:.5;box-shadow:none;background:transparent}
+body.vcb .chip{border:1px solid var(--line);background:var(--chipbg);box-shadow:none;font-family:var(--text);font-weight:600;font-size:13.5px;padding:8px 14px;color:var(--ink)}
+body.vcb .chip:hover{border-color:var(--accent)}
+body.vcb .chip[aria-selected="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+body.vcb .chip.locked{background:var(--locked-bg);color:var(--locked-fg);border-color:var(--locked-bd)}
+body.vcb .subtabs{scrollbar-color:var(--line) transparent;scrollbar-width:thin}
+body.vcb .subtabs::-webkit-scrollbar{height:6px}
+body.vcb .subtabs::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+body.vcb .subtabs::-webkit-scrollbar-track{background:transparent}
+body.vcb .chip .done,body.vcb .mode .done{border:0;background:var(--mint);color:#fff}
+
+/* ---------- idioma: lista desplegable sobre el propio botón ---------- */
+.langwrap{position:relative;display:inline-flex}
+.langwrap[hidden]{display:none}
+.langchip::after{content:"";width:5px;height:5px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(45deg);margin:-3px 0 0 2px;opacity:.7}
+.langchip[aria-expanded="true"]{border-color:var(--accent, var(--amber))}
+.langchip[aria-expanded="true"]::after{transform:rotate(-135deg);margin-top:3px}
+.langmenu{position:absolute;top:calc(100% + 8px);right:0;z-index:40;min-width:230px;max-width:calc(100vw - 32px);max-height:min(70vh,480px);overflow:auto;
+  padding:6px;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 50px -20px rgba(0,0,0,.55)}
+.langmenu[hidden]{display:none}
+.langopt{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:0;border-radius:9px;background:transparent;color:var(--ink);
+  font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.langopt:hover,.langopt:focus-visible{background:var(--accent-soft, var(--foam));outline:none}
+.langopt[aria-selected="true"]{color:var(--accent, var(--deep));font-weight:700}
+.langopt .lnat{margin-left:auto;color:var(--ink-soft);font-size:12px;font-weight:400}
+.langopt .flag{width:24px;height:16px;flex:none;margin:0;border:0;border-radius:3px;box-shadow:0 0 0 1px rgba(20,32,46,.14)}
+/* ---------- cambio de web: desplegable con el logo de cada app ---------- */
+.appwrap{position:relative;display:inline-flex;flex:none;--ap-bg:var(--paper);--ap-line:var(--line);--ap-ink:var(--ink);--ap-soft:var(--ink-soft);--ap-acc:var(--accent,var(--amber));--ap-hover:var(--accent-soft,var(--foam))}
+.appwrap[hidden]{display:none}
+.appchip{display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 11px 0 7px;border-radius:999px;border:1px solid var(--ap-line);background:var(--ap-bg);color:var(--ap-ink);cursor:pointer;font:inherit}
+.appchip:hover,.appchip[aria-expanded="true"]{border-color:var(--ap-acc)}
+.appchip:focus-visible{outline:2px solid var(--ap-acc);outline-offset:2px}
+.appchip::after{content:"";width:5px;height:5px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(45deg);margin:-3px 0 0 2px;opacity:.7}
+.appchip[aria-expanded="true"]::after{transform:rotate(-135deg);margin-top:3px}
+.applogo{width:24px;height:24px;flex:none;display:block;border-radius:7px}
+.appmenu{position:absolute;top:calc(100% + 8px);right:0;z-index:40;min-width:268px;max-width:calc(100vw - 32px);padding:6px;background:var(--ap-bg);border:1px solid var(--ap-line);border-radius:14px;box-shadow:0 20px 50px -20px rgba(0,0,0,.55)}
+.appmenu[hidden]{display:none}
+.appopt{display:flex;align-items:center;gap:12px;width:100%;box-sizing:border-box;padding:9px 10px;border:0;border-radius:9px;background:transparent;color:var(--ap-ink);font:inherit;font-size:14px;text-align:left;text-decoration:none;cursor:pointer}
+.appopt:hover,.appopt:focus-visible{background:var(--ap-hover);outline:none}
+.appopt .applogo{width:34px;height:34px;border-radius:10px}
+.appopt .apptx{display:flex;flex-direction:column;gap:1px;line-height:1.25;min-width:0}
+.appopt .appnm{font-weight:700;font-size:15px}
+.appopt .appsb{color:var(--ap-soft);font-size:12px;font-weight:400}
+.appopt[aria-current="page"]{color:var(--ap-acc);cursor:default}
+.appopt[aria-current="page"] .appsb{color:var(--ap-soft)}
+.appopt[aria-current="page"]::after{content:"";margin-left:auto;width:5px;height:10px;border:solid currentColor;border-width:0 2px 2px 0;transform:rotate(45deg) translate(-2px,-2px);flex:none}
+body:not(.vcb) .appchip{height:44px;padding:0 12px 0 9px;border:var(--bd);box-shadow:var(--sh-s);transition:transform .12s,box-shadow .12s}
+body:not(.vcb) .appchip .applogo{width:28px;height:28px;border-radius:8px}
+@media (hover:hover){body:not(.vcb) .appchip:hover{transform:translate(-2px,-2px);box-shadow:var(--sh)}}
+body:not(.vcb) .appchip:active{transform:translate(2px,2px);box-shadow:var(--sh-xs)}
+body:not(.vcb) .appchip:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+body:not(.vcb) .appmenu{border:var(--bd);border-radius:16px;box-shadow:var(--sh)}
+
+/* ---------- ayuda: cómo funciona (ventana) ---------- */
+.modal-overlay{position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(10,16,25,.55)}
+.modal-lg{background:var(--paper);color:var(--ink);border:var(--bd);border-radius:var(--r-card);box-shadow:var(--sh-l);width:100%;max-width:640px;
+  max-height:min(86vh,820px);overflow:auto;overscroll-behavior:contain;padding:22px 26px 26px;font-family:var(--text)}
+.modal-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.modal-title{margin:0;font-family:var(--display);font-weight:700;font-size:20px}
+.modal-x{padding:0 6px;border:0;border-radius:7px;background:transparent;color:var(--ink-soft);font-size:28px;line-height:1;cursor:pointer}
+.modal-x:hover{color:var(--ink)}
+.modal-x:focus-visible{outline:2px solid var(--accent, var(--amber));outline-offset:2px}
+.info-body h3{margin:22px 0 6px;font-family:var(--display);font-size:15px;font-weight:700}
+.info-body p,.info-body li{font-size:14px;line-height:1.55;color:var(--ink)}
+.info-body p{margin:8px 0 0}
+.info-body ul{margin:4px 0 0;padding-left:20px}
+.info-body li{margin:5px 0}
+.info-body .muted-note{color:var(--ink-soft)}
+.info-status{display:flex;gap:10px;align-items:flex-start;margin:4px 0 0;padding:10px 12px;border:1px solid var(--hair-2);border-radius:10px;font-size:14px;line-height:1.5}
+.sdot{flex:none;width:9px;height:9px;margin-top:6px;border-radius:50%;background:var(--coral)}
+.sdot.ok{background:var(--mint)}
+.info-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+body.modal-open{overflow:hidden}
+
+/* ---------- tiempo dominado: test final terminado y guardado → botón dorado ---------- */
+:root{--gold-a:#FCE9A6;--gold-b:#EDBA32;--gold-bd:#A8740A;--gold-fg:#3A2700}
+:root[data-theme="dark"]{--gold-a:#F6D777;--gold-b:#D9A21E;--gold-bd:#FFE08A;--gold-fg:#2A1C00}
+.chip .star{display:none;width:16px;height:16px;flex:none}
+.chip .star svg{width:100%;height:100%;display:block}
+.chip.gold .star{display:inline-flex}
+.chip.gold .done{display:none}
+body .chip.gold,body.vcb .chip.gold,body.vcb .chip.gold[aria-selected="true"]{background:linear-gradient(135deg,var(--gold-a),var(--gold-b));border-color:var(--gold-bd);color:var(--gold-fg)}
+body .chip.gold[aria-selected="true"]{box-shadow:inset 0 0 0 2px var(--gold-fg)}
+body.vcb .chip.gold:hover{border-color:var(--gold-fg)}
+.goldnote{display:flex;gap:10px;align-items:flex-start;max-width:480px;margin:14px auto 0;padding:10px 14px;border:1px solid var(--gold-bd);border-radius:12px;
+  background:linear-gradient(135deg,var(--gold-a),var(--gold-b));color:var(--gold-fg);font-size:14px;line-height:1.45;text-align:left;font-weight:600}
+.goldnote.soft{background:var(--foam);border:1px dashed var(--hair-2);color:var(--ink-soft)}
+.goldnote .gstar{flex:none;width:20px;height:20px;margin-top:1px}
+.goldnote .gstar svg{width:100%;height:100%;display:block}
+:root{--gold-text:#7A5200}
+:root[data-theme="dark"]{--gold-text:#F6D777}
+.choice .cstats{align-self:stretch;margin-top:auto;padding-top:14px;display:flex;flex-direction:column;gap:7px}
+.choice .crow{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;color:var(--ink-soft)}
+.choice .cbadge{display:inline-flex;align-items:center;gap:5px;min-height:30px;padding:0 13px;border:var(--bd-s);border-radius:999px;background:var(--foam);color:var(--ink-soft);font-family:var(--mono);font-size:13px;font-weight:600;line-height:1;box-shadow:var(--sh-xs)}
+.choice .crow.on .cbadge{background:linear-gradient(135deg,var(--gold-a),var(--gold-b));border-color:var(--gold-bd);color:var(--gold-fg)}
+.retrynote{font-size:13px;color:var(--ink-soft);margin:0 0 12px}
+body.vcb .mode{border:1px solid var(--line);background:var(--chipbg);box-shadow:none;border-radius:10px;font-family:var(--text);font-weight:600;color:var(--ink)}
+body.vcb .mode:hover{border-color:var(--accent)}
+body.vcb .mode[aria-selected="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+body.vcb .pill{border:1px solid var(--line);background:var(--paper);box-shadow:none;font-weight:600}
+body.vcb .pill.sky{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+body.vcb .pill.pale{background:var(--pale)}
+body.vcb .pill.mint{background:var(--ok-bg);color:var(--mint);border-color:var(--mint)}
+body.vcb .iconbtn{border:1px solid var(--line);background:var(--paper);box-shadow:none}
+body.vcb .iconbtn:hover{border-color:var(--accent)}
+body.vcb .iconbtn.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+body.vcb .hintchip{border:1px solid var(--line);background:var(--pale);box-shadow:none}
+body.vcb .switch .track{width:34px;height:20px;border:0;background:var(--switch-off);box-shadow:none}
+body.vcb .switch .track::after{top:2px;left:2px;width:16px;height:16px;background:#fff;box-shadow:0 1px 2px rgba(20,32,46,.3)}
+body.vcb .switch input:checked + .track{background:var(--accent)}
+body.vcb .switch input:checked + .track::after{transform:translateX(14px)}
+body.vcb .switch input:focus-visible + .track{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- campos de respuesta ---------- */
+body.vcb input.ans,body.vcb textarea.ans{background:var(--foam);border:1px solid var(--line);border-radius:10px;box-shadow:none;font-family:var(--text);font-weight:500;padding:10px 13px;transition:border-color .15s,box-shadow .15s}
+body.vcb input.ans:focus,body.vcb textarea.ans:focus{transform:none;box-shadow:0 0 0 3px var(--accent-soft);border-color:var(--accent)}
+body.vcb input.ans.ok,body.vcb textarea.ans.ok{background:var(--ok-bg);border-color:var(--mint)}
+body.vcb input.ans.bad,body.vcb textarea.ans.bad{background:var(--bad-bg);border-color:var(--coral)}
+body.vcb .static{background:var(--foam);border:1px solid var(--line);border-radius:10px;box-shadow:none;font-weight:500}
+body.vcb .conj.model .static{background:var(--paper)}
+body.vcb .row .pron{font-weight:600}
+
+/* ---------- enunciado (como la «karte» de Vocabulando), avisos y progreso ---------- */
+body.vcb .prompt{position:relative;overflow:hidden;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px 20px 16px;box-shadow:0 10px 30px -18px rgba(20,32,46,.4)}
+body.vcb .prompt::after{content:"";position:absolute;top:0;left:0;right:0;height:5px;background:linear-gradient(90deg,var(--accent),#5B79F0)}
+body.vcb .prompt .k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;color:var(--ink-soft);opacity:1}
+body.vcb .prompt .v{font-family:var(--display);font-weight:700;font-size:28px;letter-spacing:-.015em}
+body.vcb .sentence,body.vcb .testq{font-family:var(--display)}
+body.vcb .banner{border:1px solid var(--line);box-shadow:none}
+body.vcb .banner.good{border-color:var(--mint)}
+body.vcb .banner.bad{border-color:var(--coral)}
+body.vcb .bar{height:10px;background:var(--foam);border:1px solid var(--line);box-shadow:none}
+body.vcb .bar span,body.vcb .bar i,body.vcb .testlevels .seg.current .ln,body.vcb .exphases .seg .track i{background:var(--accent)}
+body.vcb .testlevels .seg.done .ln{background:var(--mint)}
+body.vcb .exphases .seg.done .track i{background:var(--mint)}
+
+/* ---------- dictado, test y examen ---------- */
+body.vcb .playbtn{background:var(--accent);border:0;border-radius:14px;box-shadow:none}
+body.vcb .playbtn svg{fill:#fff}
+body.vcb .optbtn,body.vcb .exvbtn{border:1px solid var(--line);background:var(--paper);box-shadow:none;border-radius:11px;font-family:var(--text);font-weight:600;color:var(--ink)}
+body.vcb .optbtn:hover:not(:disabled),body.vcb .exvbtn:hover:not(:disabled){border-color:var(--accent);box-shadow:none}
+body.vcb .optbtn.ok{background:var(--ok-bg);border-color:var(--mint)}
+body.vcb .optbtn.bad{background:var(--bad-bg);border-color:var(--coral)}
+body.vcb .optbtn.gris{box-shadow:none}
+body.vcb .exbanda{background:var(--paper);border-width:1px}
+body.vcb .extagcount{border-width:1px}
+body.vcb .exmarca{border-width:1px}
+body.vcb .expal:hover:not(:disabled){border-bottom-color:var(--accent);background:var(--accent-soft)}
+body.vcb .exhueco{background:var(--foam)}
+body.vcb .exfail.sep{border-top:1px solid var(--line)}
+body.vcb .voicetoast{border:1px solid var(--line);box-shadow:0 10px 30px -18px rgba(0,0,0,.5)}
+body.vcb footer{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--ink-soft)}
+@media (max-width:640px){
+  body.vcb .themewrap{width:100%;margin-left:0;flex-wrap:wrap;row-gap:8px}   /* si no caben en una fila, las pestañas ocupan la primera y los botones pasan a la siguiente */
+  body.vcb .tabs{flex:1 1 auto}
+  body.vcb .tab{flex:1;padding:8px 10px;text-align:center}
+}
+@media (max-width:480px){
+  body.vcb .tabs{flex:1 1 100%}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+
+/* ---------- Declinario: tablas de teoría y cuadrícula de práctica ---------- */
+.dtablewrap{overflow-x:auto;margin:6px 0 4px}
+.dtable{border-collapse:separate;border-spacing:0;font-size:14.5px;min-width:100%}
+.dtable th,.dtable td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--hair);white-space:nowrap}
+.dtable th{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);font-weight:500}
+.dtable th.rowh{text-transform:none;letter-spacing:0;font-family:var(--text);font-size:13.5px;font-weight:700;color:var(--ink);background:var(--foam)}
+.dtable td{font-weight:600}
+.dtable td.none{color:var(--ink-soft);font-weight:400}
+.dgwrap{overflow-x:auto;margin:6px 0 14px;padding-bottom:4px}
+.dgrid{display:grid;grid-template-columns:minmax(120px,max-content) repeat(var(--cols),minmax(120px,1fr));gap:8px 10px;align-items:start;min-width:min-content}
+.dg.head{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);padding:0 2px}
+.dg.rowh{font-weight:700;font-size:13.5px;padding-top:11px}
+.dg.cell{position:relative;min-width:0}
+.dg.cell .static{display:block;padding-top:11px;color:var(--ink-soft)}
+.dg.cell input.ans{width:100%;min-width:0}
+.dg.cell .fix{display:block;margin-top:3px}
+.sentence .cellwrap{width:min(100%,172px);flex:0 0 auto}   /* sin esto la casilla de la frase reserva el ancho natural de un campo de texto */
+@media (max-width:640px){.sentence .cellwrap{width:min(100%,138px)}}
+/* ======================================================================================================
+   Mundario: tablas de «Aprender» y preguntas de «Practicar» (todo con las variables de color de arriba,
+   así que sirve igual en claro, en oscuro y con el aspecto de Vocabulando)
+   ====================================================================================================== */
+.lbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px 18px;margin:0 0 14px}
+.tipp{margin:0;font-size:13.5px;line-height:1.5}
+.card h2 .pill{vertical-align:middle;margin-left:8px;font-family:var(--text);font-size:12px;padding:3px 10px}
+.mt{border:var(--bd-s);border-radius:var(--r-card);background:var(--paper);box-shadow:var(--sh-s);overflow:hidden}
+.mt-head,.mt-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) 40px;gap:12px;align-items:center;padding:11px 16px}
+.mt-head{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);background:var(--foam);padding-top:9px;padding-bottom:9px}
+.mt-row{border-top:1px dashed var(--hair-2)}
+.mt-es{font-weight:700;font-size:15px;line-height:1.35;overflow-wrap:anywhere}
+.mt-es small,.mt-tg small{display:block;font-weight:400;font-size:12px;color:var(--ink-soft);margin-top:1px}
+.mt-tg{font-family:var(--display);font-weight:600;font-size:17px;line-height:1.35;min-width:0;overflow-wrap:anywhere}
+.mt-tg small{font-family:var(--text)}
+.mt.cover .mt-row{cursor:pointer}
+.mt.cover .mt-row:not(.open) .mt-tg{filter:blur(7px);user-select:none;-webkit-user-select:none}
+.qnode{display:block}
+.qv{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.qv .v{overflow-wrap:anywhere}
+.qrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:14px}
+.qrow:empty{display:none}
+.optn{display:inline-flex;width:22px;height:22px;flex:none;align-items:center;justify-content:center;border:2px solid var(--ink-soft);border-radius:999px;
+  font-family:var(--mono);font-size:11px;font-weight:800;color:var(--ink-soft);margin-right:11px;vertical-align:1px}
+.optbtn.ok .optn,.optbtn.bad .optn{color:var(--ink);border-color:var(--ink)}
+.testresult{text-align:center}
+.testresult .testready{text-align:left;margin:14px 0}
+.testresult .controls{justify-content:center}
+.testresult .testreview{text-align:left}
+.progline{margin:4px 0 6px}
+@media (max-width:640px){
+  .mt-head,.mt-row{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) 36px;padding:10px 12px;gap:8px}
+  .mt-tg{font-size:16px}
+  .mt-es{font-size:14px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bootError" id="bootError" role="alert" hidden>
+    <p class="bootErrorTitle" id="bootErrorTitle">La página no ha podido arrancar bien.</p>
+    <p>Prueba a recargarla. Si sigue igual, haz una captura de este aviso y envíasela a quien te pasó el archivo.</p>
+    <p class="bootErrorDetail" id="bootErrorText"></p>
+    <button type="button" class="btn small" id="bootErrorClose">Cerrar</button>
+  </div>
+  <div class="topbar">
+    <div class="brand">
+      <p class="eyebrow" id="eyebrow">Sala de datos clave</p>
+      <h1><button class="brandbtn" id="brandBtn" type="button" aria-label="Ir al inicio de Mundario">Mundario</button></h1>
+    </div>
+    <div class="themewrap">
+      <div class="langwrap" id="langWrap" hidden>
+        <button class="langchip" id="langChip" type="button" hidden aria-haspopup="listbox" aria-expanded="false" title="Cambiar de idioma" aria-label="Cambiar de idioma"></button>
+        <div class="langmenu" id="langMenu" role="listbox" aria-label="Idioma" hidden></div>
+      </div>
+      <div class="appwrap" id="appWrap" hidden>
+        <button class="appchip" id="appChip" type="button" aria-haspopup="menu" aria-expanded="false" title="Cambiar de web"></button>
+        <div class="appmenu" id="appMenu" role="menu" aria-label="Webs" hidden></div>
+      </div>
+      <button class="themebtn" id="themeBtn" type="button" aria-pressed="false" aria-label="Modo oscuro" title="Activar el modo oscuro">
+        <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+        <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M18.7 5.3l-1.6 1.6M6.9 17.1l-1.6 1.6"/></svg>
+      </button>
+      <button class="themebtn" id="infoBtn" type="button" aria-haspopup="dialog" aria-label="Cómo funciona" title="Cómo funciona"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r=".7" fill="currentColor" stroke-width="1"/></svg></button>
+    </div>
+  </div>
+  <script>
+  /* tema claro / oscuro: data-theme ya viene puesto por el script de <head>; esto conecta el botón.
+     Va en su propio script para que el botón funcione aunque el script principal fallara. */
+  (function(){
+    var KEY = 'mundario-theme', SHARED = 'idiomas:theme';   /* SHARED: la comparte con las demás webs */
+    var root = document.documentElement;
+    var btn = document.getElementById('themeBtn');
+    var mq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+    var chosen = false;                       /* elección hecha en esta sesión (aunque no se pueda guardar) */
+    function saved(){ try{ var v = localStorage.getItem(SHARED); if(v !== 'dark' && v !== 'light') v = localStorage.getItem(KEY); return (v === 'dark' || v === 'light') ? v : null; }catch(e){ return null; } }
+    function apply(theme){
+      var dark = theme === 'dark';
+      root.setAttribute('data-theme', dark ? 'dark' : 'light');
+      btn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+      btn.title = dark ? 'Volver al modo claro' : 'Activar el modo oscuro';
+    }
+    apply(root.getAttribute('data-theme'));
+    btn.addEventListener('click', function(){
+      var next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      chosen = true;
+      apply(next);
+      try{ localStorage.setItem(KEY, next); localStorage.setItem(SHARED, next); }catch(e){ /* sin almacenamiento: vale para esta sesión */ }
+    });
+    /* sin elección propia ni guardada, sigue al sistema */
+    function onSystem(e){ if(!chosen && !saved()) apply(e.matches ? 'dark' : 'light'); }
+    if(mq){ if(mq.addEventListener) mq.addEventListener('change', onSystem); else if(mq.addListener) mq.addListener(onSystem); }
+    /* otra pestaña ha cambiado el tema */
+    window.addEventListener('storage', function(e){ if((e.key === KEY || e.key === SHARED) && (e.newValue === 'dark' || e.newValue === 'light')) apply(e.newValue); });
+  })();
+  </script>
+  <script>
+  (function(){
+    /* cambio de web: desplegable con el logo de cada app. Solo aparece al abrir los archivos del disco (donde las rutas relativas
+       funcionan); si algún día se publican, pon aquí las direcciones completas. El idioma abierto (#pt) y el tema viajan con el enlace. */
+    var CUR = 'mundario';
+    var APPS = [
+      {id:'vocabulando', name:'Vocabulando', sub:'Vocabulario y frases', url:'../Vocabulando/Vocabulando.html'},
+      {id:'conjugario',  name:'Conjugario',  sub:'Conjugaciones',        url:'../Conjugario/index.html'},
+      {id:'declinario',  name:'Declinario',  sub:'Declinaciones y pronombres', url:'../Declinario/index.html'},
+      {id:'mundario',    name:'Mundario',    sub:'Números, hora, países y más', url:'../Mundario/index.html'}
+    ];
+    var ST = " fill='none' stroke='#FFFFFF' stroke-width='7.2' stroke-linecap='round' stroke-linejoin='round'";
+    var GLYPH = {
+      vocabulando: "<path d='M14.5 19 L27 45.5 L39.5 19'" + ST + "/>",
+      conjugario:  "<path d='M35.36 22.54 A13 13 0 1 0 35.36 42.46'" + ST + "/>",
+      declinario:  "<path d='M17.5 19 H26 A13.25 13.25 0 0 1 26 45.5 H17.5 Z'" + ST + "/>",
+      mundario:    "<path d='M13.5 45 V20 L24.75 34 L36 20 V45'" + ST + "/>"
+    };
+    var nLogo = 0;
+    function logo(id){
+      var g = 'sibg' + (++nLogo);
+      return '<svg class="applogo" viewBox="0 0 64 64" aria-hidden="true" focusable="false"><defs><linearGradient id="' + g + '" x1="0" y1="0" x2="1" y2="1">' +
+        '<stop offset="0" stop-color="#5B7BF4"/><stop offset="1" stop-color="#2748D6"/></linearGradient></defs>' +
+        '<rect width="64" height="64" rx="15" fill="url(#' + g + ')"/>' + GLYPH[id] + '<circle cx="49" cy="44.2" r="4.9" fill="#FFB020"/></svg>';
+    }
+    function usable(u){ return /^https?:\/\//i.test(u) || location.protocol === 'file:'; }
+    function theme(){
+      try{ if(window.__sibTheme) return window.__sibTheme(); }catch(e){}
+      return document.documentElement.getAttribute('data-theme');
+    }
+    function sendTheme(){ var t = theme(); if(t === 'dark' || t === 'light'){ try{ localStorage.setItem('idiomas:theme', t); }catch(e){} } }
+    function menuOf(w){ return w.querySelector('.appmenu'); }
+    function chipOf(w){ return w.querySelector('.appchip'); }
+    function build(w){
+      var h = /^#[a-z]{2}$/.test(location.hash) ? location.hash : '';
+      menuOf(w).innerHTML = APPS.map(function(a){
+        var inner = logo(a.id) + '<span class="apptx"><span class="appnm">' + a.name + '</span><span class="appsb">' + a.sub + '</span></span>';
+        return a.id === CUR
+          ? '<span class="appopt" role="menuitem" tabindex="-1" aria-current="page" data-app="' + a.id + '">' + inner + '</span>'
+          : '<a class="appopt" role="menuitem" data-app="' + a.id + '" href="' + a.url + h + '">' + inner + '</a>';
+      }).join('');
+    }
+    function close(w, refocus){
+      var m = menuOf(w), b = chipOf(w);
+      if(!m || m.hidden) return;
+      m.hidden = true; m.style.transform = '';
+      b.setAttribute('aria-expanded', 'false');
+      if(refocus) b.focus();
+    }
+    function closeAll(except){ [].slice.call(document.querySelectorAll('.appwrap')).forEach(function(w){ if(w !== except) close(w); }); }
+    function open(w){
+      closeAll(w);
+      var m = menuOf(w), b = chipOf(w);
+      build(w); m.style.transform = ''; m.hidden = false; b.setAttribute('aria-expanded', 'true');
+      var r = m.getBoundingClientRect(), W = document.documentElement.clientWidth;   /* en pantallas estrechas no se sale por los lados */
+      var dx = r.left < 8 ? 8 - r.left : (r.right > W - 8 ? W - 8 - r.right : 0);
+      if(dx) m.style.transform = 'translateX(' + Math.round(dx) + 'px)';
+      var first = m.querySelector('.appopt:not([aria-current])') || m.querySelector('.appopt'); if(first) first.focus();
+    }
+    function openOne(){ return [].slice.call(document.querySelectorAll('.appwrap')).filter(function(w){ var m = menuOf(w); return m && !m.hidden; })[0]; }
+    try{
+      var wraps = [].slice.call(document.querySelectorAll('.appwrap'));
+      if(!wraps.length || !APPS.some(function(a){ return a.id !== CUR && usable(a.url); })) return;
+      var me = APPS.filter(function(a){ return a.id === CUR; })[0];
+      wraps.forEach(function(w){
+        var b = chipOf(w);
+        b.innerHTML = logo(CUR);
+        b.setAttribute('aria-label', 'Cambiar de web (ahora: ' + me.name + ')');
+        w.hidden = false;
+      });
+      document.addEventListener('click', function(ev){
+        var t = ev.target; if(!t || !t.closest) return;
+        var chip = t.closest('.appchip');
+        if(chip){ var w = chip.closest('.appwrap'), m = menuOf(w); if(m.hidden) open(w); else close(w); return; }
+        var opt = t.closest('.appopt');
+        if(opt){
+          var wo = opt.closest('.appwrap');
+          if(opt.tagName === 'A') sendTheme(); else close(wo, true);   /* la propia web: solo se cierra la lista */
+          return;
+        }
+        closeAll();
+      });
+      document.addEventListener('auxclick', function(ev){ var t = ev.target; if(t && t.closest && t.closest('.appopt')) sendTheme(); });
+      document.addEventListener('keydown', function(ev){
+        var chip = ev.target && ev.target.closest ? ev.target.closest('.appchip') : null;
+        if(chip && (ev.key === 'ArrowDown' || ev.key === 'ArrowUp')){ ev.preventDefault(); var w0 = chip.closest('.appwrap'); if(menuOf(w0).hidden) open(w0); return; }
+        var w = openOne(); if(!w) return;
+        var opts = [].slice.call(menuOf(w).querySelectorAll('.appopt')), i = opts.indexOf(document.activeElement);
+        if(ev.key === 'Escape'){ ev.preventDefault(); close(w, true); }
+        else if(ev.key === 'ArrowDown'){ ev.preventDefault(); opts[(i + 1) % opts.length].focus(); }
+        else if(ev.key === 'ArrowUp'){ ev.preventDefault(); opts[(i - 1 + opts.length) % opts.length].focus(); }
+        else if(ev.key === 'Home'){ ev.preventDefault(); opts[0].focus(); }
+        else if(ev.key === 'End'){ ev.preventDefault(); opts[opts.length - 1].focus(); }
+        else if(ev.key === 'Tab') close(w);
+      });
+    }catch(e){ /* sin desplegable: el resto de la página no depende de él */ }
+  })();
+</script>
+    <!-- pantalla de bienvenida -->
+  <div id="welcome">
+    <div class="card main hero">
+      <div class="big">¿Qué idioma vas a practicar?</div>
+      <div class="choices" id="choices"></div>
+      <div class="nojs" role="alert">
+        <p class="nojsTitle">Mundario necesita JavaScript y ahora no se está ejecutando.</p>
+        <p>Suele pasar al abrir el archivo desde la vista previa de Archivos (iPad o iPhone) o del Finder (Mac, con la barra espaciadora), de un mensaje o de un correo: esas vistas previas no ejecutan JavaScript.</p>
+        <p>Ábrelo en un navegador (Safari, Chrome, Edge…) desde la dirección web donde esté publicado, o con una aplicación capaz de ejecutar páginas HTML.</p>
+      </div>
+    </div>
+  </div>
+  <!-- aplicación -->
+  <div id="app" hidden>
+    <div class="tabs" role="tablist" aria-label="Secciones">
+      <button class="tab" id="tabLearn" role="tab" aria-selected="true">Aprender</button>
+      <button class="tab" id="tabPractice" role="tab" aria-selected="false">Practicar</button>
+    </div>
+    <div class="subtabs" id="subtabs" role="tablist" aria-label="Temas"></div>
+    <div id="panelLearn"></div>
+    <div id="panelPractice" hidden></div>
+  </div>
+  <footer>
+    <span>Mundario · sala de datos clave</span>
+  </footer>
+</div>
+<script>
+/* ======================================================================================================
+   DATOS · cada fila es una ficha: español | fr | it | pt | ca | pl | en | de | el
+   · En el español, « · » separa el texto del dato de apoyo (la cifra o el país que se enseña debajo).
+   · «~» separa formas igual de válidas (la primera es la que se enseña; las demás también se aceptan).
+   · En los temas con género (gender:true), «masculino/femenino»; sin barra, la forma vale para los dos.
+   ====================================================================================================== */
+const LANG_ORDER = ['fr','it','pt','ca','pl','en','de','el'];
+const LANGS = {
+  fr:{ code:'fr', name:'Francés',   native:'Français',  tts:'fr-FR' },
+  it:{ code:'it', name:'Italiano',  native:'Italiano',  tts:'it-IT' },
+  pt:{ code:'pt', name:'Portugués', native:'Português', tts:'pt-PT' },
+  ca:{ code:'ca', name:'Catalán',   native:'Català',    tts:'ca-ES' },
+  pl:{ code:'pl', name:'Polaco',    native:'Polski',    tts:'pl-PL' },
+  en:{ code:'en', name:'Inglés',    native:'English',   tts:'en-GB' },
+  de:{ code:'de', name:'Alemán',    native:'Deutsch',   tts:'de-DE' },
+  el:{ code:'el', name:'Griego',    native:'Ελληνικά',  tts:'el-GR' }
+};
+
+const CAL_NOTES = {
+  fr:'Días y meses van en minúscula: lundi, janvier. «Lundi» es este lunes; «le lundi», todos los lunes.',
+  it:'Días y meses van en minúscula: lunedì, gennaio. «Lunedì» es este lunes; «il lunedì», todos los lunes.',
+  pt:'Todo en minúscula. De lunes a viernes llevan «-feira» (segunda-feira…); sábado y domingo, no. En conversación se acorta: «segunda», «terça».',
+  ca:'Todo en minúscula: dilluns, gener. Los días de entre semana acaban en «-s»; dissabte y diumenge, no.',
+  pl:'Todo en minúscula: poniedziałek, styczeń. «W poniedziałek» = el lunes.',
+  en:'Siempre con mayúscula inicial: Monday, January. «On Monday», pero «in January».',
+  de:'Son sustantivos, así que con mayúscula: Montag, Januar. «Am Montag» (el lunes), «im Januar» (en enero). Sábado: Samstag (sur) o Sonnabend (norte y este).',
+  el:'En minúscula y con artículo: η Δευτέρα, ο Ιανουάριος. «El lunes» se dice «τη Δευτέρα».'
+};
+
+const TOPICS = [
+{ id:'num', name:'Números', group:'Cifras', gender:false,
+  lead:'Los cardinales del 0 al 100 y los más útiles después (centenas, mil y millón), más unos cuantos «difíciles»: 21, 35, 72, 99, 101.',
+  notes:{
+    fr:'70, 80 y 90 se forman con el 20: soixante-dix (60+10), quatre-vingts (4×20), quatre-vingt-dix. En Bélgica y Suiza se dice septante y nonante. El 21, 31, 41… llevan «et» (vingt et un); el resto, guion (vingt-deux).',
+    it:'Las decenas pierden la vocal final ante uno y otto: ventuno, trentotto. Los números compuestos se escriben en una sola palabra: trentacinque, centouno.',
+    pt:'Entre decenas y unidades va «e»: trinta e cinco; también tras las centenas: cento e um. En Portugal se dice dezasseis, dezassete y dezanove; en Brasil, dezesseis, dezessete y dezenove.',
+    ca:'Del 21 al 29 se escribe «vint-i-…» (con «i» y guiones); desde el 31, sin «i»: trenta-u, quaranta-dos. Las centenas llevan guion: dos-cents.',
+    pl:'Los números no se pegan: dwadzieścia jeden. Del 11 al 19 acaban en «-naście». El 1 y el 2 cambian con el género (jeden, jedna, jedno; dwa, dwie).',
+    en:'Del 21 al 99 se une con guion: twenty-one. Delante de «hundred» y «thousand» se puede decir «a» u «one»: a hundred.',
+    de:'Se dice primero la unidad: 21 = einundzwanzig (uno-y-veinte), todo junto en una palabra. 16 y 17 pierden letras (sechzehn, siebzehn) y 30 es dreißig. «Eins» al contar, pero «ein» delante de un sustantivo.',
+    el:'Hasta el 4 y en las centenas el griego cambia con el género; aquí van las formas neutras, que son las que se usan al contar. Antes de otra cifra, «εκατό» pasa a «εκατόν» (εκατόν ένα). El 7, 8 y 9 tienen dos formas: επτά/εφτά, οκτώ/οχτώ, εννέα/εννιά.'
+  },
+  rows:`
+0 · cero|zéro|zero|zero|zero|zero|zero|null|μηδέν
+1 · uno|un|uno|um|un|jeden|one|eins|ένα~ένας~μία
+2 · dos|deux|due|dois|dos|dwa|two|zwei|δύο
+3 · tres|trois|tre|três|tres|trzy|three|drei|τρία~τρεις
+4 · cuatro|quatre|quattro|quatro|quatre|cztery|four|vier|τέσσερα~τέσσερις
+5 · cinco|cinq|cinque|cinco|cinc|pięć|five|fünf|πέντε
+6 · seis|six|sei|seis|sis|sześć|six|sechs|έξι
+7 · siete|sept|sette|sete|set|siedem|seven|sieben|επτά~εφτά
+8 · ocho|huit|otto|oito|vuit|osiem|eight|acht|οκτώ~οχτώ
+9 · nueve|neuf|nove|nove|nou|dziewięć|nine|neun|εννέα~εννιά
+10 · diez|dix|dieci|dez|deu|dziesięć|ten|zehn|δέκα
+11 · once|onze|undici|onze|onze|jedenaście|eleven|elf|έντεκα
+12 · doce|douze|dodici|doze|dotze|dwanaście|twelve|zwölf|δώδεκα
+13 · trece|treize|tredici|treze|tretze|trzynaście|thirteen|dreizehn|δεκατρία~δεκατρείς
+14 · catorce|quatorze|quattordici|catorze|catorze|czternaście|fourteen|vierzehn|δεκατέσσερα~δεκατέσσερις
+15 · quince|quinze|quindici|quinze|quinze|piętnaście|fifteen|fünfzehn|δεκαπέντε
+16 · dieciséis|seize|sedici|dezasseis~dezesseis|setze|szesnaście|sixteen|sechzehn|δεκαέξι
+17 · diecisiete|dix-sept|diciassette|dezassete~dezessete|disset|siedemnaście|seventeen|siebzehn|δεκαεπτά
+18 · dieciocho|dix-huit|diciotto|dezoito|divuit|osiemnaście|eighteen|achtzehn|δεκαοκτώ
+19 · diecinueve|dix-neuf|diciannove|dezanove~dezenove|dinou|dziewiętnaście|nineteen|neunzehn|δεκαεννέα~δεκαεννιά
+20 · veinte|vingt|venti|vinte|vint|dwadzieścia|twenty|zwanzig|είκοσι
+21 · veintiuno|vingt et un|ventuno|vinte e um|vint-i-u|dwadzieścia jeden|twenty-one|einundzwanzig|είκοσι ένα
+30 · treinta|trente|trenta|trinta|trenta|trzydzieści|thirty|dreißig|τριάντα
+35 · treinta y cinco|trente-cinq|trentacinque|trinta e cinco|trenta-cinc|trzydzieści pięć|thirty-five|fünfunddreißig|τριάντα πέντε
+40 · cuarenta|quarante|quaranta|quarenta|quaranta|czterdzieści|forty|vierzig|σαράντα
+50 · cincuenta|cinquante|cinquanta|cinquenta|cinquanta|pięćdziesiąt|fifty|fünfzig|πενήντα
+60 · sesenta|soixante|sessanta|sessenta|seixanta|sześćdziesiąt|sixty|sechzig|εξήντα
+70 · setenta|soixante-dix|settanta|setenta|setanta|siedemdziesiąt|seventy|siebzig|εβδομήντα
+72 · setenta y dos|soixante-douze|settantadue|setenta e dois|setanta-dos|siedemdziesiąt dwa|seventy-two|zweiundsiebzig|εβδομήντα δύο
+80 · ochenta|quatre-vingts|ottanta|oitenta|vuitanta|osiemdziesiąt|eighty|achtzig|ογδόντα
+90 · noventa|quatre-vingt-dix|novanta|noventa|noranta|dziewięćdziesiąt|ninety|neunzig|ενενήντα
+99 · noventa y nueve|quatre-vingt-dix-neuf|novantanove|noventa e nove|noranta-nou|dziewięćdziesiąt dziewięć|ninety-nine|neunundneunzig|ενενήντα εννέα~ενενήντα εννιά
+100 · cien|cent|cento|cem|cent|sto|one hundred~a hundred|hundert|εκατό
+101 · ciento uno|cent un|centouno|cento e um|cent u|sto jeden|one hundred and one~a hundred and one|hunderteins~hundertundeins|εκατόν ένα
+200 · doscientos|deux cents|duecento|duzentos|dos-cents|dwieście|two hundred|zweihundert|διακόσια~διακόσιοι
+500 · quinientos|cinq cents|cinquecento|quinhentos|cinc-cents|pięćset|five hundred|fünfhundert|πεντακόσια~πεντακόσιοι
+1000 · mil|mille|mille|mil|mil|tysiąc|one thousand~a thousand|tausend~eintausend|χίλια~χίλιοι
+1 000 000 · un millón|un million|un milione|um milhão|un milió|milion~jeden milion|one million~a million|eine Million|ένα εκατομμύριο
+`},
+
+{ id:'ord', name:'Ordinales', group:'Cifras', gender:true,
+  lead:'Del primero al décimo. Cuando la forma cambia con el género se da la masculina y la femenina (masculino / femenino).',
+  notes:{
+    fr:'Desde el segundo se añade «-ième» al cardinal: troisième, quatrième (cinq → cinquième, neuf → neuvième). «Premier» tiene femenino: première. «Second/seconde» también existe.',
+    it:'Del 1.º al 10.º son irregulares (primo, secondo, terzo…) y concuerdan en género: primo/prima. Desde el 11.º se añade «-esimo» al cardinal sin su vocal final: undicesimo.',
+    pt:'Concuerdan en género y número: primeiro/primeira, segundo/segunda… El décimo es «décimo».',
+    ca:'En cifras se abrevian: 1r, 2n, 3r, 4t, 5è. Desde el quinto se añade «-è» (cinquè) y el femenino lleva «-ena» (cinquena).',
+    pl:'Se declinan como adjetivos: pierwszy, pierwsza, pierwsze (masculino, femenino, neutro). En cifras llevan punto: 1., 2.',
+    en:'En cifras llevan sufijo: 1st, 2nd, 3rd, 4th… Los tres primeros son irregulares; del cuarto en adelante se añade «-th» (fourth, fifth, sixth).',
+    de:'Hasta el 19.º se añade «-te» al cardinal: zweite, vierte (pero erste, dritte y siebte son irregulares). En cifras llevan punto: der 1., der 2. Se declinan como adjetivos.',
+    el:'Se declinan como adjetivos: πρώτος, πρώτη, πρώτο. Aquí van el masculino y el femenino.'
+  },
+  rows:`
+primero/primera|premier/première|primo/prima|primeiro/primeira|primer/primera|pierwszy/pierwsza|first|erste|πρώτος/πρώτη
+segundo/segunda|deuxième|secondo/seconda|segundo/segunda|segon/segona|drugi/druga|second|zweite|δεύτερος/δεύτερη
+tercero/tercera|troisième|terzo/terza|terceiro/terceira|tercer/tercera|trzeci/trzecia|third|dritte|τρίτος/τρίτη
+cuarto/cuarta|quatrième|quarto/quarta|quarto/quarta|quart/quarta|czwarty/czwarta|fourth|vierte|τέταρτος/τέταρτη
+quinto/quinta|cinquième|quinto/quinta|quinto/quinta|cinquè/cinquena|piąty/piąta|fifth|fünfte|πέμπτος/πέμπτη
+sexto/sexta|sixième|sesto/sesta|sexto/sexta|sisè/sisena|szósty/szósta|sixth|sechste|έκτος/έκτη
+séptimo/séptima|septième|settimo/settima|sétimo/sétima|setè/setena|siódmy/siódma|seventh|siebte|έβδομος/έβδομη
+octavo/octava|huitième|ottavo/ottava|oitavo/oitava|vuitè/vuitena|ósmy/ósma|eighth|achte|όγδοος/όγδοη
+noveno/novena|neuvième|nono/nona|nono/nona|novè/novena|dziewiąty/dziewiąta|ninth|neunte|ένατος/ένατη
+décimo/décima|dixième|decimo/decima|décimo/décima|desè/desena|dziesiąty/dziesiąta|tenth|zehnte|δέκατος/δέκατη
+`},
+
+{ id:'hora', name:'La hora', group:'Tiempo', gender:false,
+  lead:'Cómo preguntar y decir la hora: en punto, y cuarto, y media, menos cuarto, diez minutos antes o después, mediodía, medianoche y las partes del día. Todas las frases usan la misma hora en los ocho idiomas, para que se vean las diferencias.',
+  notes:{
+    fr:'Se dice «et quart» (y cuarto), «et demie» (y media) y «moins le quart» (menos cuarto). Para las horas oficiales: «quinze heures trente».',
+    it:'Se dice «Sono le…» (plural), salvo «È l\'una», «È mezzogiorno» y «È mezzanotte». «E mezza» (y media) y «meno un quarto» (menos cuarto).',
+    pt:'«É uma hora» (singular) pero «São duas horas». Para «y media» se dice «e meia»; «meio-dia» y «meia-noite». En Portugal también se oye «um quarto para as quatro» (cuatro menos cuarto).',
+    ca:'El sistema tradicional cuenta los cuartos que ya han pasado de la hora siguiente: «un quart de quatre» (3:15), «dos quarts de quatre» (3:30), «tres quarts de quatre» (3:45). Es el de Cataluña; en el País Valenciano se usa más «les tres i quart» o «les tres i mitja».',
+    pl:'«Godzina» es femenina, así que se usan ordinales femeninos: «jest trzecia». «Wpół do czwartej» (literalmente «a medias hacia la cuarta») = las tres y media. «O ósmej» = a las ocho.',
+    en:'«Past» (y) y «to» (menos): ten past three, ten to four. «O\'clock» solo en punto. En el Reino Unido, «half three» (informal) = 3:30.',
+    de:'¡Cuidado con «halb vier»! Significa las tres y media («media hora hacia las cuatro»), no las cuatro y media. «Viertel nach drei» = tres y cuarto; «Viertel vor vier» = cuatro menos cuarto.',
+    el:'Se usa «και» (y) y «παρά» (menos): «τρεις και τέταρτο», «τέσσερις παρά τέταρτο». La una es femenina: «μία».'
+  },
+  rows:`
+¿Qué hora es?|Quelle heure est-il ?|Che ora è?~Che ore sono?|Que horas são?|Quina hora és?|Która jest godzina?~Która godzina?|What time is it?|Wie spät ist es?~Wie viel Uhr ist es?|Τι ώρα είναι;
+Son las tres en punto · 3:00|Il est trois heures|Sono le tre|São três horas|Són les tres|Jest trzecia|It's three o'clock~It is three o'clock|Es ist drei Uhr|Είναι τρεις η ώρα~Είναι τρεις
+Es la una · 1:00|Il est une heure|È l'una|É uma hora|És la una|Jest pierwsza|It's one o'clock~It is one o'clock|Es ist ein Uhr|Είναι μία η ώρα~Είναι μία
+Son las tres y cuarto · 3:15|Il est trois heures et quart|Sono le tre e un quarto~Sono le tre e quindici|São três e um quarto~São três e quinze|És un quart de quatre~Són les tres i quart|Jest kwadrans po trzeciej~Jest piętnaście po trzeciej~Jest trzecia piętnaście|It's a quarter past three~It's quarter past three~It's three fifteen|Es ist Viertel nach drei|Είναι τρεις και τέταρτο
+Son las tres y media · 3:30|Il est trois heures et demie|Sono le tre e mezza~Sono le tre e mezzo~Sono le tre e trenta|São três e meia~São três e trinta|Són dos quarts de quatre~Són les tres i mitja|Jest wpół do czwartej~Jest w pół do czwartej~Jest trzecia trzydzieści|It's half past three~It's three thirty|Es ist halb vier|Είναι τρεις και μισή
+Son las cuatro menos cuarto · 3:45|Il est quatre heures moins le quart|Sono le quattro meno un quarto~Sono le tre e quarantacinque|São quatro menos um quarto~É um quarto para as quatro|Són tres quarts de quatre~Són les quatre menys quart|Jest za kwadrans czwarta~Jest za piętnaście czwarta|It's a quarter to four~It's quarter to four~It's three forty-five|Es ist Viertel vor vier|Είναι τέσσερις παρά τέταρτο
+Son las tres y diez · 3:10|Il est trois heures dix|Sono le tre e dieci|São três e dez|Són les tres i deu|Jest dziesięć po trzeciej~Jest trzecia dziesięć|It's ten past three~It's three ten|Es ist zehn nach drei|Είναι τρεις και δέκα
+Son las cuatro menos diez · 3:50|Il est quatre heures moins dix|Sono le quattro meno dieci|São quatro menos dez~São dez para as quatro|Són les quatre menys deu|Jest za dziesięć czwarta~Jest dziesięć do czwartej|It's ten to four~It's three fifty|Es ist zehn vor vier|Είναι τέσσερις παρά δέκα
+Es mediodía · 12:00|Il est midi|È mezzogiorno|É meio-dia|És migdia|Jest południe~Jest dwunasta|It's noon~It's midday~It is noon~It is midday|Es ist Mittag~Es ist zwölf Uhr mittags|Είναι μεσημέρι~Είναι δώδεκα το μεσημέρι
+Es medianoche · 0:00|Il est minuit|È mezzanotte|É meia-noite|És mitjanit|Jest północ|It's midnight~It is midnight|Es ist Mitternacht|Είναι μεσάνυχτα~Είναι δώδεκα τα μεσάνυχτα
+a las ocho|à huit heures|alle otto|às oito horas~às oito|a les vuit|o ósmej~o godzinie ósmej|at eight o'clock~at eight|um acht Uhr~um acht|στις οκτώ~στις οχτώ
+¿A qué hora?|À quelle heure ?|A che ora?|A que horas?|A quina hora?|O której godzinie?~O której?|At what time?~What time?|Um wie viel Uhr?~Wann?|Τι ώρα;
+por la mañana|le matin|la mattina~di mattina|de manhã|al matí|rano|in the morning|morgens~am Morgen~vormittags|το πρωί
+por la tarde|l'après-midi|il pomeriggio~di pomeriggio|à tarde|a la tarda|po południu|in the afternoon|nachmittags~am Nachmittag|το απόγευμα
+por la noche|le soir~la nuit|la sera~la notte|à noite|a la nit|wieczorem~w nocy|in the evening~at night|abends~nachts~am Abend|το βράδυ~τη νύχτα
+`},
+
+{ id:'dias', name:'Días', group:'Tiempo', gender:false,
+  lead:'Los siete días de la semana.', notes:CAL_NOTES,
+  rows:`
+lunes|lundi|lunedì|segunda-feira|dilluns|poniedziałek|Monday|Montag|Δευτέρα
+martes|mardi|martedì|terça-feira|dimarts|wtorek|Tuesday|Dienstag|Τρίτη
+miércoles|mercredi|mercoledì|quarta-feira|dimecres|środa|Wednesday|Mittwoch|Τετάρτη
+jueves|jeudi|giovedì|quinta-feira|dijous|czwartek|Thursday|Donnerstag|Πέμπτη
+viernes|vendredi|venerdì|sexta-feira|divendres|piątek|Friday|Freitag|Παρασκευή
+sábado|samedi|sabato|sábado|dissabte|sobota|Saturday|Samstag~Sonnabend|Σάββατο
+domingo|dimanche|domenica|domingo|diumenge|niedziela|Sunday|Sonntag|Κυριακή
+`},
+
+{ id:'meses', name:'Meses y estaciones', group:'Tiempo', gender:false,
+  lead:'Los doce meses del año y las cuatro estaciones.', notes:CAL_NOTES,
+  rows:`
+enero|janvier|gennaio|janeiro|gener|styczeń|January|Januar~Jänner|Ιανουάριος
+febrero|février|febbraio|fevereiro|febrer|luty|February|Februar|Φεβρουάριος
+marzo|mars|marzo|março|març|marzec|March|März|Μάρτιος
+abril|avril|aprile|abril|abril|kwiecień|April|April|Απρίλιος
+mayo|mai|maggio|maio|maig|maj|May|Mai|Μάιος
+junio|juin|giugno|junho|juny|czerwiec|June|Juni|Ιούνιος
+julio|juillet|luglio|julho|juliol|lipiec|July|Juli|Ιούλιος
+agosto|août|agosto|agosto|agost|sierpień|August|August|Αύγουστος
+septiembre|septembre|settembre|setembro|setembre|wrzesień|September|September|Σεπτέμβριος
+octubre|octobre|ottobre|outubro|octubre|październik|October|Oktober|Οκτώβριος
+noviembre|novembre|novembre|novembro|novembre|listopad|November|November|Νοέμβριος
+diciembre|décembre|dicembre|dezembro|desembre|grudzień|December|Dezember|Δεκέμβριος
+primavera|le printemps|la primavera|a primavera|la primavera|wiosna|spring|der Frühling|η άνοιξη
+verano|l'été|l'estate|o verão|l'estiu|lato|summer|der Sommer|το καλοκαίρι
+otoño|l'automne|l'autunno|o outono|la tardor|jesień|autumn~fall|der Herbst|το φθινόπωρο
+invierno|l'hiver|l'inverno|o inverno|l'hivern|zima|winter|der Winter|ο χειμώνας
+`},
+
+{ id:'paises', name:'Países', group:'Mundo', gender:false,
+  lead:'Los países de Europa y del resto del mundo que más salen, con el artículo que lleva cada uno en su idioma (si no lo escribes, se acepta igualmente, pero se te avisa).',
+  notes:{
+    fr:'Todos llevan artículo: la France, le Portugal. Para «en/a»: «en» + femenino (en France), «au» + masculino (au Portugal) y «aux» + plural (aux États-Unis).',
+    it:'Casi todos llevan artículo: la Francia, il Portogallo (no Cuba). «En»: «in Francia», pero «negli Stati Uniti» y «nel Regno Unito».',
+    pt:'Llevan artículo, salvo Portugal, Cuba y Marrocos: a França, o Brasil. Para «en»: «em Portugal», «em França» (o «na França») y «no Brasil».',
+    ca:'Algunos llevan artículo (el Brasil, la Xina, els Estats Units, l\'Índia) y otros no (França, Espanya, Mèxic). «En» se dice «a» o «al»: a França, al Brasil.',
+    pl:'No hay artículos. «En» = «w» + locativo: w Polsce, we Francji, w Hiszpanii. Italia y Alemania son plurales: Włochy, Niemcy.',
+    en:'Solo llevan «the» los nombres en plural o con «Kingdom/Republic»: the United States, the Netherlands, the UK. Los demás, sin artículo: Spain, Japan.',
+    de:'La mayoría van sin artículo: Deutschland. Con artículo: die Schweiz, die Türkei, die Niederlande, die USA, das Vereinigte Königreich. «En»: «in Spanien», «in der Schweiz».',
+    el:'Siempre con artículo: η Ελλάδα, το Βέλγιο, οι Κάτω Χώρες. «En España» = «στην Ισπανία».'
+  },
+  rows:`
+España|l'Espagne|la Spagna|a Espanha|Espanya|Hiszpania|Spain|Spanien|η Ισπανία
+Portugal|le Portugal|il Portogallo|Portugal|Portugal|Portugalia|Portugal|Portugal|η Πορτογαλία
+Francia|la France|la Francia|a França|França|Francja|France|Frankreich|η Γαλλία
+Italia|l'Italie|l'Italia|a Itália|Itàlia|Włochy|Italy|Italien|η Ιταλία
+Alemania|l'Allemagne|la Germania|a Alemanha|Alemanya|Niemcy|Germany|Deutschland|η Γερμανία
+Reino Unido|le Royaume-Uni|il Regno Unito|o Reino Unido|el Regne Unit|Wielka Brytania~Zjednoczone Królestwo|the United Kingdom~the UK|das Vereinigte Königreich|το Ηνωμένο Βασίλειο
+Irlanda|l'Irlande|l'Irlanda|a Irlanda|Irlanda|Irlandia|Ireland|Irland|η Ιρλανδία
+Países Bajos|les Pays-Bas|i Paesi Bassi|os Países Baixos|els Països Baixos|Holandia~Niderlandy|the Netherlands|die Niederlande|οι Κάτω Χώρες~η Ολλανδία
+Bélgica|la Belgique|il Belgio|a Bélgica|Bèlgica|Belgia|Belgium|Belgien|το Βέλγιο
+Suiza|la Suisse|la Svizzera|a Suíça|Suïssa|Szwajcaria|Switzerland|die Schweiz|η Ελβετία
+Austria|l'Autriche|l'Austria|a Áustria|Àustria|Austria|Austria|Österreich|η Αυστρία
+Polonia|la Pologne|la Polonia|a Polónia|Polònia|Polska|Poland|Polen|η Πολωνία
+Grecia|la Grèce|la Grecia|a Grécia|Grècia|Grecja|Greece|Griechenland|η Ελλάδα
+Suecia|la Suède|la Svezia|a Suécia|Suècia|Szwecja|Sweden|Schweden|η Σουηδία
+Noruega|la Norvège|la Norvegia|a Noruega|Noruega|Norwegia|Norway|Norwegen|η Νορβηγία
+Dinamarca|le Danemark|la Danimarca|a Dinamarca|Dinamarca|Dania|Denmark|Dänemark|η Δανία
+Finlandia|la Finlande|la Finlandia|a Finlândia|Finlàndia|Finlandia|Finland|Finnland|η Φινλανδία
+Rusia|la Russie|la Russia|a Rússia|Rússia|Rosja|Russia|Russland|η Ρωσία
+Rumanía|la Roumanie|la Romania|a Roménia|Romania|Rumunia|Romania|Rumänien|η Ρουμανία
+Turquía|la Turquie|la Turchia|a Turquia|Turquia|Turcja|Turkey|die Türkei|η Τουρκία
+Estados Unidos|les États-Unis|gli Stati Uniti|os Estados Unidos|els Estats Units|Stany Zjednoczone|the United States~the USA|die Vereinigten Staaten~die USA|οι Ηνωμένες Πολιτείες~οι ΗΠΑ
+Canadá|le Canada|il Canada|o Canadá|el Canadà|Kanada|Canada|Kanada|ο Καναδάς
+México|le Mexique|il Messico|o México|Mèxic|Meksyk|Mexico|Mexiko|το Μεξικό
+Argentina|l'Argentine|l'Argentina|a Argentina|l'Argentina|Argentyna|Argentina|Argentinien|η Αργεντινή
+Brasil|le Brésil|il Brasile|o Brasil|el Brasil|Brazylia|Brazil|Brasilien|η Βραζιλία
+Chile|le Chili|il Cile|o Chile|Xile|Chile|Chile|Chile|η Χιλή
+Colombia|la Colombie|la Colombia|a Colômbia|Colòmbia|Kolumbia|Colombia|Kolumbien|η Κολομβία
+Perú|le Pérou|il Perù|o Peru|el Perú|Peru|Peru|Peru|το Περού
+Cuba|Cuba|Cuba|Cuba|Cuba|Kuba|Cuba|Kuba|η Κούβα
+China|la Chine|la Cina|a China|la Xina|Chiny|China|China|η Κίνα
+Japón|le Japon|il Giappone|o Japão|el Japó|Japonia|Japan|Japan|η Ιαπωνία
+India|l'Inde|l'India|a Índia|l'Índia|Indie|India|Indien|η Ινδία
+Corea del Sur|la Corée du Sud|la Corea del Sud|a Coreia do Sul|Corea del Sud|Korea Południowa|South Korea|Südkorea|η Νότια Κορέα
+Marruecos|le Maroc|il Marocco|Marrocos|el Marroc|Maroko|Morocco|Marokko|το Μαρόκο
+Egipto|l'Égypte|l'Egitto|o Egito|Egipte|Egipt|Egypt|Ägypten|η Αίγυπτος
+Australia|l'Australie|l'Australia|a Austrália|Austràlia|Australia|Australia|Australien|η Αυστραλία
+`},
+
+{ id:'gent', name:'Gentilicios', group:'Mundo', gender:true,
+  lead:'Cómo se dice de dónde eres: la nacionalidad de cada país, en masculino y femenino. Se pregunta una de las dos formas al azar.',
+  notes:{
+    fr:'Aquí van los adjetivos, que se escriben en minúscula: «il est français». Como sustantivo de persona llevan mayúscula: un Français, une Française.',
+    it:'Sin mayúscula. Los acabados en «-ese» y «-a» (francese, belga) no cambian por género; los acabados en «-o» pasan a «-a»: italiano → italiana.',
+    pt:'Sin mayúscula. Los acabados en «-ês» hacen el femenino en «-esa» (francês → francesa) y los acabados en «-ão» pasan a «-ã» (alemão → alemã).',
+    ca:'Sin mayúscula. Los acabados en «-è» hacen el femenino en «-esa» (francès → francesa); los acabados en «-à», en «-ana» (italià → italiana).',
+    pl:'Aquí van los sustantivos de persona, que llevan mayúscula: Francuz, Francuzka. El adjetivo (francuski) se escribe en minúscula.',
+    en:'Las nacionalidades se escriben siempre con mayúscula y no cambian con el género: I\'m French.',
+    de:'Aquí van los sustantivos de persona, con mayúscula: der Franzose, die Französin. El adjetivo (französisch) se usa para las cosas: französisches Essen.',
+    el:'Aquí van los sustantivos de persona. El femenino suele acabar en «-ίδα», «-ή» o «-έζα»: Γαλλίδα, Ιρλανδή, Δανέζα.'
+  },
+  rows:`
+español/española|espagnol/espagnole|spagnolo/spagnola|espanhol/espanhola|espanyol/espanyola|Hiszpan/Hiszpanka|Spanish|Spanier/Spanierin|Ισπανός/Ισπανίδα
+portugués/portuguesa|portugais/portugaise|portoghese|português/portuguesa|portuguès/portuguesa|Portugalczyk/Portugalka|Portuguese|Portugiese/Portugiesin|Πορτογάλος/Πορτογαλίδα
+francés/francesa|français/française|francese|francês/francesa|francès/francesa|Francuz/Francuzka|French|Franzose/Französin|Γάλλος/Γαλλίδα
+italiano/italiana|italien/italienne|italiano/italiana|italiano/italiana|italià/italiana|Włoch/Włoszka|Italian|Italiener/Italienerin|Ιταλός/Ιταλίδα
+alemán/alemana|allemand/allemande|tedesco/tedesca|alemão/alemã|alemany/alemanya|Niemiec/Niemka|German|Deutscher/Deutsche|Γερμανός/Γερμανίδα
+británico/británica|britannique|britannico/britannica|britânico/britânica|britànic/britànica|Brytyjczyk/Brytyjka|British|Brite/Britin|Βρετανός/Βρετανίδα
+irlandés/irlandesa|irlandais/irlandaise|irlandese|irlandês/irlandesa|irlandès/irlandesa|Irlandczyk/Irlandka|Irish|Ire/Irin|Ιρλανδός/Ιρλανδή
+neerlandés/neerlandesa|néerlandais/néerlandaise|olandese|neerlandês/neerlandesa~holandês/holandesa|neerlandès/neerlandesa~holandès/holandesa|Holender/Holenderka|Dutch|Niederländer/Niederländerin|Ολλανδός/Ολλανδή
+belga|belge|belga|belga|belga|Belg/Belgijka|Belgian|Belgier/Belgierin|Βέλγος/Βελγίδα
+suizo/suiza|suisse|svizzero/svizzera|suíço/suíça|suís/suïssa|Szwajcar/Szwajcarka|Swiss|Schweizer/Schweizerin|Ελβετός/Ελβετίδα
+austriaco/austriaca|autrichien/autrichienne|austriaco/austriaca|austríaco/austríaca|austríac/austríaca|Austriak/Austriaczka|Austrian|Österreicher/Österreicherin|Αυστριακός/Αυστριακή
+polaco/polaca|polonais/polonaise|polacco/polacca|polaco/polaca|polonès/polonesa|Polak/Polka|Polish|Pole/Polin|Πολωνός/Πολωνέζα
+griego/griega|grec/grecque|greco/greca|grego/grega|grec/grega|Grek/Greczynka|Greek|Grieche/Griechin|Έλληνας/Ελληνίδα
+sueco/sueca|suédois/suédoise|svedese|sueco/sueca|suec/sueca|Szwed/Szwedka|Swedish|Schwede/Schwedin|Σουηδός/Σουηδέζα
+noruego/noruega|norvégien/norvégienne|norvegese|norueguês/norueguesa|noruec/noruega|Norweg/Norweżka|Norwegian|Norweger/Norwegerin|Νορβηγός/Νορβηγίδα
+danés/danesa|danois/danoise|danese|dinamarquês/dinamarquesa|danès/danesa|Duńczyk/Dunka|Danish|Däne/Dänin|Δανός/Δανέζα
+finlandés/finlandesa|finlandais/finlandaise|finlandese|finlandês/finlandesa|finlandès/finlandesa|Fin/Finka|Finnish|Finne/Finnin|Φινλανδός/Φινλανδέζα
+ruso/rusa|russe|russo/russa|russo/russa|rus/russa|Rosjanin/Rosjanka|Russian|Russe/Russin|Ρώσος/Ρωσίδα
+rumano/rumana|roumain/roumaine|rumeno/rumena|romeno/romena|romanès/romanesa|Rumun/Rumunka|Romanian|Rumäne/Rumänin|Ρουμάνος/Ρουμάνα
+turco/turca|turc/turque|turco/turca|turco/turca|turc/turca|Turek/Turczynka|Turkish|Türke/Türkin|Τούρκος/Τουρκάλα
+estadounidense|américain/américaine|americano/americana~statunitense|americano/americana~norte-americano/norte-americana|estatunidenc/estatunidenca~nord-americà/nord-americana|Amerykanin/Amerykanka|American|Amerikaner/Amerikanerin|Αμερικανός/Αμερικανίδα
+canadiense|canadien/canadienne|canadese|canadiano/canadiana~canadense|canadenc/canadenca|Kanadyjczyk/Kanadyjka|Canadian|Kanadier/Kanadierin|Καναδός/Καναδή
+mexicano/mexicana|mexicain/mexicaine|messicano/messicana|mexicano/mexicana|mexicà/mexicana|Meksykanin/Meksykanka|Mexican|Mexikaner/Mexikanerin|Μεξικανός/Μεξικανή
+argentino/argentina|argentin/argentine|argentino/argentina|argentino/argentina|argentí/argentina|Argentyńczyk/Argentynka|Argentine~Argentinian|Argentinier/Argentinierin|Αργεντινός/Αργεντινή
+brasileño/brasileña|brésilien/brésilienne|brasiliano/brasiliana|brasileiro/brasileira|brasiler/brasilera|Brazylijczyk/Brazylijka|Brazilian|Brasilianer/Brasilianerin|Βραζιλιάνος/Βραζιλιάνα
+chileno/chilena|chilien/chilienne|cileno/cilena|chileno/chilena|xilè/xilena|Chilijczyk/Chilijka|Chilean|Chilene/Chilenin|Χιλιανός/Χιλιανή
+colombiano/colombiana|colombien/colombienne|colombiano/colombiana|colombiano/colombiana|colombià/colombiana|Kolumbijczyk/Kolumbijka|Colombian|Kolumbianer/Kolumbianerin|Κολομβιανός/Κολομβιανή
+peruano/peruana|péruvien/péruvienne|peruviano/peruviana|peruano/peruana|peruà/peruana|Peruwiańczyk/Peruwianka|Peruvian|Peruaner/Peruanerin|Περουβιανός/Περουβιανή
+cubano/cubana|cubain/cubaine|cubano/cubana|cubano/cubana|cubà/cubana|Kubańczyk/Kubanka|Cuban|Kubaner/Kubanerin|Κουβανός/Κουβανή
+chino/china|chinois/chinoise|cinese|chinês/chinesa|xinès/xinesa|Chińczyk/Chinka|Chinese|Chinese/Chinesin|Κινέζος/Κινέζα
+japonés/japonesa|japonais/japonaise|giapponese|japonês/japonesa|japonès/japonesa|Japończyk/Japonka|Japanese|Japaner/Japanerin|Ιάπωνας/Ιαπωνέζα~Ιάπωνας/Γιαπωνέζα
+indio/india|indien/indienne|indiano/indiana|indiano/indiana|indi/índia|Hindus/Hinduska|Indian|Inder/Inderin|Ινδός/Ινδή
+marroquí|marocain/marocaine|marocchino/marocchina|marroquino/marroquina|marroquí/marroquina|Marokańczyk/Marokanka|Moroccan|Marokkaner/Marokkanerin|Μαροκινός/Μαροκινή
+egipcio/egipcia|égyptien/égyptienne|egiziano/egiziana|egípcio/egípcia|egipci/egípcia|Egipcjanin/Egipcjanka|Egyptian|Ägypter/Ägypterin|Αιγύπτιος/Αιγύπτια
+australiano/australiana|australien/australienne|australiano/australiana|australiano/australiana|australià/australiana|Australijczyk/Australijka|Australian|Australier/Australierin|Αυστραλός/Αυστραλή
+surcoreano/surcoreana|sud-coréen/sud-coréenne|sudcoreano/sudcoreana|sul-coreano/sul-coreana|sud-coreà/sud-coreana|Południowokoreańczyk/Południowokoreanka|South Korean|Südkoreaner/Südkoreanerin|Νοτιοκορεάτης/Νοτιοκορεάτισσα
+`},
+
+{ id:'cap', name:'Capitales', group:'Mundo', gender:false,
+  lead:'La capital de cada uno de esos países. Muchas cambian de nombre según el idioma: Londres, London, Londra, Λονδίνο…',
+  notes:{
+    en:'Hoy se dice «Beijing» y no «Peking» (la forma antigua), y «Mexico City» para la capital de México.',
+    de:'Los nombres compuestos se escriben con guion: Mexiko-Stadt, Neu-Delhi. «Peking» es la forma alemana de Pekín.',
+    ca:'«Brussel·les» lleva el punto volado de la «l·l».',
+    pl:'Muchas capitales tienen forma propia en polaco: Paryż, Rzym, Londyn, Wiedeń, Moskwa.'
+  },
+  rows:`
+Madrid · España|Madrid|Madrid|Madrid|Madrid|Madryt|Madrid|Madrid|Μαδρίτη
+Lisboa · Portugal|Lisbonne|Lisbona|Lisboa|Lisboa|Lizbona|Lisbon|Lissabon|Λισαβόνα
+París · Francia|Paris|Parigi|Paris|París|Paryż|Paris|Paris|Παρίσι
+Roma · Italia|Rome|Roma|Roma|Roma|Rzym|Rome|Rom|Ρώμη
+Berlín · Alemania|Berlin|Berlino|Berlim|Berlín|Berlin|Berlin|Berlin|Βερολίνο
+Londres · Reino Unido|Londres|Londra|Londres|Londres|Londyn|London|London|Λονδίνο
+Dublín · Irlanda|Dublin|Dublino|Dublim~Dublin|Dublín|Dublin|Dublin|Dublin|Δουβλίνο
+Ámsterdam · Países Bajos|Amsterdam|Amsterdam|Amesterdão|Amsterdam|Amsterdam|Amsterdam|Amsterdam|Άμστερνταμ
+Bruselas · Bélgica|Bruxelles|Bruxelles|Bruxelas|Brussel·les|Bruksela|Brussels|Brüssel|Βρυξέλλες
+Berna · Suiza|Berne|Berna|Berna|Berna|Berno|Bern|Bern|Βέρνη
+Viena · Austria|Vienne|Vienna|Viena|Viena|Wiedeń|Vienna|Wien|Βιέννη
+Varsovia · Polonia|Varsovie|Varsavia|Varsóvia|Varsòvia|Warszawa|Warsaw|Warschau|Βαρσοβία
+Atenas · Grecia|Athènes|Atene|Atenas|Atenes|Ateny|Athens|Athen|Αθήνα
+Estocolmo · Suecia|Stockholm|Stoccolma|Estocolmo|Estocolm|Sztokholm|Stockholm|Stockholm|Στοκχόλμη
+Oslo · Noruega|Oslo|Oslo|Oslo|Oslo|Oslo|Oslo|Oslo|Όσλο
+Copenhague · Dinamarca|Copenhague|Copenaghen|Copenhaga|Copenhaguen|Kopenhaga|Copenhagen|Kopenhagen|Κοπεγχάγη
+Helsinki · Finlandia|Helsinki|Helsinki|Helsínquia|Hèlsinki|Helsinki|Helsinki|Helsinki|Ελσίνκι
+Moscú · Rusia|Moscou|Mosca|Moscovo|Moscou|Moskwa|Moscow|Moskau|Μόσχα
+Bucarest · Rumanía|Bucarest|Bucarest|Bucareste|Bucarest|Bukareszt|Bucharest|Bukarest|Βουκουρέστι
+Ankara · Turquía|Ankara|Ankara|Ancara|Ankara|Ankara|Ankara|Ankara|Άγκυρα
+Washington D. C. · Estados Unidos|Washington|Washington|Washington|Washington|Waszyngton|Washington, D.C.~Washington|Washington, D.C.~Washington|Ουάσινγκτον
+Ottawa · Canadá|Ottawa|Ottawa|Otava|Ottawa|Ottawa|Ottawa|Ottawa|Οττάβα~Οτάβα
+Ciudad de México · México|Mexico|Città del Messico|Cidade do México|Ciutat de Mèxic|Meksyk|Mexico City|Mexiko-Stadt|Πόλη του Μεξικού
+Buenos Aires · Argentina|Buenos Aires|Buenos Aires|Buenos Aires|Buenos Aires|Buenos Aires|Buenos Aires|Buenos Aires|Μπουένος Άιρες
+Brasilia · Brasil|Brasilia|Brasilia|Brasília|Brasília|Brasília|Brasília|Brasília|Μπραζίλια
+Santiago de Chile · Chile|Santiago du Chili|Santiago del Cile|Santiago do Chile|Santiago de Xile|Santiago|Santiago|Santiago de Chile|Σαντιάγο
+Bogotá · Colombia|Bogota|Bogotà|Bogotá|Bogotà|Bogota|Bogotá|Bogotá|Μπογκοτά
+Lima · Perú|Lima|Lima|Lima|Lima|Lima|Lima|Lima|Λίμα
+La Habana · Cuba|La Havane|L'Avana|Havana|L'Havana|Hawana|Havana|Havanna|Αβάνα
+Pekín · China|Pékin|Pechino|Pequim|Pequín|Pekin|Beijing|Peking|Πεκίνο
+Tokio · Japón|Tokyo|Tokyo|Tóquio|Tòquio|Tokio|Tokyo|Tokio|Τόκιο
+Nueva Delhi · India|New Delhi|Nuova Delhi|Nova Deli|Nova Delhi|Nowe Delhi|New Delhi|Neu-Delhi|Νέο Δελχί
+Seúl · Corea del Sur|Séoul|Seul|Seul|Seül|Seul|Seoul|Seoul|Σεούλ
+Rabat · Marruecos|Rabat|Rabat|Rabat|Rabat|Rabat|Rabat|Rabat|Ραμπάτ
+El Cairo · Egipto|Le Caire|Il Cairo|Cairo|el Caire|Kair|Cairo|Kairo|Κάιρο
+Canberra · Australia|Canberra|Canberra|Camberra|Canberra|Canberra|Canberra|Canberra|Καμπέρα
+`},
+
+{ id:'div', name:'Divisas', group:'Mundo', gender:false,
+  lead:'Las monedas más relevantes del mundo, con el país en el que se usan.',
+  notes:{
+    fr:'El adjetivo va detrás y en minúscula: franc suisse, dollar canadien, livre sterling.',
+    it:'El adjetivo va detrás y en minúscula: franco svizzero, dollaro canadese. La libra es «sterlina».',
+    pt:'El adjetivo va detrás y en minúscula: franco suíço, dólar canadiano. En Portugal, «dólar americano»; en Brasil, «dólar norte-americano» también.',
+    ca:'El adjetivo va detrás y en minúscula: franc suís, dòlar canadenc. La libra se dice «lliura».',
+    pl:'El adjetivo va detrás y concuerda: frank szwajcarski, dolar kanadyjski, korona szwedzka.',
+    en:'El adjetivo de nacionalidad lleva mayúscula y va delante: Swiss franc, Mexican peso. «Pound sterling» va en minúscula.',
+    de:'El adjetivo va delante y se declina: der Schweizer Franken, der kanadische Dollar, die schwedische Krone.',
+    el:'El adjetivo va delante y concuerda con el género de la moneda: ελβετικό φράγκο, σουηδική κορώνα, τουρκική λίρα.'
+  },
+  rows:`
+euro · zona euro|euro|euro|euro|euro|euro|euro|Euro|ευρώ
+dólar estadounidense · Estados Unidos|dollar américain|dollaro statunitense~dollaro americano|dólar americano~dólar norte-americano|dòlar estatunidenc~dòlar americà|dolar amerykański|US dollar~American dollar|US-Dollar~amerikanischer Dollar|αμερικανικό δολάριο~δολάριο ΗΠΑ
+libra esterlina · Reino Unido|livre sterling|sterlina|libra esterlina|lliura esterlina|funt szterling|pound sterling~British pound|Pfund Sterling~britisches Pfund|λίρα στερλίνα~βρετανική λίρα
+franco suizo · Suiza|franc suisse|franco svizzero|franco suíço|franc suís|frank szwajcarski|Swiss franc|Schweizer Franken|ελβετικό φράγκο
+yen · Japón|yen|yen|iene|ien|jen|yen|Yen|γιεν
+yuan · China|yuan|yuan|yuan~iuane~renminbi|iuan~yuan|juan|yuan~renminbi|Yuan~Renminbi|γουάν~γιουάν
+rublo · Rusia|rouble|rublo|rublo|ruble|rubel|rouble~ruble|Rubel|ρούβλι
+zloty · Polonia|złoty~zloty|złoty~zloty|zloty~złoty|zloty~złoty|złoty|zloty~złoty|Złoty~Zloty|ζλότι
+corona sueca · Suecia|couronne suédoise|corona svedese|coroa sueca|corona sueca|korona szwedzka|Swedish krona|schwedische Krone|σουηδική κορώνα
+lira turca · Turquía|livre turque|lira turca|lira turca|lira turca|lira turecka|Turkish lira|türkische Lira|τουρκική λίρα
+peso mexicano · México|peso mexicain|peso messicano|peso mexicano|peso mexicà|peso meksykańskie|Mexican peso|mexikanischer Peso|μεξικανικό πέσο
+real brasileño · Brasil|réal brésilien~real brésilien|real brasiliano|real brasileiro|real brasiler|real brazylijski|Brazilian real|brasilianischer Real|βραζιλιάνικο ρεάλ
+rupia india · India|roupie indienne|rupia indiana|rupia indiana|rupia índia|rupia indyjska|Indian rupee|indische Rupie|ινδική ρουπία
+dólar canadiense · Canadá|dollar canadien|dollaro canadese|dólar canadiano|dòlar canadenc|dolar kanadyjski|Canadian dollar|kanadischer Dollar|καναδικό δολάριο
+won surcoreano · Corea del Sur|won sud-coréen|won sudcoreano|won sul-coreano|won sud-coreà|won południowokoreański|South Korean won|südkoreanischer Won|νοτιοκορεατικό γουόν
+dírham marroquí · Marruecos|dirham marocain|dirham marocchino|dirham marroquino|dirham marroquí|dirham marokański|Moroccan dirham|marokkanischer Dirham|μαροκινό ντιρχάμ
+`},
+
+{ id:'lang', name:'Idiomas', group:'Mundo', gender:false,
+  lead:'El nombre de los idiomas más habituales, empezando por los ocho de esta web.',
+  notes:{
+    fr:'Sin mayúscula: le français, parler allemand.',
+    it:'Sin mayúscula: l\'italiano, parlo spagnolo.',
+    pt:'Sin mayúscula: o português, falo alemão.',
+    ca:'Sin mayúscula: el català, parlo francès. «Castellà» es otro nombre del español.',
+    pl:'Sin mayúscula, en forma de adjetivo masculino: polski, hiszpański. «Mówię po polsku» = hablo polaco.',
+    en:'Con mayúscula siempre: English, Spanish. A diferencia del español, la nacionalidad y el idioma se llaman igual.',
+    de:'Son sustantivos (mayúscula): Französisch, Deutsch. «Ich spreche Spanisch» = hablo español.',
+    el:'Se usa el plural neutro, en minúscula: τα ελληνικά, τα ισπανικά. «Μιλάω ισπανικά» = hablo español.'
+  },
+  rows:`
+español|espagnol|spagnolo|espanhol|espanyol~castellà|hiszpański|Spanish|Spanisch|ισπανικά
+francés|français|francese|francês|francès|francuski|French|Französisch|γαλλικά
+italiano|italien|italiano|italiano|italià|włoski|Italian|Italienisch|ιταλικά
+portugués|portugais|portoghese|português|portuguès|portugalski|Portuguese|Portugiesisch|πορτογαλικά
+catalán|catalan|catalano|catalão|català|kataloński|Catalan|Katalanisch|καταλανικά
+polaco|polonais|polacco|polaco|polonès|polski|Polish|Polnisch|πολωνικά
+inglés|anglais|inglese|inglês|anglès|angielski|English|Englisch|αγγλικά
+alemán|allemand|tedesco|alemão|alemany|niemiecki|German|Deutsch|γερμανικά
+griego|grec|greco|grego|grec|grecki|Greek|Griechisch|ελληνικά
+ruso|russe|russo|russo|rus|rosyjski|Russian|Russisch|ρωσικά
+chino|chinois|cinese|chinês|xinès|chiński|Chinese|Chinesisch|κινεζικά
+árabe|arabe|arabo|árabe|àrab|arabski|Arabic|Arabisch|αραβικά
+japonés|japonais|giapponese|japonês|japonès|japoński|Japanese|Japanisch|ιαπωνικά
+`}
+];
+
+const FLAGS = {
+  en:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#012169"/><path d="M0 0 60 40M60 0 0 40" stroke="#fff" stroke-width="9"/><path d="M0 0 60 40M60 0 0 40" stroke="#C8102E" stroke-width="4"/><path d="M30 0V40M0 20H60" stroke="#fff" stroke-width="14"/><path d="M30 0V40M0 20H60" stroke="#C8102E" stroke-width="8"/></svg>',
+  fr:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#fff"/><rect width="20" height="40" fill="#0055A4"/><rect x="40" width="20" height="40" fill="#EF4135"/></svg>',
+  it:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#fff"/><rect width="20" height="40" fill="#008C45"/><rect x="40" width="20" height="40" fill="#CD212A"/></svg>',
+  de:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#DD0000"/><rect width="60" height="13.34" fill="#000"/><rect y="26.67" width="60" height="13.34" fill="#FFCE00"/></svg>',
+  pt:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#DA291C"/><rect width="24" height="40" fill="#046A38"/><g fill="none" stroke="#FFE800" stroke-width="1.6"><circle cx="24" cy="20" r="8.5"/><ellipse cx="24" cy="20" rx="3.6" ry="8.5"/><path d="M15.5 20h17M24 11.5v17"/></g><path d="M24 13.6l-4.6 3v6.8l4.6 3 4.6-3v-6.8z" fill="#fff" stroke="#DA291C" stroke-width="1.6"/></svg>',
+  pl:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#fff"/><rect y="20" width="60" height="20" fill="#DC143C"/></svg>',
+  ca:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#FCDD09"/><g fill="#DA121A"><rect y="4.44" width="60" height="4.44"/><rect y="13.33" width="60" height="4.44"/><rect y="22.22" width="60" height="4.44"/><rect y="31.11" width="60" height="4.44"/></g></svg>',
+  el:'<svg class="flag" viewBox="0 0 60 40" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice"><rect width="60" height="40" fill="#0D5EAF"/><g fill="#fff"><rect y="4.44" width="60" height="4.44"/><rect y="13.33" width="60" height="4.44"/><rect y="22.22" width="60" height="4.44"/><rect y="31.11" width="60" height="4.44"/></g><rect width="22.22" height="22.22" fill="#0D5EAF"/><path d="M11.11 0V22.22M0 11.11H22.22" stroke="#fff" stroke-width="4.44"/></svg>'
+};
+/* ======================================================================================================
+   LÓGICA
+   ====================================================================================================== */
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function el(tag, cls, html){ const e = document.createElement(tag); if(cls) e.className = cls; if(html != null) e.innerHTML = html; return e; }
+function shuffle(a){ a = a.slice(); for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+const ICO_SAY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+const ICO_BULB = '<svg class="tipbulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2V16h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg>';
+const STAR_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.6l2.9 6.1 6.7.8-4.9 4.6 1.3 6.6L12 17.4l-6 3.3 1.3-6.6L2.4 9.5l6.7-.8z"/></svg>';
+
+/* ---------- de las filas de texto a fichas ---------- */
+function parseCell(str, gender){
+  const vars = String(str).split('~').map(s => s.trim()).filter(Boolean);
+  if(!gender) return { m: vars, f: vars };
+  const m = [], f = [];
+  vars.forEach(v => { const p = v.split('/').map(s => s.trim()); m.push(p[0]); f.push(p.length > 1 && p[1] ? p[1] : p[0]); });
+  return { m, f };
+}
+function buildData(){
+  TOPICS.forEach(t => {
+    t.items = t.rows.trim().split('\n').map(s => s.trim()).filter(Boolean).map((line, i) => {
+      const f = line.split('|');
+      if(f.length !== 9) throw new Error('Fila mal formada en «' + t.id + '» (' + f.length + ' campos): ' + line);
+      const parts = f[0].split(' · ');
+      const it = { id: t.id + ':' + i, topic: t, es: parseCell(parts[0], t.gender), sub: parts[1] || '', cells: {} };
+      LANG_ORDER.forEach((c, k) => { it.cells[c] = parseCell(f[k + 1], t.gender); });
+      return it;
+    });
+  });
+}
+/* comprobaciones de coherencia (no de ortografía): campos vacíos, repetidos, formas con barras donde no toca… */
+function validateData(){
+  const bad = [];
+  TOPICS.forEach(t => {
+    const seen = {};
+    if(t.items.length < 4) bad.push(t.id + ': menos de 4 fichas');
+    t.items.forEach((it, i) => {
+      const key = it.es.m.join('~');
+      if(seen[key]) bad.push(t.id + ': ficha repetida «' + key + '»');
+      seen[key] = 1;
+      if(!it.es.m.length || !it.es.m[0]) bad.push(t.id + '#' + i + ': español vacío');
+      LANG_ORDER.forEach(c => {
+        const cell = it.cells[c];
+        ['m', 'f'].forEach(g => {
+          if(!cell[g].length) bad.push(t.id + '#' + i + ' ' + c + ': vacío');
+          cell[g].forEach(x => { if(!x || /^\s|\s$|\s{2}/.test(x)) bad.push(t.id + '#' + i + ' ' + c + ': espacios sobrantes en «' + x + '»'); });
+        });
+        if(!t.gender && /\//.test(cell.m.join(''))) { /* una barra fuera de los temas con género: vale en «a/en», pero se avisa */
+          if(t.id !== 'hora') bad.push(t.id + '#' + i + ' ' + c + ': barra en «' + cell.m[0] + '»');
+        }
+      });
+    });
+    LANG_ORDER.forEach(c => { if(!t.notes || t.notes[c] === undefined) { /* las notas son opcionales */ } });
+  });
+  return bad;
+}
+
+/* ---------- estado ---------- */
+const state = { lang:null, tab:'learn', topic:{}, mode:'type', cover:false, q:null, bags:{}, tally:{ ok:0, bad:0 }, test:null, active:null, lastIdx:-1 };
+const T = id => TOPICS.filter(t => t.id === id)[0];
+const curTopic = () => T(state.topic[state.lang] || TOPICS[0].id) || TOPICS[0];
+const lgl = code => LANGS[code].name.toLowerCase();
+const gk = g => g ? 'f' : 'm';
+const esText = (it, g) => it.es[gk(g)][0];
+const formsOf = (it, code, g) => it.cells[code][gk(g)];
+const TEST_QN = 10, TEST_APROBADO = 80;
+
+/* ---------- progreso guardado en este navegador ---------- */
+const PROG_KEY = 'mundario:progreso';
+const prog = { d:{}, ok:true };
+function progToday(){ const d = new Date(), p = n => String(n).padStart(2, '0'); return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+function progDate(iso){ const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? (+m[3]) + '/' + (+m[2]) + '/' + m[1] : ''; }
+function progParse(raw){   /* lee con cuidado: lo que no cuadre se ignora */
+  const out = {}; let o = null;
+  try{ o = JSON.parse(raw); }catch(e){ return out; }
+  const src = o && typeof o === 'object' && o.d && typeof o.d === 'object' ? o.d : null;
+  if(!src) return out;
+  LANG_ORDER.forEach(c => {
+    const l = src[c]; if(!l || typeof l !== 'object') return;
+    TOPICS.forEach(t => {
+      const e = l[t.id]; if(!e || typeof e !== 'object') return;
+      const best = Math.round(+e.best);
+      if(best >= 0 && best <= 100) (out[c] = out[c] || {})[t.id] = { best, date: /^\d{4}-\d{2}-\d{2}$/.test(e.date || '') ? e.date : '' };
+    });
+  });
+  return out;
+}
+function progLoad(){ try{ prog.d = progParse(localStorage.getItem(PROG_KEY) || ''); prog.ok = true; }catch(e){ prog.ok = false; } }
+function progSave(){ try{ localStorage.setItem(PROG_KEY, JSON.stringify({ v:1, d:prog.d })); prog.ok = true; }catch(e){ prog.ok = false; } }
+const progEntry = (c, id) => (prog.d[c] && prog.d[c][id]) || null;
+function progLang(c){ let n = 0; TOPICS.forEach(t => { if(progEntry(c, t.id)) n++; }); return { n, tot: TOPICS.length }; }
+function progCount(){ let n = 0, tot = 0; LANG_ORDER.forEach(c => { const p = progLang(c); n += p.n; tot += p.tot; }); return { n, tot }; }
+function progRecord(id, pct){
+  const e = progEntry(state.lang, id);
+  (prog.d[state.lang] = prog.d[state.lang] || {})[id] = { best: Math.max(pct, e ? e.best : 0), date: progToday() };
+  progSave();
+}
+function progStarsHtml(code){
+  const c = progLang(code), tip = c.n + ' de ' + c.tot + ' temas dorados';
+  return '<span class="cstats"><span class="crow' + (c.n ? ' on' : '') + '" title="' + tip + '" aria-label="' + tip + '"><span class="cbadge">★ ' + c.n + '/' + c.tot + '</span>temas</span></span>';
+}
+
+/* ---------- comparar lo que se escribe con lo esperado ---------- */
+const ART = {
+  fr:/^(l'|le |la |les )/, it:/^(l'|il |lo |la |i |gli |le )/, pt:/^(o |a |os |as )/, ca:/^(l'|el |la |els |les )/,
+  pl:null, en:/^(the )/, de:/^(der |die |das )/, el:/^(ο |η |το |οι |τα )/
+};
+function base(s){   /* minúsculas, un solo tipo de apóstrofo y de espacio; guiones y puntuación cuentan como espacio */
+  return String(s).toLowerCase().replace(/[’`´]/g, "'").replace(/[‐-―-]+/g, ' ').replace(/·/g, '').replace(/[.,;:!?¿¡"]/g, ' ').replace(/\s+/g, ' ').trim();
+}
+function stripAcc(t){ return t.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/ł/g, 'l').replace(/ß/g, 'ss').replace(/ς/g, 'σ'); }
+function lax(s, code){   /* sin artículo, sin acentos, sin apóstrofos ni espacios */
+  let b = base(s); const re = ART[code]; if(re) b = b.replace(re, '');
+  return stripAcc(b).replace(/'/g, '').replace(/ /g, '');
+}
+function judge(input, forms, code){
+  const a = base(input);
+  if(!a) return { empty:true };
+  for(let i = 0; i < forms.length; i++) if(base(forms[i]) === a) return { ok:true };
+  const la = lax(input, code);
+  for(let i = 0; i < forms.length; i++) if(lax(forms[i], code) === la) return { ok:true, near:true, fix:forms[i] };
+  return { ok:false };
+}
+
+/* ---------- voz ---------- */
+let toastT = 0;
+function toast(msg){
+  let t = $('vtoast');
+  if(!t){ t = el('div', 'voicetoast'); t.id = 'vtoast'; t.innerHTML = '<span class="msg"></span><button type="button" class="close" aria-label="Cerrar">×</button>'; document.body.appendChild(t); t.querySelector('.close').onclick = () => t.classList.remove('show'); }
+  t.querySelector('.msg').textContent = msg; t.classList.add('show');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 5000);
+}
+function say(text, code){
+  try{
+    const synth = window.speechSynthesis;
+    if(!synth || !window.SpeechSynthesisUtterance){ toast('Este navegador no puede leer en voz alta.'); return; }
+    const lg = LANGS[code], vs = synth.getVoices();
+    const want = lg.tts.toLowerCase(), pre = want.slice(0, 2);
+    let v = vs.filter(x => x.lang.replace('_', '-').toLowerCase() === want)[0] || vs.filter(x => x.lang.toLowerCase().indexOf(pre) === 0)[0];
+    if(!v && vs.length){ toast('No hay ninguna voz instalada para ' + lgl(code) + ' en este dispositivo.'); return; }
+    synth.cancel();
+    const u = new SpeechSynthesisUtterance(String(text).replace(/\s*\([^)]*\)/g, ''));
+    u.lang = lg.tts; u.rate = .9; if(v) u.voice = v;
+    synth.speak(u);
+  }catch(e){ /* sin voz: lo demás sigue funcionando */ }
+}
+
+/* ---------- vista «Aprender» ---------- */
+function showForms(it, code){   /* HTML de lo que se enseña de una ficha: la forma principal y, debajo, las alternativas */
+  const c = it.cells[code], g = curTopic().gender;
+  const one = i => g ? c.m[i] + (c.f[i] !== c.m[i] ? ' / ' + c.f[i] : '') : c.m[i];
+  const alts = []; for(let i = 1; i < c.m.length; i++) alts.push(one(i));
+  return '<span class="v">' + esc(one(0)) + '</span>' + (alts.length ? '<small>también: ' + esc(alts.join(' · ')) + '</small>' : '');
+}
+function showEs(it){
+  const g = curTopic().gender, e = it.es;
+  const main = g ? e.m[0] + (e.f[0] !== e.m[0] ? ' / ' + e.f[0] : '') : e.m[0];
+  return esc(main) + (it.sub ? '<small>' + esc(it.sub) + '</small>' : '');
+}
+function tipNode(code, text){
+  return el('div', 'tip', '<div class="tiphead">' + ICO_BULB + 'Ojo en ' + esc(lgl(code)) + '</div><p class="tipp">' + esc(text) + '</p>');
+}
+function renderLearn(){
+  const t = curTopic(), code = state.lang, p = $('panelLearn');
+  p.innerHTML = '';
+  const card = el('div', 'card main');
+  card.appendChild(el('h2', '', esc(t.name)));
+  card.appendChild(el('p', 'lead', esc(t.lead)));
+  const note = t.notes && t.notes[code];
+  if(note) card.appendChild(tipNode(code, note));
+  const bar = el('div', 'lbar');
+  bar.innerHTML = '<label class="switch"><input type="checkbox" id="coverSw"' + (state.cover ? ' checked' : '') + '><span class="track"></span><span>Tapar las respuestas (pulsa una fila para verla)</span></label>' +
+    '<button type="button" class="btn small primary" id="goPractice">Practicar este tema →</button>';
+  card.appendChild(bar);
+  const tb = el('div', 'mt' + (state.cover ? ' cover' : ''));
+  tb.id = 'mtable';
+  let html = '<div class="mt-head"><span>Español</span><span>' + esc(LANGS[code].name) + '</span><span></span></div>';
+  t.items.forEach((it, i) => {
+    html += '<div class="mt-row" data-i="' + i + '"><div class="mt-es">' + showEs(it) + '</div><div class="mt-tg">' + showForms(it, code) + '</div>' +
+      '<button type="button" class="iconbtn small" data-say="' + i + '" aria-label="Escuchar" title="Escuchar">' + ICO_SAY + '</button></div>';
+  });
+  tb.innerHTML = html;
+  card.appendChild(tb);
+  p.appendChild(card);
+}
+
+/* ---------- vista «Practicar» ---------- */
+const MODES = [['type', 'Escribe la traducción'], ['choice', 'Elige la correcta'], ['test', 'Test final ★']];
+function makeQ(t, it, kind){
+  const code = state.lang;
+  let g = 0, glabel = '';
+  if(t.gender){
+    const c = it.cells[code], differs = c.f[0] !== c.m[0] || it.es.f[0] !== it.es.m[0];
+    if(differs){ g = Math.random() < .5 ? 0 : 1; glabel = g ? 'femenino' : 'masculino'; }
+  }
+  const answer = formsOf(it, code, g);
+  const q = { t, it, g, kind, code, answer, shown: answer[0], es: esText(it, g), sub: it.sub, glabel };
+  if(kind === 'choice'){
+    const opts = [];
+    shuffle(t.items.filter(x => x !== it)).forEach(x => { const s = esText(x, g); if(opts.length < 3 && s !== q.es && opts.indexOf(s) < 0) opts.push(s); });
+    q.options = shuffle(opts.concat(q.es));
+  }
+  return q;
+}
+function questionNode(q, ctx){
+  const isType = q.kind === 'type', box = el('div', 'qnode');
+  const sub = [q.sub, q.glabel].filter(Boolean).join(' · ');
+  const pr = el('div', 'prompt');
+  pr.innerHTML = '<div class="k">' + (isType ? 'Escríbelo en ' + esc(lgl(q.code)) : '¿Qué significa en español?') + '</div>' +
+    '<div class="qv"><div class="v">' + esc(isType ? q.es : q.shown) + '</div>' +
+    (isType ? '' : '<button type="button" class="iconbtn small" data-qsay aria-label="Escuchar" title="Escuchar">' + ICO_SAY + '</button>') + '</div>' +
+    (isType && sub ? '<div class="sub">' + esc(sub) + '</div>' : '');
+  box.appendChild(pr);
+  const fb = el('div', 'banner'); fb.setAttribute('aria-live', 'polite');
+  const row = el('div', 'qrow');
+  let done = false, input = null;
+  const next = el('button', 'btn primary', esc(ctx.nextLabel || 'Siguiente')); next.type = 'button'; next.hidden = true;
+  next.onclick = () => ctx.next();
+  function finish(ok, near, skipped){
+    if(done) return; done = true;
+    let h = '';
+    if(ok && !near) h = '¡Correcto!';
+    else if(ok) h = 'Casi: se escribe «' + esc(near) + '»';
+    else h = (skipped ? 'La respuesta es' : 'No es esa. Es') + ' «' + esc(isType ? q.answer[0] : q.es) + '»';
+    if(isType && q.answer.length > 1 && !(ok && !near)) h += '<div class="sub">También vale: ' + esc(q.answer.slice(1).join(' · ')) + '</div>';
+    fb.innerHTML = h; fb.className = 'banner show ' + (ok ? 'good' : 'bad');
+    if(isType){ input.disabled = true; input.classList.add(ok ? 'ok' : 'bad'); }
+    row.innerHTML = '';
+    if(isType){ const s = el('button', 'iconbtn', ICO_SAY); s.type = 'button'; s.title = 'Escuchar'; s.setAttribute('aria-label', 'Escuchar'); s.onclick = () => say(q.answer[0], q.code); row.appendChild(s); }
+    next.hidden = false; row.appendChild(next); next.focus();
+    ctx.onAnswer(ok);
+  }
+  if(isType){
+    input = el('input', 'ans exansv'); input.type = 'text'; input.setAttribute('autocomplete', 'off'); input.setAttribute('autocapitalize', 'none'); input.setAttribute('autocorrect', 'off'); input.spellcheck = false;
+    input.placeholder = 'Tu respuesta'; input.setAttribute('aria-label', 'Tu respuesta en ' + lgl(q.code)); input.lang = q.code;
+    const check = el('button', 'btn primary', 'Comprobar'); check.type = 'button';
+    const skip = el('button', 'btn small', 'No lo sé'); skip.type = 'button';
+    const go = () => { const r = judge(input.value, q.answer, q.code); if(r.empty){ input.focus(); return; } finish(!!r.ok, r.near ? r.fix : '', false); };
+    check.onclick = go; skip.onclick = () => finish(false, '', true);
+    input.addEventListener('keydown', ev => { if(ev.key === 'Enter'){ ev.preventDefault(); ev.stopPropagation(); go(); } });
+    box.appendChild(input);
+    row.appendChild(check); row.appendChild(skip);
+    state.active = { isDone: () => done, next: () => ctx.next() };
+  } else {
+    const opts = el('div', 'testopts');
+    q.options.forEach((o, i) => {
+      const b = el('button', 'optbtn', '<span class="optn">' + (i + 1) + '</span>' + esc(o)); b.type = 'button'; b.dataset.o = o;
+      b.onclick = () => pick(i);
+      opts.appendChild(b);
+    });
+    box.appendChild(opts);
+    const pick = i => {
+      if(done) return;
+      const ok = q.options[i] === q.es;
+      Array.prototype.forEach.call(opts.children, (b, k) => { b.disabled = true; if(q.options[k] === q.es) b.classList.add('ok'); else if(k === i) b.classList.add('bad'); });
+      finish(ok, '', false);
+    };
+    state.active = { isDone: () => done, next: () => ctx.next(), pick };
+  }
+  const sp = pr.querySelector('[data-qsay]'); if(sp) sp.onclick = () => say(q.shown, q.code);
+  box.appendChild(fb); box.appendChild(row);
+  box.focusFirst = () => { if(input) input.focus(); };
+  return box;
+}
+function nextPractice(){
+  const t = curTopic(), key = state.lang + ':' + t.id;
+  let bag = state.bags[key];
+  if(!bag || !bag.length) bag = state.bags[key] = shuffle(t.items.map((_, i) => i));
+  if(bag.length > 1 && bag[0] === state.lastIdx) bag.push(bag.shift());
+  const idx = bag.shift(); state.lastIdx = idx;
+  state.q = makeQ(t, t.items[idx], state.mode);
+  state.q.idx = idx;
+}
+function renderPractice(){
+  const t = curTopic(), p = $('panelPractice');
+  p.innerHTML = '';
+  state.active = null;
+  const card = el('div', 'card main');
+  const e = progEntry(state.lang, t.id);
+  card.innerHTML = '<h2>' + esc(t.name) + (e ? ' <span class="pill mint">★ dominado</span>' : '') + '</h2>';
+  const modes = el('div', 'modes');
+  MODES.forEach(m => {
+    const b = el('button', 'mode', esc(m[1])); b.type = 'button'; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', state.mode === m[0]); b.dataset.mode = m[0];
+    b.onclick = () => { if(state.mode === m[0]) return; state.mode = m[0]; state.q = null; state.test = null; if(m[0] !== 'test') state.tally = { ok:0, bad:0 }; renderPractice(); };
+    modes.appendChild(b);
+  });
+  card.appendChild(modes);
+  const body = el('div', 'qbody'); body.id = 'qbody';
+  card.appendChild(body);
+  p.appendChild(card);
+  if(state.mode === 'test') renderTestStep(); else renderPracticeStep();
+}
+function tallyHtml(){ return '<div class="pills"><span class="pill mint">✓ ' + state.tally.ok + '</span><span class="pill">✗ ' + state.tally.bad + '</span></div>'; }
+function renderPracticeStep(){
+  const body = $('qbody'); body.innerHTML = '';
+  if(!state.q || state.q.kind !== state.mode || state.q.code !== state.lang || state.q.t !== curTopic()) nextPractice();
+  const q = state.q;
+  const tl = el('div', '', tallyHtml()); tl.id = 'tally'; body.appendChild(tl);
+  const node = questionNode(q, {
+    nextLabel: 'Siguiente',
+    onAnswer: ok => {
+      if(ok) state.tally.ok++; else { state.tally.bad++; const bag = state.bags[state.lang + ':' + curTopic().id]; if(bag) bag.splice(Math.min(3, bag.length), 0, q.idx); }
+      tl.innerHTML = tallyHtml();
+    },
+    next: () => { state.q = null; renderPracticeStep(); }
+  });
+  body.appendChild(node);
+  node.focusFirst();
+}
+/* ---------- test final ---------- */
+function startTest(){
+  const t = curTopic(), n = Math.min(TEST_QN, t.items.length);
+  const items = shuffle(t.items).slice(0, n), nType = Math.ceil(n * .6);
+  const kinds = shuffle(items.map((_, i) => i < nType ? 'type' : 'choice'));
+  state.test = { topic:t.id, lang:state.lang, qs: items.map((it, i) => makeQ(t, it, kinds[i])), i:0, score:0, fails:[] };
+}
+function renderTestStep(){
+  const body = $('qbody'); body.innerHTML = '';
+  if(!state.test || state.test.lang !== state.lang || state.test.topic !== curTopic().id) startTest();
+  const s = state.test, t = curTopic(), n = s.qs.length, need = Math.ceil(n * TEST_APROBADO / 100);
+  while(s.i < n && s.qs[s.i].answered) s.i++;   /* si vuelves de otra pestaña, no se contesta dos veces la misma */
+  if(s.i >= n) return renderTestResult();
+  const q = s.qs[s.i];
+  const head = el('div', '', '<div class="lead">Test final: ' + n + ' preguntas, ' + need + ' aciertos para dejar el tema en dorado ★</div>' +
+    '<div class="progline"><div class="bar" style="flex:1"><span style="width:' + Math.round(100 * s.i / n) + '%"></span></div><span class="num">Pregunta ' + (s.i + 1) + ' de ' + n + '</span></div>');
+  body.appendChild(head);
+  const last = s.i === n - 1;
+  const node = questionNode(q, {
+    nextLabel: last ? 'Ver resultado' : 'Siguiente',
+    onAnswer: ok => { q.answered = true; if(ok) s.score++; else s.fails.push(q); },
+    next: () => { s.i++; renderTestStep(); }
+  });
+  body.appendChild(node);
+  node.focusFirst();
+}
+function renderTestResult(){
+  const body = $('qbody'), s = state.test, t = curTopic(), n = s.qs.length, need = Math.ceil(n * TEST_APROBADO / 100);
+  const passed = s.score >= need, pct = Math.round(100 * s.score / n);
+  state.active = null;
+  let gotStar = false;
+  if(passed){ gotStar = !progEntry(state.lang, t.id); progRecord(t.id, pct); }
+  let h = '<div class="testresult"><div class="testscore">' + s.score + '/' + n + '</div>';
+  if(passed) h += '<div class="testready"><span class="cap">★</span><div class="txt"><div class="k">' + (gotStar ? '¡Tema dominado!' : 'Superado otra vez') + '</div><div class="d">Has llegado a ' + need + ' aciertos o más. «' + esc(t.name) + '» queda en dorado en ' + esc(lgl(state.lang)) + (prog.ok ? '.' : ', pero este navegador no deja guardarlo: se perderá al cerrar la página.') + '</div></div></div>';
+  else h += '<p class="lead">Te faltan ' + (need - s.score) + ' acierto' + (need - s.score === 1 ? '' : 's') + ' para dominar el tema (hacen falta ' + need + ' de ' + n + '). No se guarda nada: repasa y vuelve a intentarlo.</p>';
+  if(s.fails.length){
+    h += '<div class="testreview"><b>Para repasar</b>' + s.fails.map(q => '<div class="testreviewrow"><span class="bad2">' + esc(q.es) + (q.sub && q.kind === 'type' ? ' (' + esc(q.sub) + ')' : '') + '</span> → <b>' + esc(q.answer[0]) + '</b></div>').join('') + '</div>';
+  }
+  h += '<div class="controls"><button type="button" class="btn primary" id="testAgain">Repetir el test</button><button type="button" class="btn" id="testPractice">Seguir practicando</button></div></div>';
+  body.innerHTML = h;
+  renderSubtabs();
+  $('testAgain').onclick = () => { state.test = null; renderTestStep(); };
+  $('testPractice').onclick = () => { state.mode = 'type'; state.q = null; state.test = null; state.tally = { ok:0, bad:0 }; renderPractice(); };
+}
+
+/* ---------- pantalla de bienvenida, pestañas y temas ---------- */
+function buildWelcome(){
+  const box = $('choices'); box.innerHTML = '';
+  LANG_ORDER.forEach(code => {
+    const lg = LANGS[code], b = el('button', 'choice');
+    b.dataset.lang = code;
+    b.innerHTML = FLAGS[code] + '<span class="cname">' + esc(lg.name) + '</span><span class="cnative">' + esc(lg.native) + '</span>' + progStarsHtml(code);
+    b.onclick = () => chooseLang(code);
+    box.appendChild(b);
+  });
+}
+function renderSubtabs(){
+  const bar = $('subtabs'); bar.innerHTML = '';
+  const cur = curTopic();
+  TOPICS.forEach(t => {
+    const e = progEntry(state.lang, t.id);
+    const c = el('button', 'chip' + (e ? ' gold' : ''));
+    c.type = 'button'; c.setAttribute('role', 'tab'); c.setAttribute('aria-selected', t.id === cur.id); c.title = t.group;
+    c.appendChild(el('span', '', esc(t.name)));
+    if(e){
+      c.appendChild(el('span', 'star', STAR_SVG));
+      c.title = 'Dominado: test final superado (mejor nota ' + e.best + ' %' + (e.date ? ', ' + progDate(e.date) : '') + ')';
+      c.setAttribute('aria-label', t.name + ', dominado');
+    }
+    c.onclick = () => { state.topic[state.lang] = t.id; state.q = null; state.test = null; state.tally = { ok:0, bad:0 }; setTab(state.tab); };
+    bar.appendChild(c);
+  });
+}
+function setTab(which){
+  state.tab = which;
+  $('tabLearn').setAttribute('aria-selected', which === 'learn');
+  $('tabPractice').setAttribute('aria-selected', which === 'practice');
+  $('panelLearn').hidden = which !== 'learn';
+  $('panelPractice').hidden = which !== 'practice';
+  state.active = null;
+  if(which === 'learn') renderLearn(); else renderPractice();
+  renderSubtabs();
+}
+/* mismo aspecto que Vocabulando en las pantallas de práctica: clase en <body>, pestañas y chip de idioma en la cabecera */
+function vcbSkin(code){
+  try{
+    const on = !!code, bar = document.querySelector('.themewrap'), tabs = document.querySelector('.tabs'), chip = $('langChip'), wrap = $('langWrap');
+    closeLangMenu();
+    document.body.classList.toggle('vcb', on);
+    if(on){
+      if(tabs && bar && tabs.parentNode !== bar) bar.insertBefore(tabs, bar.firstChild);
+      if(chip){ chip.innerHTML = FLAGS[code] + '<span>' + code.toUpperCase() + '</span>'; chip.hidden = false; }
+      if(wrap) wrap.hidden = false;
+    } else {
+      if(tabs && tabs.parentNode !== $('app')) $('app').insertBefore(tabs, $('app').firstChild);
+      if(chip) chip.hidden = true;
+      if(wrap) wrap.hidden = true;
+    }
+  }catch(e){ /* sin el aspecto nuevo: la práctica sigue funcionando */ }
+}
+/* el idioma abierto va en la dirección (#fr, #pt…): así las otras webs pueden abrir Mundario en el mismo idioma */
+function syncLangHash(code){
+  try{ history.replaceState(null, '', code ? '#' + code : location.pathname + location.search); }catch(e){}
+}
+function chooseLang(code){
+  state.lang = code; state.q = null; state.test = null; state.mode = 'type'; state.tally = { ok:0, bad:0 };
+  if(!state.topic[code]) state.topic[code] = TOPICS[0].id;
+  $('welcome').hidden = true;
+  $('app').hidden = false;
+  $('eyebrow').textContent = 'Datos clave · ' + LANGS[code].name;
+  document.title = 'Mundario · ' + LANGS[code].name;
+  vcbSkin(code);
+  setTab('learn');
+  syncLangHash(code);
+  window.scrollTo({ top:0 });
+}
+function backToWelcome(){
+  state.lang = null; state.q = null; state.test = null; state.active = null;
+  $('welcome').hidden = false;
+  $('app').hidden = true;
+  $('eyebrow').textContent = 'Sala de datos clave';
+  document.title = 'Mundario';
+  vcbSkin('');
+  syncLangHash('');
+  buildWelcome();
+  window.scrollTo({ top:0 });
+}
+$('brandBtn').onclick = backToWelcome;
+
+/* ---- idioma: lista desplegable sobre el propio botón; se elige ahí mismo, sin pasar por la pantalla de inicio ---- */
+function buildLangMenu(){
+  const m = $('langMenu'); if(!m) return;
+  m.innerHTML = '';
+  LANG_ORDER.forEach(code => {
+    const lg = LANGS[code];
+    const b = el('button', 'langopt', FLAGS[code] + '<span>' + esc(lg.name) + '</span><span class="lnat">' + esc(lg.native) + '</span>');
+    b.type = 'button'; b.dataset.lang = code;
+    b.setAttribute('role', 'option'); b.setAttribute('aria-selected', code === state.lang ? 'true' : 'false');
+    m.appendChild(b);
+  });
+}
+function closeLangMenu(refocus){
+  const m = $('langMenu'), b = $('langChip');
+  if(!m || m.hidden) return;
+  m.hidden = true; m.style.transform = '';
+  if(b){ b.setAttribute('aria-expanded', 'false'); if(refocus) b.focus(); }
+}
+function openLangMenu(){
+  const m = $('langMenu'), b = $('langChip'); if(!m || !b) return;
+  buildLangMenu(); m.style.transform = ''; m.hidden = false; b.setAttribute('aria-expanded', 'true');
+  const r = m.getBoundingClientRect(), W = document.documentElement.clientWidth;
+  const dx = r.left < 8 ? 8 - r.left : (r.right > W - 8 ? W - 8 - r.right : 0);
+  if(dx) m.style.transform = 'translateX(' + Math.round(dx) + 'px)';
+  const cur = m.querySelector('[aria-selected="true"]') || m.querySelector('.langopt'); if(cur) cur.focus();
+}
+
+/* ---- ayuda: cómo funciona la web ---- */
+let infoAsk = false;   /* se está pidiendo confirmación para borrar el progreso guardado */
+function infoProgHtml(){
+  let access = true; try{ localStorage.getItem(PROG_KEY); }catch(e){ access = false; }
+  const c = progCount(), ok = access && prog.ok;
+  const status = !ok
+    ? 'Este navegador no deja guardar datos (¿navegación privada o bloqueo del almacenamiento?). Los temas que dejes en dorado se recordarán solo hasta que recargues o cierres la página.'
+    : !c.n ? 'Todavía no hay nada guardado en este navegador: ningún tema en dorado.'
+    : 'Guardado en este navegador: <b>' + c.n + ' de ' + c.tot + ' temas</b> en dorado.';
+  let html = '<div class="info-status"><i class="sdot' + (ok ? ' ok' : '') + '"></i><span>' + status + '</span></div>';
+  if(c.n){
+    html += infoAsk
+      ? '<p>¿Seguro? Se quitarán los ' + c.n + ' temas en dorado de este navegador, y no se puede deshacer.</p><div class="info-actions"><button type="button" class="btn small primary" id="progDelYes">Sí, borrar</button><button type="button" class="btn small" id="progDelNo">Cancelar</button></div>'
+      : '<div class="info-actions"><button type="button" class="btn small" id="progDel">Borrar progreso guardado</button></div>';
+  }
+  return html;
+}
+function infoHtml(){
+  const sib = $('appWrap') && !$('appWrap').hidden;
+  const nFichas = TOPICS.reduce((n, t) => n + t.items.length, 0);
+  return '<div class="modal-top"><h2 class="modal-title" id="infoTitle">Cómo funciona Mundario</h2><button type="button" class="modal-x" id="infoClose" aria-label="Cerrar">×</button></div>' +
+    '<div class="info-body">' +
+    '<p>Mundario reúne lo que hay que saber en cada idioma y no es del todo gramática, ni vocabulario, ni conjugación: números, hora, calendario, países, gentilicios, capitales, divisas e idiomas. Son ' + TOPICS.length + ' temas y ' + nFichas + ' fichas, en 8 idiomas: francés, italiano, portugués, catalán, polaco, inglés, alemán y griego. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Mundario» vuelves a ella.' + (sib ? ' El botón con el logo (junto al del tema) te lleva a Vocabulando, Conjugario o Declinario, en el mismo idioma.' : '') + '</p>' +
+    '<h3>Aprender</h3>' +
+    '<p>Cada tema tiene su tabla (español a la izquierda, el idioma a la derecha) y, encima, un aviso con lo que más confunde en ese idioma. El botón del altavoz lee la forma en voz alta (hace falta una voz instalada en tu dispositivo). «Tapar las respuestas» oculta la columna del idioma: pulsa una fila para ver su respuesta y comprueba de cabeza.</p>' +
+    '<h3>Practicar</h3><ul>' +
+    '<li><b>Escribe la traducción:</b> te doy la ficha en español y la escribes en el idioma. Lo que falles vuelve a salir pronto.</li>' +
+    '<li><b>Elige la correcta:</b> te doy la forma en el idioma y eliges su significado entre cuatro. Puedes pulsar 1, 2, 3 o 4.</li>' +
+    '<li><b>Test final:</b> ' + TEST_QN + ' preguntas (unas se escriben y otras se eligen; en los temas más cortos, una por ficha). Con ' + TEST_APROBADO + ' % de aciertos o más, el tema queda en <b>dorado ★</b> y se guarda. Si no llegas, no se guarda nada.</li></ul>' +
+    '<h3>Acentos, artículos y mayúsculas</h3>' +
+    '<p>No importan las mayúsculas, los guiones ni los signos de puntuación. Si aciertas sin un acento, sin el artículo o sin el apóstrofo, se acepta y se te enseña cómo se escribe. Donde hay varias formas válidas (por ejemplo «Es ist halb vier» o «Es ist drei Uhr dreißig»), vale cualquiera de ellas.</p>' +
+    '<h3>Dónde se guarda tu progreso</h3>' +
+    '<div id="infoProg">' + infoProgHtml() + '</div>' +
+    '<p>Mundario guarda solo los temas que dejas en dorado, con tu mejor nota y la fecha, en este navegador (no hay ningún servidor). Siguen ahí al recargar o cerrar la página, pero no pasan solos de un navegador o de un dispositivo a otro. Safari puede borrar los datos de una web que lleva tiempo sin visitarse; si la añades a la pantalla de inicio, no lo hace.</p>' +
+    '<h3>Qué sale de tu navegador</h3>' +
+    '<p>Mundario no consulta internet: todas las fichas están dentro de la propia página. Solo se descargan las tipografías de Google Fonts al abrirla.</p>' +
+    '<h3>Una advertencia</h3>' +
+    '<p>Las fichas están escritas a mano y revisadas con comprobaciones automáticas, que solo detectan incoherencias (campos vacíos, repetidos…), no errores de ortografía ni de uso. Hay cosas que cambian de un país a otro (las horas en catalán, «dezasseis» frente a «dezesseis»…) y se ha elegido la variedad europea. Si una forma te parece dudosa, compruébala en un diccionario.</p>' +
+    '<h3>Créditos</h3><p class="muted-note">Tipografías: Fredoka, Nunito, DM Mono, Bricolage Grotesque, Inter e IBM Plex Mono (Google Fonts, licencia OFL). Banderas dibujadas en SVG.</p>' +
+    '</div>';
+}
+function openInfo(){
+  closeInfo(); infoAsk = false;
+  const d = document.createElement('div');
+  d.className = 'modal-overlay'; d.id = 'infoOverlay';
+  d.innerHTML = '<div class="modal-lg" role="dialog" aria-modal="true" aria-labelledby="infoTitle">' + infoHtml() + '</div>';
+  document.body.appendChild(d); document.body.classList.add('modal-open');
+  const b = $('infoBtn'); if(b) b.setAttribute('aria-expanded', 'true');
+  $('infoClose').focus();
+}
+function closeInfo(refocus){
+  const d = $('infoOverlay');
+  if(!d) return;
+  d.remove(); document.body.classList.remove('modal-open'); infoAsk = false;
+  const b = $('infoBtn'); if(b){ b.removeAttribute('aria-expanded'); if(refocus) b.focus(); }
+}
+function infoRefreshProg(focusId){
+  const box = $('infoProg'); if(!box) return;
+  box.innerHTML = infoProgHtml();
+  const f = focusId && $(focusId); if(f) f.focus();
+}
+function progClear(){
+  prog.d = {};
+  try{ localStorage.removeItem(PROG_KEY); }catch(e){}
+  if(state.lang) renderSubtabs(); else buildWelcome();
+  if(state.lang && state.tab === 'practice') renderPractice();
+}
+
+/* ---- eventos ---- */
+document.addEventListener('click', ev => {
+  const t = ev.target; if(!t || !t.closest) return;
+  if(t.closest('#infoBtn')){ closeLangMenu(); openInfo(); return; }
+  if(t.closest('#infoClose') || t.id === 'infoOverlay'){ closeInfo(true); return; }
+  if(t.closest('#progDel')){ infoAsk = true; infoRefreshProg('progDelNo'); return; }
+  if(t.closest('#progDelNo')){ infoAsk = false; infoRefreshProg('progDel'); return; }
+  if(t.closest('#progDelYes')){ infoAsk = false; progClear(); infoRefreshProg(); return; }
+  if(t.closest('#langChip')){ const m = $('langMenu'); if(m && m.hidden) openLangMenu(); else closeLangMenu(); return; }
+  const opt = t.closest('.langopt');
+  if(opt){ const code = opt.dataset.lang; closeLangMenu(true); if(code && code !== state.lang) chooseLang(code); return; }
+  const sayB = t.closest('[data-say]');
+  if(sayB){ const it = curTopic().items[+sayB.dataset.say]; if(it) say(formsOf(it, state.lang, 0)[0], state.lang); return; }
+  if(t.closest('#goPractice')){ setTab('practice'); window.scrollTo({ top:0 }); return; }
+  const row = t.closest('.mt-row');
+  if(row && $('mtable') && $('mtable').classList.contains('cover')){ row.classList.toggle('open'); return; }
+  closeLangMenu();
+});
+document.addEventListener('change', ev => {
+  if(ev.target && ev.target.id === 'coverSw'){ state.cover = !!ev.target.checked; const tb = $('mtable'); if(tb){ tb.classList.toggle('cover', state.cover); Array.prototype.forEach.call(tb.querySelectorAll('.mt-row.open'), r => r.classList.remove('open')); } }
+});
+document.addEventListener('keydown', ev => {
+  const m = $('langMenu');
+  if(m && !m.hidden){
+    if(ev.key === 'Escape'){ ev.preventDefault(); closeLangMenu(true); return; }
+    const opts = Array.from(m.querySelectorAll('.langopt')), i = opts.indexOf(document.activeElement);
+    if(ev.key === 'ArrowDown'){ ev.preventDefault(); opts[(i + 1) % opts.length].focus(); }
+    else if(ev.key === 'ArrowUp'){ ev.preventDefault(); opts[(i - 1 + opts.length) % opts.length].focus(); }
+    else if(ev.key === 'Home'){ ev.preventDefault(); opts[0].focus(); }
+    else if(ev.key === 'End'){ ev.preventDefault(); opts[opts.length - 1].focus(); }
+    else if(ev.key === 'Tab') closeLangMenu();
+    return;
+  }
+  const d = $('infoOverlay');
+  if(d){
+    if(ev.key === 'Escape'){ ev.preventDefault(); closeInfo(true); return; }
+    if(ev.key === 'Tab'){   /* el foco se queda dentro de la ventana */
+      const f = Array.from(d.querySelectorAll('button, a[href]')).filter(x => !x.disabled && x.offsetParent !== null);
+      if(!f.length) return;
+      const first = f[0], last = f[f.length - 1];
+      if(!d.contains(document.activeElement)){ ev.preventDefault(); first.focus(); }
+      else if(ev.shiftKey && document.activeElement === first){ ev.preventDefault(); last.focus(); }
+      else if(!ev.shiftKey && document.activeElement === last){ ev.preventDefault(); first.focus(); }
+    }
+    return;
+  }
+  const a = state.active;
+  if(!a || state.lang === null || state.tab !== 'practice') return;
+  const tag = ev.target && ev.target.tagName;
+  if(ev.key === 'Enter' && a.isDone() && !/^(BUTTON|A|TEXTAREA|SELECT)$/.test(tag || '')){ ev.preventDefault(); a.next(); }
+  else if(/^[1-4]$/.test(ev.key) && a.pick && !a.isDone() && !/^(INPUT|TEXTAREA|SELECT)$/.test(tag || '')){ ev.preventDefault(); a.pick(+ev.key - 1); }
+});
+/* otra pestaña ha cambiado lo guardado (nuevo tema dorado, o borrado): se refleja aquí al momento */
+window.addEventListener('storage', ev => {
+  if(ev.key !== PROG_KEY && ev.key !== null) return;
+  try{
+    progLoad();
+    if(state.lang) renderSubtabs(); else buildWelcome();
+    if($('infoProg')) infoRefreshProg();
+  }catch(e){}
+});
+$('tabLearn').onclick = () => setTab('learn');
+$('tabPractice').onclick = () => setTab('practice');
+
+/* ---- arranque ---- */
+buildData();
+(function(){ const bad = validateData(); if(bad.length){ try{ console.error('Mundario · datos con problemas:\n' + bad.join('\n')); }catch(e){} } window.__dataProblems = bad; })();
+progLoad();
+buildWelcome();
+window.__booted = true;   /* arranque completo: ver el aviso de errores del <head> */
+/* abierto desde otra web con #xx (p. ej. #pt): entra directamente en ese idioma */
+(function(){
+  function fromHash(){
+    var c = location.hash.replace(/^#/, '');
+    if(c && Object.prototype.hasOwnProperty.call(LANGS, c) && state.lang !== c) chooseLang(c);
+  }
+  try{ fromHash(); window.addEventListener('hashchange', function(){ try{ fromHash(); }catch(e){} }); }catch(e){}
+})();
+</script>
+</body>
+</html>
