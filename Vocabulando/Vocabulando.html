@@ -126,6 +126,35 @@
     box-shadow: 0 1px 2px rgba(20, 32, 46, .12);
   }
 
+  .tab {
+    white-space: nowrap;
+  }
+
+  .tab .tab-n {
+    display: inline-grid;
+    place-items: center;
+    box-sizing: border-box;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    margin-left: 7px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    vertical-align: 1px;
+  }
+
+  .tab .tab-n[hidden] {
+    display: none;
+  }
+
+  body.theme-dark .tab .tab-n {
+    color: #0F1721;
+  }
+
   .top-right {
     display: flex;
     align-items: center;
@@ -3099,6 +3128,18 @@
     .tabs {
       flex-wrap: wrap;
     }
+
+    .tab {
+      padding: 8px 10px;
+    }
+
+    .tab .tab-n {
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      margin-left: 5px;
+      font-size: 11px;
+    }
   }
 
   @media (prefers-reduced-motion:reduce) {
@@ -3184,8 +3225,8 @@
     </div>
     <div class="top-right">
       <nav class="tabs">
-        <button class="tab is-active" data-tab="crear">Crear</button>
-        <button class="tab" data-tab="estudiar">Estudiar</button>
+        <button class="tab is-active" data-tab="estudiar">Estudiar<span class="tab-n" id="tabDue" hidden></span></button>
+        <button class="tab" data-tab="crear">Crear</button>
         <button class="tab" data-tab="mazo">Mazo</button>
         <button class="tab" data-tab="actividad">Actividad</button>
       </nav>
@@ -5452,7 +5493,7 @@
     var LEECH = 5; // fallos (sumando todas sus tarjetas) a partir de los cuales una entrada se considera «difícil»
     var DECK_PAGE = 100; // filas de la lista del mazo que se dibujan de una vez (el resto, con «Mostrar más»)
     var S = {
-      lang: null, tab: "crear", deckDir: "es-it", autoSentence: false, theme: "dark",
+      lang: null, tab: "estudiar", deckDir: "es-it", autoSentence: false, theme: "dark",
       editing: null, confirmDelete: null, expanded: {}, deckShown: DECK_PAGE, q: "", fState: "all", fSent: "all", fGender: "all", fSort: "new", qSent: true, goal: 10, typeOn: false, typed: null, clozeOn: false, dictOn: false, xlOpen: {}, nextTab: null, dictPlayed: "", editFrom: null, editY: 0, restoreY: null, imp: null, restore: null, ipaOpen: {}, anyVoice: false, undo: [], newExtra: {}, newWords: 20, newSents: 10, revOn: false, autoSpeak: false, mode: "word",
       current: null, flipped: false, showSentence: false, studyAhead: false, bannerOff: false,
       formGender: "", formEsGender: "", formWikt: null, formBusy: false, suggErr: null, autoGen: true, detecting: false, autoSugg: true, sugg: null, suggBusy: false, sents: null, sentsBusy: false, sentsSlow: false, transBusy: false, tatDownAt: 0,
@@ -6425,7 +6466,7 @@
     function route() {
       var code = location.hash.replace(/^#/, ""), lang = LANG_BY[code] ? code : null;
       if (lang !== S.lang) {
-        S.lang = lang; S.tab = S.nextTab || "crear"; S.nextTab = null; S.editing = null; S.formGender = ""; S.formEsGender = ""; S.suggErr = null; S.formWikt = null; S.sugg = null; S.sents = null; S.suggBusy = false; S.confirmDelete = null; S.expanded = {}; S.xlOpen = {}; S.ipaOpen = {}; S.deckShown = DECK_PAGE; resetDeckView(); S.editFrom = null; S.undo = [];
+        S.lang = lang; S.tab = S.nextTab || "estudiar"; S.nextTab = null; S.editing = null; S.formGender = ""; S.formEsGender = ""; S.suggErr = null; S.formWikt = null; S.sugg = null; S.sents = null; S.suggBusy = false; S.confirmDelete = null; S.expanded = {}; S.xlOpen = {}; S.ipaOpen = {}; S.deckShown = DECK_PAGE; resetDeckView(); S.editFrom = null; S.undo = [];
         S.current = null; S.flipped = false; S.studyAhead = false; S.mode = "word";
         if (S.imp && S.imp.to !== lang) S.imp = null;                                  // otra importación o salir del idioma: el borrador se descarta
         if (S.imp) S.formEsGender = S.imp.draft.esGender || "";                         // el género en español viaja con la entrada
@@ -6451,7 +6492,8 @@
     function render() {
       if (!S.lang) return;
       document.querySelectorAll(".tab").forEach(function (b) { b.classList.toggle("is-active", b.dataset.tab === S.tab); });
-      if (!initDone || !loaded[S.lang]) { view.innerHTML = '<div class="empty">Cargando el mazo…</div>'; return; }
+      if (!initDone || !loaded[S.lang]) { tabDueFill(true); view.innerHTML = '<div class="empty">Cargando el mazo…</div>'; return; }
+      tabDueFill();
       var content = S.tab === "crear" ? renderCrear() : S.tab === "estudiar" ? renderEstudiar() : S.tab === "mazo" ? renderMazo() : renderActividad();
       if (S.confirmDelete) content += renderConfirm();
       var ti0 = document.getElementById("typedIn"), draft = ti0 ? { k: ti0.getAttribute("data-key"), v: ti0.value, f: document.activeElement === ti0 } : null;
@@ -7057,7 +7099,7 @@
         "<li>El lápiz lleva a Crear con la entrada cargada; al guardar o cancelar vuelves a la lista, en el mismo punto. La × borra (pide confirmación), «frase» abre la oración y el altavoz la pronuncia. El <b>+</b> añade esa entrada a otro idioma: eliges uno en el que todavía no esté y se abre Crear en él con la palabra española, su frase y su género ya puestos y, si hay conexión, la traducción de la palabra (Wikcionario) y de la frase (MyMemory) como propuesta. No se guarda nada hasta que pulses «Guardar»: lo revisas, lo cambias y, al guardar o cancelar, vuelves al idioma, la pestaña y el punto en que estabas (la lista con sus filtros y su posición, o Estudiar con el mismo modo). Está también en la tarjeta de Estudiar. En Crear, bajo el formulario, quedan las últimas 5 añadidas para comprobar lo que acabas de guardar.</li>" +
         "<li>El botón <b>IPA</b> (en cada fila de Mazo y en la tarjeta de Estudiar, cuando ya ves la respuesta) consulta <b>en ese momento</b> en Wiktionary la transcripción fonética de la palabra del idioma: fonémica entre barras /…/ y fonética entre corchetes […]. Enseña la pronunciación <b>europea</b> (francés de Francia y no de Quebec, portugués de Portugal y no de Brasil, inglés británico y no americano…) y dice qué variantes ha dejado fuera. El inglés se transcribe en el <b>SSB</b> (Standard Southern British) en el sistema de Geoff Lindsey, el de <b>CUBE</b>: se convierte desde el RP de Wiktionary y el enlace «(CUBE)» deja comprobar la palabra en su diccionario. Si Wiktionary solo trae una no europea, la muestra avisando. Si la palabra lleva varias formas («der Mann / der Kerl»), salen todas. Si Wiktionary no trae la transcripción (una frase, una forma flexionada, un compuesto largo…), se prueba <b>palabra a palabra</b> y, donde falte, se calcula una <b>aproximada con las reglas de pronunciación</b> del idioma (se avisa de que no es la de un diccionario; en inglés no se puede deducir de la ortografía). La transcripción se ve en fucsia y entre paréntesis queda el enlace a la entrada. No se guarda: se pide de nuevo al volver a abrir la página.</li></ul>" +
         "<h3>Estudiar</h3>" +
-        "<p>Se muestra la palabra (o la frase) en español, pulsas «Mostrar respuesta» y la valoras con <i>Otra vez, Difícil, Bien</i> o <i>Fácil</i>. La app programa el siguiente repaso con el algoritmo FSRS: cuanto mejor la sabes, más tarde vuelve. Las tarjetas con plazo de días tocan desde las 4:00 de su día, y el día nuevo (también para los contadores de Actividad) empieza a las 4:00: lo que repases de madrugada cuenta como el día anterior. Hay dos modos, Palabras y Frases (y, si lo activas, Inversa: del idioma al español). Atajos: punto o espacio para mostrar la respuesta; J, K, L, Ñ (o 0, 1, 2, 3) para valorar; Z para deshacer el último repaso; P para oír la pronunciación.</p>" +
+        "<p>Se muestra la palabra (o la frase) en español, pulsas «Mostrar respuesta» y la valoras con <i>Otra vez, Difícil, Bien</i> o <i>Fácil</i>. La app programa el siguiente repaso con el algoritmo FSRS: cuanto mejor la sabes, más tarde vuelve. Las tarjetas con plazo de días tocan desde las 4:00 de su día, y el día nuevo (también para los contadores de Actividad) empieza a las 4:00: lo que repases de madrugada cuenta como el día anterior. El número junto a la pestaña Estudiar (y el de «por repasar» en cada idioma de la pantalla inicial) son las tarjetas que ya tocan: no cuenta las nuevas, ni las pausadas, ni los modos que no tengas activados. Hay dos modos, Palabras y Frases (y, si lo activas, Inversa: del idioma al español). Atajos: punto o espacio para mostrar la respuesta; J, K, L, Ñ (o 0, 1, 2, 3) para valorar; Z para deshacer el último repaso; P para oír la pronunciación.</p>" +
         "<ul>" +
         "<li><b>Palabras y frases nuevas por día:</b> en la propia pestaña Estudiar eliges cuántas palabras nuevas y cuántas frases nuevas se te ofrecen cada día (por defecto 20 y 10, o sin límite); el resto espera su turno. «Inversa» usa el límite de palabras. Si te quedas con ganas, el botón «Estudiar nuevas más» añade 10. Los repasos que toquen salen siempre.</li>" +
         "<li><b>Deshacer</b> (Z o el botón «Deshacer») anula los últimos repasos de esta sesión, de uno en uno, mientras sigas en este idioma.</li>" +
@@ -7517,6 +7559,13 @@
       var b = peekBucket(code, true);
       if (!b || !b.deck.length) return { n: 0, due: 0, news: 0 };
       return bucketPlan(b, code);
+    }
+    function tabDueFill(off) { // el número de tarjetas por repasar (el mismo que ves en la pantalla inicial), junto a la pestaña Estudiar
+      var el = document.getElementById("tabDue"); if (!el) return;
+      var n = off ? 0 : langSummary(S.lang).due;
+      el.hidden = !n; el.textContent = n || "";
+      if (n) { var lbl = n + " por repasar"; el.title = lbl; el.setAttribute("aria-label", lbl); }
+      else { el.removeAttribute("title"); el.removeAttribute("aria-label"); }
     }
     function pickStreakFill() { // la racha, en la esquina del selector: llama grande y los días
       var el = document.getElementById("pickStreak"); if (!el) return;
@@ -8852,7 +8901,7 @@
         body = '<div class="empty">' + (mode === "sentence" || mode === "dict"
           ? "No hay frases guardadas. Añade una oración de ejemplo al crear una palabra."
           : mode === "cloze" ? "Ninguna frase sirve para un hueco: hace falta una frase con su traducción en la que aparezca la palabra de la ficha."
-          : "El mazo está vacío. Ve a <b>Crear</b> para añadir palabras.") + "</div>";
+          : 'El mazo está vacío.<br><button class="link-btn" id="goCrear">Añadir palabras en Crear →</button>') + "</div>";
       } else {
         if (!S.current) pickNext();
         if (!S.current) {
@@ -9234,6 +9283,7 @@
       if (ib) { if (document.getElementById("impMenu") && impBtn === ib) closeImpMenu(); else openImpMenu(ib); return; }
       if (t.closest("#impCancel")) { cancelImport(); return; }
       if (t.closest(".js-freset")) { resetFilters(); render(); var q0 = document.getElementById("deckQ"); if (q0) q0.focus(); return; }
+      if (t.closest("#goCrear")) { S.tab = "crear"; render(); window.scrollTo(0, 0); focusFirst(); return; }
       if (t.closest("#goMazo")) { S.tab = "mazo"; S.deckShown = DECK_PAGE; render(); window.scrollTo(0, 0); return; }
       if (t.closest("#deckMore")) { showMoreRows(false); return; }
       if (t.closest("#deckAll")) { showMoreRows(true); return; }
