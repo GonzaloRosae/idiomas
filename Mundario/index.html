@@ -859,8 +859,13 @@ body.vcb footer{font-family:var(--mono);font-size:11px;letter-spacing:.04em;colo
 .mt-es small,.mt-tg small{display:block;font-weight:400;font-size:12px;color:var(--ink-soft);margin-top:1px}
 .mt-tg{font-family:var(--display);font-weight:600;font-size:17px;line-height:1.35;min-width:0;overflow-wrap:anywhere}
 .mt-tg small{font-family:var(--text)}
-.mt.cover .mt-row{cursor:pointer}
-.mt.cover .mt-row:not(.open) .mt-tg{filter:blur(7px);user-select:none;-webkit-user-select:none}
+.mts.cover .mt-row{cursor:pointer}
+.mts.cover .mt-row:not(.open) .mt-tg{filter:blur(7px);user-select:none;-webkit-user-select:none}
+.sech{font-family:var(--display);font-weight:700;font-size:17px;margin:24px 0 4px}
+.sech:first-child{margin-top:6px}
+.secl{margin:0 0 12px;color:var(--ink-soft);font-size:13.5px;max-width:64ch}
+.mts .tip{margin:10px 0 12px}
+.modes.scope{margin:-6px 0 14px}
 .qnode{display:block}
 .qv{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .qv .v{overflow-wrap:anywhere}
@@ -1095,8 +1100,11 @@ const CAL_NOTES = {
 };
 
 const TOPICS = [
-{ id:'num', name:'Números', group:'Cifras', gender:false,
-  lead:'Los cardinales del 0 al 100 y los más útiles después (centenas, mil y millón), más unos cuantos «difíciles»: 21, 35, 72, 99, 101.',
+{ id:'num', name:'Números', group:'Cifras',
+  lead:'Dos partes: los cardinales (uno, dos, tres…) y los ordinales (primero, segundo, tercero…).',
+  sections:[
+{ id:'card', name:'Cardinales', gender:false,
+  lead:'Del 0 al 100 y los más útiles después (centenas, mil y millón), más unos cuantos «difíciles»: 21, 35, 72, 99, 101.',
   notes:{
     fr:'70, 80 y 90 se forman con el 20: soixante-dix (60+10), quatre-vingts (4×20), quatre-vingt-dix. En Bélgica y Suiza se dice septante y nonante. El 21, 31, 41… llevan «et» (vingt et un); el resto, guion (vingt-deux).',
     it:'Las decenas pierden la vocal final ante uno y otto: ventuno, trentotto. Los números compuestos se escriben en una sola palabra: trentacinque, centouno.',
@@ -1148,7 +1156,7 @@ const TOPICS = [
 1 000 000 · un millón|un million|un milione|um milhão|un milió|milion~jeden milion|one million~a million|eine Million|ένα εκατομμύριο
 `},
 
-{ id:'ord', name:'Ordinales', group:'Cifras', gender:true,
+{ id:'ord', name:'Ordinales', gender:true,
   lead:'Del primero al décimo. Cuando la forma cambia con el género se da la masculina y la femenina (masculino / femenino).',
   notes:{
     fr:'Desde el segundo se añade «-ième» al cardinal: troisième, quatrième (cinq → cinquième, neuf → neuvième). «Premier» tiene femenino: première. «Second/seconde» también existe.',
@@ -1171,7 +1179,8 @@ séptimo/séptima|septième|settimo/settima|sétimo/sétima|setè/setena|siódmy
 octavo/octava|huitième|ottavo/ottava|oitavo/oitava|vuitè/vuitena|ósmy/ósma|eighth|achte|όγδοος/όγδοη
 noveno/novena|neuvième|nono/nona|nono/nona|novè/novena|dziewiąty/dziewiąta|ninth|neunte|ένατος/ένατη
 décimo/décima|dixième|decimo/decima|décimo/décima|desè/desena|dziesiąty/dziesiąta|tenth|zehnte|δέκατος/δέκατη
-`},
+`}
+  ] },
 
 { id:'hora', name:'La hora', group:'Tiempo', gender:false,
   lead:'Cómo preguntar y decir la hora: en punto, y cuarto, y media, menos cuarto, diez minutos antes o después, mediodía, medianoche y las partes del día. Todas las frases usan la misma hora en los ocho idiomas, para que se vean las diferencias.',
@@ -1234,6 +1243,38 @@ primavera|le printemps|la primavera|a primavera|la primavera|wiosna|spring|der F
 verano|l'été|l'estate|o verão|l'estiu|lato|summer|der Sommer|το καλοκαίρι
 otoño|l'automne|l'autunno|o outono|la tardor|jesień|autumn~fall|der Herbst|το φθινόπωρο
 invierno|l'hiver|l'inverno|o inverno|l'hivern|zima|winter|der Winter|ο χειμώνας
+`},
+
+{ id:'colores', name:'Colores', group:'Básicos', gender:true,
+  lead:'Los colores básicos, con su femenino cuando cambia, y «claro» y «oscuro» para matizarlos (azul claro, verde oscuro).',
+  notes:{
+    fr:'Van detrás del sustantivo y concuerdan: une robe rouge, une chemise blanche. Los que son nombres de cosas (marron, orange) no cambian nunca.',
+    it:'Van detrás del sustantivo. Los acabados en «-o» pasan a «-a» (rosso → rossa); los demás (verde, blu, rosa, viola, arancione) no cambian. «Azzurro» es el azul claro; «blu», el oscuro.',
+    pt:'Van detrás del sustantivo y concuerdan en género y número: vermelho/vermelha. Azul, verde, rosa, laranja y cinza no cambian de género. En Portugal se dice «castanho» y «cinzento»; en Brasil, «marrom» y «cinza».',
+    ca:'Van detrás del sustantivo y concuerdan: vermell/vermella. Para el rojo, en Valencia y Baleares se dice también «roig/roja».',
+    pl:'Son adjetivos y concuerdan con el sustantivo en género, número y caso: czerwony samochód, czerwona torba. En masculino acaban en «-y», en femenino en «-a».',
+    en:'No cambian con el género ni el número y van delante del sustantivo: a red car. Se escriben en minúscula. «Gray» (EE. UU.) y «grey» (Reino Unido) son lo mismo.',
+    de:'Delante del sustantivo se declinan (ein roter Wagen, eine rote Tasche); solos o tras «sein» no cambian: der Wagen ist rot. Algunos nunca se declinan: rosa, lila, beige.',
+    el:'Se declinan como adjetivos (κόκκινος, κόκκινη, κόκκινο); aquí van masculino y femenino. Muchos colores son invariables: μπλε, ροζ, γκρι, καφέ, πορτοκαλί, μωβ, μπεζ.'
+  },
+  rows:`
+rojo/roja|rouge|rosso/rossa|vermelho/vermelha|vermell/vermella~roig/roja|czerwony/czerwona|red|rot|κόκκινος/κόκκινη
+azul|bleu/bleue|blu~azzurro/azzurra|azul|blau/blava|niebieski/niebieska|blue|blau|μπλε
+verde|vert/verte|verde|verde|verd/verda|zielony/zielona|green|grün|πράσινος/πράσινη
+amarillo/amarilla|jaune|giallo/gialla|amarelo/amarela|groc/groga|żółty/żółta|yellow|gelb|κίτρινος/κίτρινη
+naranja|orange|arancione~arancio|laranja|taronja|pomarańczowy/pomarańczowa|orange|orange|πορτοκαλί
+rosa|rose|rosa|rosa~cor-de-rosa|rosa|różowy/różowa|pink|rosa|ροζ
+morado/morada|violet/violette|viola|roxo/roxa~violeta|morat/morada~violeta|fioletowy/fioletowa|purple|lila~violett|μωβ~βιολετί
+marrón|marron~brun/brune|marrone|castanho/castanha~marrom|marró|brązowy/brązowa|brown|braun|καφέ
+negro/negra|noir/noire|nero/nera|preto/preta~negro/negra|negre/negra|czarny/czarna|black|schwarz|μαύρος/μαύρη
+blanco/blanca|blanc/blanche|bianco/bianca|branco/branca|blanc/blanca|biały/biała|white|weiß~weiss|άσπρος/άσπρη~λευκός/λευκή
+gris|gris/grise|grigio/grigia|cinzento/cinzenta~cinza|gris/grisa|szary/szara|gray~grey|grau|γκρι
+beige|beige|beige|bege|beix|beżowy/beżowa|beige|beige|μπεζ
+dorado/dorada|doré/dorée|dorato/dorata|dourado/dourada|daurat/daurada|złoty/złota|gold~golden|golden~goldfarben|χρυσός/χρυσή~χρυσαφί
+plateado/plateada|argenté/argentée|argento~argentato/argentata|prateado/prateada|platejat/platejada|srebrny/srebrna|silver|silbern~silber~silberfarben|ασημί~ασημένιος/ασημένια
+turquesa|turquoise|turchese|turquesa|turquesa|turkusowy/turkusowa|turquoise|türkis|τυρκουάζ
+claro/clara · para un color|clair/claire|chiaro/chiara|claro/clara|clar/clara|jasny/jasna|light|hell|ανοιχτός/ανοιχτή
+oscuro/oscura · para un color|foncé/foncée~sombre|scuro/scura|escuro/escura|fosc/fosca|ciemny/ciemna|dark|dunkel|σκούρος/σκούρη
 `},
 
 { id:'paises', name:'Países', group:'Mundo', gender:false,
@@ -1475,15 +1516,20 @@ function parseCell(str, gender){
   vars.forEach(v => { const p = v.split('/').map(s => s.trim()); m.push(p[0]); f.push(p.length > 1 && p[1] ? p[1] : p[0]); });
   return { m, f };
 }
-function buildData(){
+function buildData(){   /* un tema tiene una sola tabla (rows) o varias partes (sections), cada una con su propio género */
   TOPICS.forEach(t => {
-    t.items = t.rows.trim().split('\n').map(s => s.trim()).filter(Boolean).map((line, i) => {
-      const f = line.split('|');
-      if(f.length !== 9) throw new Error('Fila mal formada en «' + t.id + '» (' + f.length + ' campos): ' + line);
-      const parts = f[0].split(' · ');
-      const it = { id: t.id + ':' + i, topic: t, es: parseCell(parts[0], t.gender), sub: parts[1] || '', cells: {} };
-      LANG_ORDER.forEach((c, k) => { it.cells[c] = parseCell(f[k + 1], t.gender); });
-      return it;
+    const secs = t.sections || [{ id:'', gender:!!t.gender, rows:t.rows }];
+    t.items = [];
+    secs.forEach(s => {
+      s.items = s.rows.trim().split('\n').map(x => x.trim()).filter(Boolean).map((line, i) => {
+        const f = line.split('|');
+        if(f.length !== 9) throw new Error('Fila mal formada en «' + t.id + '» (' + f.length + ' campos): ' + line);
+        const parts = f[0].split(' · '), g = !!s.gender;
+        const it = { id: t.id + ':' + s.id + ':' + i, topic: t, sec: t.sections ? s : null, gender: g, es: parseCell(parts[0], g), sub: parts[1] || '', cells: {} };
+        LANG_ORDER.forEach((c, k) => { it.cells[c] = parseCell(f[k + 1], g); });
+        return it;
+      });
+      s.items.forEach(it => t.items.push(it));
     });
   });
 }
@@ -1504,7 +1550,7 @@ function validateData(){
           if(!cell[g].length) bad.push(t.id + '#' + i + ' ' + c + ': vacío');
           cell[g].forEach(x => { if(!x || /^\s|\s$|\s{2}/.test(x)) bad.push(t.id + '#' + i + ' ' + c + ': espacios sobrantes en «' + x + '»'); });
         });
-        if(!t.gender && /\//.test(cell.m.join(''))) { /* una barra fuera de los temas con género: vale en «a/en», pero se avisa */
+        if(!it.gender && /\//.test(cell.m.join(''))) { /* una barra fuera de los temas con género: vale en «a/en», pero se avisa */
           if(t.id !== 'hora') bad.push(t.id + '#' + i + ' ' + c + ': barra en «' + cell.m[0] + '»');
         }
       });
@@ -1515,7 +1561,7 @@ function validateData(){
 }
 
 /* ---------- estado ---------- */
-const state = { lang:null, tab:'learn', topic:{}, mode:'type', cover:false, q:null, bags:{}, tally:{ ok:0, bad:0 }, test:null, active:null, lastIdx:-1 };
+const state = { lang:null, tab:'learn', topic:{}, scope:{}, mode:'type', cover:false, q:null, bags:{}, tally:{ ok:0, bad:0 }, test:null, active:null, lastIdx:-1 };
 const T = id => TOPICS.filter(t => t.id === id)[0];
 const curTopic = () => T(state.topic[state.lang] || TOPICS[0].id) || TOPICS[0];
 const lgl = code => LANGS[code].name.toLowerCase();
@@ -1523,6 +1569,9 @@ const gk = g => g ? 'f' : 'm';
 const esText = (it, g) => it.es[gk(g)][0];
 const formsOf = (it, code, g) => it.cells[code][gk(g)];
 const TEST_QN = 10, TEST_APROBADO = 80;
+const scopeOf = t => (t.sections && state.scope[state.lang + ':' + t.id]) || 'all';   /* en los temas con partes, cuál se practica */
+const poolOf = t => { const sc = scopeOf(t); return sc === 'all' ? t.items : t.items.filter(x => x.sec && x.sec.id === sc); };
+const bagKey = t => state.lang + ':' + t.id + ':' + scopeOf(t);
 
 /* ---------- progreso guardado en este navegador ---------- */
 const PROG_KEY = 'mundario:progreso';
@@ -1606,18 +1655,28 @@ function say(text, code){
 
 /* ---------- vista «Aprender» ---------- */
 function showForms(it, code){   /* HTML de lo que se enseña de una ficha: la forma principal y, debajo, las alternativas */
-  const c = it.cells[code], g = curTopic().gender;
+  const c = it.cells[code], g = it.gender;
   const one = i => g ? c.m[i] + (c.f[i] !== c.m[i] ? ' / ' + c.f[i] : '') : c.m[i];
   const alts = []; for(let i = 1; i < c.m.length; i++) alts.push(one(i));
   return '<span class="v">' + esc(one(0)) + '</span>' + (alts.length ? '<small>también: ' + esc(alts.join(' · ')) + '</small>' : '');
 }
 function showEs(it){
-  const g = curTopic().gender, e = it.es;
+  const g = it.gender, e = it.es;
   const main = g ? e.m[0] + (e.f[0] !== e.m[0] ? ' / ' + e.f[0] : '') : e.m[0];
   return esc(main) + (it.sub ? '<small>' + esc(it.sub) + '</small>' : '');
 }
 function tipNode(code, text){
   return el('div', 'tip', '<div class="tiphead">' + ICO_BULB + 'Ojo en ' + esc(lgl(code)) + '</div><p class="tipp">' + esc(text) + '</p>');
+}
+function tableNode(items, code, start){
+  const tb = el('div', 'mt');
+  let html = '<div class="mt-head"><span>Español</span><span>' + esc(LANGS[code].name) + '</span><span></span></div>';
+  items.forEach((it, i) => {
+    html += '<div class="mt-row" data-i="' + (start + i) + '"><div class="mt-es">' + showEs(it) + '</div><div class="mt-tg">' + showForms(it, code) + '</div>' +
+      '<button type="button" class="iconbtn small" data-say="' + (start + i) + '" aria-label="Escuchar" title="Escuchar">' + ICO_SAY + '</button></div>';
+  });
+  tb.innerHTML = html;
+  return tb;
 }
 function renderLearn(){
   const t = curTopic(), code = state.lang, p = $('panelLearn');
@@ -1625,21 +1684,24 @@ function renderLearn(){
   const card = el('div', 'card main');
   card.appendChild(el('h2', '', esc(t.name)));
   card.appendChild(el('p', 'lead', esc(t.lead)));
-  const note = t.notes && t.notes[code];
+  const note = !t.sections && t.notes && t.notes[code];
   if(note) card.appendChild(tipNode(code, note));
   const bar = el('div', 'lbar');
   bar.innerHTML = '<label class="switch"><input type="checkbox" id="coverSw"' + (state.cover ? ' checked' : '') + '><span class="track"></span><span>Tapar las respuestas (pulsa una fila para verla)</span></label>' +
     '<button type="button" class="btn small primary" id="goPractice">Practicar este tema →</button>';
   card.appendChild(bar);
-  const tb = el('div', 'mt' + (state.cover ? ' cover' : ''));
-  tb.id = 'mtable';
-  let html = '<div class="mt-head"><span>Español</span><span>' + esc(LANGS[code].name) + '</span><span></span></div>';
-  t.items.forEach((it, i) => {
-    html += '<div class="mt-row" data-i="' + i + '"><div class="mt-es">' + showEs(it) + '</div><div class="mt-tg">' + showForms(it, code) + '</div>' +
-      '<button type="button" class="iconbtn small" data-say="' + i + '" aria-label="Escuchar" title="Escuchar">' + ICO_SAY + '</button></div>';
-  });
-  tb.innerHTML = html;
-  card.appendChild(tb);
+  const wrap = el('div', 'mts' + (state.cover ? ' cover' : ''));
+  wrap.id = 'mtable';
+  if(t.sections){
+    let k = 0;
+    t.sections.forEach(s => {
+      wrap.appendChild(el('h3', 'sech', esc(s.name)));
+      if(s.lead) wrap.appendChild(el('p', 'secl', esc(s.lead)));
+      const n = s.notes && s.notes[code]; if(n) wrap.appendChild(tipNode(code, n));
+      wrap.appendChild(tableNode(s.items, code, k)); k += s.items.length;
+    });
+  } else wrap.appendChild(tableNode(t.items, code, 0));
+  card.appendChild(wrap);
   p.appendChild(card);
 }
 
@@ -1648,7 +1710,7 @@ const MODES = [['type', 'Escribe la traducción'], ['choice', 'Elige la correcta
 function makeQ(t, it, kind){
   const code = state.lang;
   let g = 0, glabel = '';
-  if(t.gender){
+  if(it.gender){
     const c = it.cells[code], differs = c.f[0] !== c.m[0] || it.es.f[0] !== it.es.m[0];
     if(differs){ g = Math.random() < .5 ? 0 : 1; glabel = g ? 'femenino' : 'masculino'; }
   }
@@ -1656,7 +1718,7 @@ function makeQ(t, it, kind){
   const q = { t, it, g, kind, code, answer, shown: answer[0], es: esText(it, g), sub: it.sub, glabel };
   if(kind === 'choice'){
     const opts = [];
-    shuffle(t.items.filter(x => x !== it)).forEach(x => { const s = esText(x, g); if(opts.length < 3 && s !== q.es && opts.indexOf(s) < 0) opts.push(s); });
+    shuffle((it.sec ? t.items.filter(x => x.sec === it.sec) : t.items).filter(x => x !== it)).forEach(x => { const s = esText(x, g); if(opts.length < 3 && s !== q.es && opts.indexOf(s) < 0) opts.push(s); });
     q.options = shuffle(opts.concat(q.es));
   }
   return q;
@@ -1722,13 +1784,13 @@ function questionNode(q, ctx){
   return box;
 }
 function nextPractice(){
-  const t = curTopic(), key = state.lang + ':' + t.id;
+  const t = curTopic(), pool = poolOf(t), key = bagKey(t);
   let bag = state.bags[key];
-  if(!bag || !bag.length) bag = state.bags[key] = shuffle(t.items.map((_, i) => i));
+  if(!bag || !bag.length) bag = state.bags[key] = shuffle(pool.map((_, i) => i));
   if(bag.length > 1 && bag[0] === state.lastIdx) bag.push(bag.shift());
   const idx = bag.shift(); state.lastIdx = idx;
-  state.q = makeQ(t, t.items[idx], state.mode);
-  state.q.idx = idx;
+  state.q = makeQ(t, pool[idx], state.mode);
+  state.q.idx = idx; state.q.scope = scopeOf(t);
 }
 function renderPractice(){
   const t = curTopic(), p = $('panelPractice');
@@ -1744,6 +1806,15 @@ function renderPractice(){
     modes.appendChild(b);
   });
   card.appendChild(modes);
+  if(t.sections && state.mode !== 'test'){
+    const sc = el('div', 'modes scope');
+    [['all', 'Todo']].concat(t.sections.map(s => [s.id, s.name])).forEach(o => {
+      const b = el('button', 'mode small2', esc(o[1])); b.type = 'button'; b.setAttribute('aria-selected', scopeOf(t) === o[0]); b.dataset.scope = o[0];
+      b.onclick = () => { if(scopeOf(t) === o[0]) return; state.scope[state.lang + ':' + t.id] = o[0]; state.q = null; state.tally = { ok:0, bad:0 }; renderPractice(); };
+      sc.appendChild(b);
+    });
+    card.appendChild(sc);
+  }
   const body = el('div', 'qbody'); body.id = 'qbody';
   card.appendChild(body);
   p.appendChild(card);
@@ -1752,13 +1823,13 @@ function renderPractice(){
 function tallyHtml(){ return '<div class="pills"><span class="pill mint">✓ ' + state.tally.ok + '</span><span class="pill">✗ ' + state.tally.bad + '</span></div>'; }
 function renderPracticeStep(){
   const body = $('qbody'); body.innerHTML = '';
-  if(!state.q || state.q.kind !== state.mode || state.q.code !== state.lang || state.q.t !== curTopic()) nextPractice();
+  if(!state.q || state.q.kind !== state.mode || state.q.code !== state.lang || state.q.t !== curTopic() || state.q.scope !== scopeOf(curTopic())) nextPractice();
   const q = state.q;
   const tl = el('div', '', tallyHtml()); tl.id = 'tally'; body.appendChild(tl);
   const node = questionNode(q, {
     nextLabel: 'Siguiente',
     onAnswer: ok => {
-      if(ok) state.tally.ok++; else { state.tally.bad++; const bag = state.bags[state.lang + ':' + curTopic().id]; if(bag) bag.splice(Math.min(3, bag.length), 0, q.idx); }
+      if(ok) state.tally.ok++; else { state.tally.bad++; const bag = state.bags[bagKey(curTopic())]; if(bag) bag.splice(Math.min(3, bag.length), 0, q.idx); }
       tl.innerHTML = tallyHtml();
     },
     next: () => { state.q = null; renderPracticeStep(); }
@@ -1767,9 +1838,15 @@ function renderPracticeStep(){
   node.focusFirst();
 }
 /* ---------- test final ---------- */
+function testItems(t, n){   /* en los temas con partes, el test reparte las preguntas a partes iguales */
+  if(!t.sections) return shuffle(t.items).slice(0, n);
+  const per = Math.ceil(n / t.sections.length);
+  let out = []; t.sections.forEach(s => { out = out.concat(shuffle(s.items).slice(0, per)); });
+  return shuffle(out).slice(0, n);
+}
 function startTest(){
   const t = curTopic(), n = Math.min(TEST_QN, t.items.length);
-  const items = shuffle(t.items).slice(0, n), nType = Math.ceil(n * .6);
+  const items = testItems(t, n), nType = Math.ceil(n * .6);
   const kinds = shuffle(items.map((_, i) => i < nType ? 'type' : 'choice'));
   state.test = { topic:t.id, lang:state.lang, qs: items.map((it, i) => makeQ(t, it, kinds[i])), i:0, score:0, fails:[] };
 }
@@ -1944,12 +2021,13 @@ function infoHtml(){
   const nFichas = TOPICS.reduce((n, t) => n + t.items.length, 0);
   return '<div class="modal-top"><h2 class="modal-title" id="infoTitle">Cómo funciona Mundario</h2><button type="button" class="modal-x" id="infoClose" aria-label="Cerrar">×</button></div>' +
     '<div class="info-body">' +
-    '<p>Mundario reúne lo que hay que saber en cada idioma y no es del todo gramática, ni vocabulario, ni conjugación: números, hora, calendario, países, gentilicios, capitales, divisas e idiomas. Son ' + TOPICS.length + ' temas y ' + nFichas + ' fichas, en 8 idiomas: francés, italiano, portugués, catalán, polaco, inglés, alemán y griego. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Mundario» vuelves a ella.' + (sib ? ' El botón con el logo (junto al del tema) te lleva a Vocabulando, Conjugario o Declinario, en el mismo idioma.' : '') + '</p>' +
+    '<p>Mundario reúne lo que hay que saber en cada idioma y no es del todo gramática, ni vocabulario, ni conjugación: números (cardinales y ordinales), hora, calendario, colores, países, gentilicios, capitales, divisas e idiomas. Son ' + TOPICS.length + ' temas y ' + nFichas + ' fichas, en 8 idiomas: francés, italiano, portugués, catalán, polaco, inglés, alemán y griego. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Mundario» vuelves a ella.' + (sib ? ' El botón con el logo (junto al del tema) te lleva a Vocabulando, Conjugario o Declinario, en el mismo idioma.' : '') + '</p>' +
     '<h3>Aprender</h3>' +
     '<p>Cada tema tiene su tabla (español a la izquierda, el idioma a la derecha) y, encima, un aviso con lo que más confunde en ese idioma. El botón del altavoz lee la forma en voz alta (hace falta una voz instalada en tu dispositivo). «Tapar las respuestas» oculta la columna del idioma: pulsa una fila para ver su respuesta y comprueba de cabeza.</p>' +
     '<h3>Practicar</h3><ul>' +
     '<li><b>Escribe la traducción:</b> te doy la ficha en español y la escribes en el idioma. Lo que falles vuelve a salir pronto.</li>' +
     '<li><b>Elige la correcta:</b> te doy la forma en el idioma y eliges su significado entre cuatro. Puedes pulsar 1, 2, 3 o 4.</li>' +
+    '<li><b>Temas con partes:</b> «Números» tiene dos (cardinales y ordinales). Encima de las preguntas eliges practicar todo o solo una parte; el test final mezcla las dos a partes iguales.</li>' +
     '<li><b>Test final:</b> ' + TEST_QN + ' preguntas (unas se escriben y otras se eligen; en los temas más cortos, una por ficha). Con ' + TEST_APROBADO + ' % de aciertos o más, el tema queda en <b>dorado ★</b> y se guarda. Si no llegas, no se guarda nada.</li></ul>' +
     '<h3>Acentos, artículos y mayúsculas</h3>' +
     '<p>No importan las mayúsculas, los guiones ni los signos de puntuación. Si aciertas sin un acento, sin el artículo o sin el apóstrofo, se acepta y se te enseña cómo se escribe. Donde hay varias formas válidas (por ejemplo «Es ist halb vier» o «Es ist drei Uhr dreißig»), vale cualquiera de ellas.</p>' +
