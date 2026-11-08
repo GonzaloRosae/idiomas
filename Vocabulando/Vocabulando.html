@@ -497,6 +497,9 @@
   .k-pause { border: 0; background: transparent; color: var(--muted); cursor: pointer; padding: 6px; border-radius: 7px; line-height: 0; }
   .k-pause svg { width: 21px; height: 21px; }
   .k-pause:hover { color: var(--accent); }
+  .k-del { border: 0; background: transparent; color: var(--muted); cursor: pointer; padding: 6px; border-radius: 7px; line-height: 0; }
+  .k-del svg { width: 21px; height: 21px; }
+  .k-del:hover { color: var(--again); }
   .pause { border: 0; background: transparent; color: #BFB4B6; cursor: pointer; padding: 3px 6px; border-radius: 7px; line-height: 0; }
   .pause svg { width: 16px; height: 16px; }
   .pause:hover { color: var(--accent); background: var(--accent-soft); }
@@ -2302,6 +2305,15 @@
     text-decoration: none;
   }
 
+  .legend-right {
+    justify-content: flex-end;
+  }
+
+  .legend-right .link-btn {
+    order: -1;
+    margin: 0 auto 0 0;
+  }
+
   .switch + .backup-row {
     margin-top: 14px;
   }
@@ -3100,6 +3112,23 @@
     .topbar {
       flex-direction: column;
       align-items: flex-start;
+    }
+
+    .k-head {
+      flex-wrap: wrap;
+      row-gap: 8px;
+    }
+
+    .k-tools {
+      gap: 4px;
+      margin-left: auto;
+    }
+
+    .k-say,
+    .k-imp,
+    .k-pause,
+    .k-del {
+      padding: 4px;
     }
 
     .k-front {
@@ -5473,10 +5502,10 @@
       var i = esGenderInfo(e);
       return i.g ? ' style="color:var(--' + GVAR[i.g] + ')" title="' + GNAME[i.g] + " (" + i.src + ')"' : "";
     }
-    function legendHtml(extra) {
+    function legendHtml(extra, right) {
       var L = LANG_BY[S.lang];
       if (!L.gender.length) return "";
-      return '<div class="legend">' + L.gender.map(function (g) { return '<span class="lg"><i style="background:var(--' + g[0] + ')"></i>' + g[1] + "</span>"; }).join("") + (extra || "") + "</div>";
+      return '<div class="legend' + (right ? " legend-right" : "") + '">' + L.gender.map(function (g) { return '<span class="lg"><i style="background:var(--' + g[0] + ')"></i>' + g[1] + "</span>"; }).join("") + (extra || "") + "</div>";
     }
     function flag(cc) {
       var l = LANG_BY[cc];
@@ -7112,6 +7141,7 @@
         "<li><b>Dictado:</b> también en Actividad (si tu navegador tiene voz para el idioma): suena una de tus frases y la escribes entera. Se compara palabra por palabra, sin que importen la puntuación ni la mayúscula inicial; las palabras que fallas se subrayan. «Más despacio» la repite más lenta y la tecla P la repite.</li>" +
         "<li><b>En tus otros idiomas:</b> al mostrar la respuesta, y con el botón «idiomas» de cada fila de Mazo, ves cómo tienes guardada esa misma palabra española en tus otros idiomas. Sirve para notar parecidos y no confundir francés, italiano, portugués o catalán.</li>" +
         "<li><b>Pausar:</b> el botón de pausa de la tarjeta (y el de cada fila de Mazo) aparta una entrada: no sale al estudiar ni cuenta en la previsión hasta que la reanudas. Las que te fallan mucho (" + LEECH + " veces o más) se marcan como «difíciles» en Mazo, con su filtro, y al mostrarte una te sugiere cambiarla o pausarla.</li>" +
+        "<li><b>Eliminar:</b> la papelera de la tarjeta (y la × de cada fila de Mazo) quita la entrada del mazo, con todo su progreso, después de pedirte confirmación.</li>" +
         "<li><b>Racha:</b> cuenta los días en que llegas a tu meta diaria (10 repasos por defecto, se cambia en Actividad), sumando todos los idiomas. Un día suelto sin llegar a la meta se perdona (uno por semana). La pantalla de elegir idioma la muestra junto a las tarjetas que tocan en cada idioma.</li>" +
         "<li><b>Actividad</b> empieza por «Hoy»: qué toca en cada idioma (con enlace para estudiarlo) y un resumen de Conjugario, y muestra además la retención de los últimos 30 días y cuántos repasos vencen en los próximos 7.</li></ul>" +
         "<h3>Dónde se guardan tus datos</h3>" +
@@ -7483,7 +7513,7 @@
         fselect("fSort", "Orden", [["new", "Más recientes"], ["old", "Más antiguas"], ["az", "A-Z en " + langName()], ["azEs", "A-Z en español"], ["due", "Próximo repaso"], ["lapses", "Más fallos"]], S.fSort) +
         '<label class="deck-chk"><input type="checkbox" id="qSent"' + (S.qSent ? " checked" : "") + " /> Buscar también en las frases</label>" +
         '<button class="link-btn js-freset" id="fReset"' + (filtersActive() ? "" : " hidden") + ">Quitar filtros</button></div></div>" +
-        legendHtml(pend ? '<button class="link-btn js-detect">' + detectLabel(pend) + "</button>" : "") +
+        legendHtml(pend ? '<button class="link-btn js-detect">' + detectLabel(pend) + "</button>" : "", true) +
         '<div id="deckBody">' + deckBodyHtml() + "</div></section>";
     }
     function recentHtml() { // las últimas añadidas, de la más reciente a la más antigua
@@ -7505,6 +7535,7 @@
       '<path class="fi" fill="url(#psFlameI)" d="M12 21.6a3.5 3.5 0 0 1-3.5-3.5c0-2 1.5-3 2.1-4.7.9.9 1.4 1.8 1.4 2.8.8-.3 1.3-1 1.4-1.9 1 1 1.1 2.1 1.1 3.8A3.5 3.5 0 0 1 12 21.6z"/></svg>';
     var ICON_PAUSE = gsvg('<rect x="6.5" y="5" width="3.6" height="14" rx="1"/><rect x="13.9" y="5" width="3.6" height="14" rx="1"/>');
     var ICON_PLAY = gsvg('<path d="M7.5 5.5v13l11-6.5z"/>');
+    var ICON_DEL = gsvg('<path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/><path d="M10 11v5M14 11v5"/>');
     var ICON_IMP = gsvg('<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>');
     var GOALS = [1, 5, 10, 20, 30, 50];
     var mirrors = {};   // código → { raw, b, at }: copia local ya analizada, para no repetirlo mientras no cambie
@@ -8930,11 +8961,12 @@
       var ipaB = (isRev || S.flipped) ? '<button class="k-ipa' + (S.ipaOpen[e.id] ? " on" : "") + '" data-ipa="card" aria-expanded="' + (S.ipaOpen[e.id] ? "true" : "false") + '" aria-label="Transcripción fonética" title="Transcripción fonética (Wiktionary)">IPA</button>' : "";
       var imp = impTargets(e).length ? '<button class="k-imp" data-imp="card" aria-haspopup="menu" aria-expanded="false" aria-label="Añadir a otro idioma" title="Añadir esta entrada a otro idioma">' + ICON_IMP + "</button>" : "";
       var pause = '<button class="k-pause" data-pause="card" aria-label="Pausar esta entrada" title="Pausar: no volverá a salir hasta que la reanudes en Mazo">' + ICON_PAUSE + "</button>";
+      var delB = '<button class="k-del" data-del="card" aria-label="Eliminar esta entrada" title="Eliminar esta entrada del mazo">' + ICON_DEL + "</button>";
       var sw = !sentLike
         ? '<button class="switch' + (S.autoSentence ? " on" : "") + '" id="autoSent" role="switch" aria-checked="' + (S.autoSentence ? "true" : "false") + '"><span class="switch-label">Frase</span><span class="switch-track"><span class="switch-thumb"></span></span></button>'
         : "";
       var tag = (isDict ? "dictado" : isCloze ? "hueco" : isSent ? "frase" : "palabra") + " · " + (isRev ? S.lang + " → es" : isDict ? S.lang : "es → " + S.lang);
-      var inner = '<div class="k-head"><div class="k-tag">' + tag + '</div><div class="k-tools">' + say + ipaB + sw + imp + pause + "</div></div>";
+      var inner = '<div class="k-head"><div class="k-tag">' + tag + '</div><div class="k-tools">' + say + ipaB + sw + imp + pause + delB + "</div></div>";
       if (isDict) {
         inner += '<div class="k-front k-dict-front">Escucha la frase y escríbela</div>' +
           '<div class="k-dict"><button class="btn btn-ghost" data-say="card">▶ Escuchar</button><button class="btn btn-ghost" data-say-slow="card">Más despacio</button></div>';
@@ -9291,8 +9323,17 @@
       if (t.closest("#deckMore")) { showMoreRows(false); return; }
       if (t.closest("#deckAll")) { showMoreRows(true); return; }
       var del = t.closest("[data-del]");
-      if (del) { S.confirmDelete = del.getAttribute("data-del"); render(); return; }
-      if (t.closest("#confirmYes")) { var did = S.confirmDelete; S.confirmDelete = null; var okd = await deleteEntry(did); if (!okd) toast("No se pudo eliminar.", true); render(); return; }
+      if (del) { var dId = del.getAttribute("data-del"); if (dId === "card") dId = S.current ? S.current.entry.id : null; if (dId) { S.confirmDelete = dId; render(); } return; }
+      if (t.closest("#confirmYes")) {
+        var did = S.confirmDelete, de0 = findEntry(did); S.confirmDelete = null;
+        var okd = await deleteEntry(did);
+        if (!okd) toast("No se pudo eliminar.", true);
+        else if (S.current && S.current.entry.id === did) { // era la tarjeta que estabas repasando: pasa a la siguiente
+          S.current = null; S.flipped = false;
+          if (S.tab === "estudiar") { pickNext(); if (de0) toast("«" + de0.deWord + "» eliminada."); }
+        }
+        render(); return;
+      }
       if (t.closest("#confirmNo") || t.id === "modalOverlay") { S.confirmDelete = null; render(); return; }
       var ed = t.closest("[data-edit]");
       if (ed) { S.editing = ed.getAttribute("data-edit"); S.formGender = (findEntry(S.editing) || {}).gender || ""; S.formEsGender = (findEntry(S.editing) || {}).esGender || ""; S.formWikt = null; S.sugg = null; S.sents = null; S.editFrom = S.tab === "mazo" ? "mazo" : null; S.editY = window.scrollY; S.tab = "crear"; render(); focusFirst(); return; }
