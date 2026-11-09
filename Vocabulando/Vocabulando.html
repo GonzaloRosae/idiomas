@@ -6584,7 +6584,8 @@
     function route() {
       var code = location.hash.replace(/^#/, ""), lang = LANG_BY[code] ? code : null;
       if (lang !== S.lang) {
-        S.lang = lang; S.tab = S.nextTab || "estudiar"; S.nextTab = null; S.editing = null; S.formGender = ""; S.formEsGender = ""; S.suggErr = null; S.formWikt = null; S.sugg = null; S.sents = null; S.suggBusy = false; S.confirmDelete = null; S.expanded = {}; S.xlOpen = {}; S.ipaOpen = {}; S.deckShown = DECK_PAGE; resetDeckView(); S.editFrom = null; S.undo = [];
+        var prevLang = S.lang; // de un idioma a otro se queda en la misma pestaña (Mazo, Crear…); desde la pantalla previa se abre Estudiar
+        S.lang = lang; S.tab = S.nextTab || (prevLang && lang ? S.tab : "estudiar"); S.nextTab = null; S.editing = null; S.formGender = ""; S.formEsGender = ""; S.suggErr = null; S.formWikt = null; S.sugg = null; S.sents = null; S.suggBusy = false; S.confirmDelete = null; S.expanded = {}; S.xlOpen = {}; S.ipaOpen = {}; S.deckShown = DECK_PAGE; resetDeckView(); S.editFrom = null; S.undo = [];
         S.current = null; S.flipped = false; S.studyAhead = false; S.mode = "word";
         if (S.imp && S.imp.to !== lang) S.imp = null;                                  // otra importación o salir del idioma: el borrador se descarta
         if (S.imp) S.formEsGender = S.imp.draft.esGender || "";                         // el género en español viaja con la entrada
@@ -6671,13 +6672,14 @@
     }
 
     function normDup(s) { return String(s || "").trim().toLowerCase(); }
+    function dupDeKey(w) { var k = normDup(apos(w)), re = ART_RE[S.lang]; return re ? k.replace(re, "") : k; } // «a vassoura» y «vassoura» son la misma
     function findDup(esVal, deVal) {
-      var es = normDup(esVal), de = normDup(deVal), esHit = null, deHit = null;
+      var esK = xlKeys(esVal), de = dupDeKey(deVal), esHit = null, deHit = null;
       for (var i = 0; i < S.deck.length; i++) {
         var e = S.deck[i];
         if (S.editing && e.id === S.editing) continue;
-        if (es && normDup(e.esWord) === es) esHit = e;
-        if (de && normDup(e.deWord) === de) deHit = e;
+        if (esK.length && xlKeys(e.esWord).some(function (k) { return esK.indexOf(k) >= 0; })) esHit = e;
+        if (de && dupDeKey(e.deWord) === de) deHit = e;
       }
       return { esHit: esHit, deHit: deHit };
     }
@@ -7868,19 +7870,38 @@
 
     // ---- «En tus otros idiomas»: la misma palabra española en los demás idiomas que ya tienes ----
     var xl = { at: 0, lang: "", map: null };
-    function xlKey(w) { var k = fold(w).replace(/\([^)]*\)/g, " ").replace(/\s+/g, " ").trim(); return k.replace(ART_RE.es, ""); }
+    // «quizás, puede» → ["quiza", "puede"]: cada alternativa por separado, sin artículo, acentos ni paréntesis, y sin la «-s» final ni el «-se» de los
+    // reflexivos (quizá / quizás, pie / pies, marear / marearse). Dos entradas son la misma palabra si comparten una alternativa.
+    var xlKeyMemo = Object.create(null), xlKeyN = 0;
+    function xlKeys(w) {
+      var src = String(w || "");
+      if (src in xlKeyMemo) return xlKeyMemo[src];
+      var out = [], s = fold(src).replace(/\([^)]*\)|\[[^\]]*\]/g, " ").replace(/^\s*(?:el|la|un|una|los|las)\s*\/\s*(?:el|la|un|una|los|las)\s+/, "");
+      s.split(/\s*[,;\/]\s*/).forEach(function (p) {
+        var k = p.replace(/\s+/g, " ").trim().replace(ART_RE.es, "").trim().replace(/([aei]r)se$/, "$1");
+        k = k.split(" ").map(function (x) { return x.length >= 4 ? x.replace(/s$/, "") : x; }).join(" ");
+        if (k.length > 1 && out.indexOf(k) < 0) out.push(k);
+      });
+      if (++xlKeyN > 20000) { xlKeyMemo = Object.create(null); xlKeyN = 0; }
+      return (xlKeyMemo[src] = out);
+    }
     function xlIndex() {
       if (xl.map && xl.lang === S.lang && Date.now() - xl.at < 20000) return xl.map;
       var map = Object.create(null);
       LANGS.forEach(function (l) {
         if (l.code === S.lang) return;
         var b = peekBucket(l.code, true); if (!b) return;
-        b.deck.forEach(function (e) { var k = xlKey(e.esWord); if (k) (map[k] || (map[k] = [])).push({ code: l.code, e: e }); });
+        b.deck.forEach(function (e) { xlKeys(e.esWord).forEach(function (k) { (map[k] || (map[k] = [])).push({ code: l.code, e: e }); }); });
       });
       xl = { at: Date.now(), lang: S.lang, map: map };
       return map;
     }
-    function xlFor(e) { var k = xlKey(e.esWord); return k ? (xlIndex()[k] || []).slice(0, 12) : []; }
+    function xlMatches(e) { // las entradas de los otros idiomas que comparten alguna alternativa de la palabra española
+      var idx = xlIndex(), seen = {}, out = [];
+      xlKeys(e.esWord).forEach(function (k) { (idx[k] || []).forEach(function (x) { var id = x.code + ":" + x.e.id; if (!seen[id]) { seen[id] = 1; out.push(x); } }); });
+      return out;
+    }
+    function xlFor(e) { return xlMatches(e).slice(0, 12); }
     function xlItems(list) {
       return list.map(function (x) {
         var g = genderInfo(x.e, x.code).g;
@@ -8873,8 +8894,8 @@
     // cancelar, se vuelve al idioma, la pestaña y el punto de partida (la lista de Mazo con sus filtros y su posición, o Estudiar con el mismo modo).
     var impBtn = null, impAt = 0;
     function impTargets(e) { // idiomas (menos el actual) en los que la palabra española de la entrada todavía no está
-      var k = xlKey(e.esWord), have = {};
-      if (k) (xlIndex()[k] || []).forEach(function (x) { have[x.code] = 1; });
+      var have = {};
+      xlMatches(e).forEach(function (x) { have[x.code] = 1; });
       return LANGS.filter(function (l) { return l.code !== S.lang && !have[l.code]; });
     }
     function impEntry(id) { return id === "card" ? (S.current && (findEntry(S.current.entry.id) || S.current.entry)) : findEntry(id); }
