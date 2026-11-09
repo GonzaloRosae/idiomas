@@ -468,15 +468,38 @@
   .empty .link-btn { display: inline-block; margin-top: 8px; }
 
   /* ---- racha general y resumen del selector ---- */
-  .pick-streak { --flame: #E4491C; display: inline-flex; align-items: center; gap: calc(4 * var(--u)); padding: calc(5 * var(--u)) calc(26 * var(--u)) calc(5 * var(--u)) calc(12 * var(--u)); background: var(--p-card); border: calc(4 * var(--u)) solid var(--p-line); border-radius: 999px; box-shadow: calc(6 * var(--u)) calc(6 * var(--u)) 0 var(--p-shadow); color: var(--flame); cursor: default; }
+  .pick-streak { --flame: #E4491C; position: relative; display: inline-flex; align-items: center; gap: calc(4 * var(--u)); padding: calc(5 * var(--u)) calc(26 * var(--u)) calc(5 * var(--u)) calc(12 * var(--u)); background: var(--p-card); border: calc(4 * var(--u)) solid var(--p-line); border-radius: 999px; box-shadow: calc(6 * var(--u)) calc(6 * var(--u)) 0 var(--p-shadow); color: var(--flame); cursor: default; }
   body.theme-dark .pick-streak { --flame: #FF8A4C; }
-  .pick-streak .ps-flame { flex: none; width: calc(92 * var(--u)); height: calc(92 * var(--u)); margin: calc(-16 * var(--u)) calc(-2 * var(--u)) calc(-16 * var(--u)) calc(-4 * var(--u)); filter: drop-shadow(calc(3 * var(--u)) calc(3 * var(--u)) 0 var(--p-shadow)); }
+  .pick-streak .ps-flame { flex: none; width: calc(62 * var(--u)); height: calc(62 * var(--u)); margin: 0 calc(2 * var(--u)) 0 0; filter: drop-shadow(calc(2 * var(--u)) calc(2 * var(--u)) 0 var(--p-shadow)); }
   .pick-streak .ps-txt { display: flex; flex-direction: column; align-items: flex-start; }
   .pick-streak b { font-family: "Fredoka", sans-serif; font-weight: 700; font-size: calc(52 * var(--u)); line-height: 1; letter-spacing: -.01em; }
   .pick-streak small { margin-top: calc(2 * var(--u)); font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: calc(15 * var(--u)); line-height: 1; letter-spacing: .08em; text-transform: uppercase; color: var(--p-muted); }
   .pick-streak.is-zero { color: var(--p-muted); }
   .pick-streak.is-zero .ps-flame .fo { fill: var(--p-muted); opacity: .5; }
   .pick-streak.is-zero .ps-flame .fi { fill: var(--p-card); opacity: .9; }
+  /* hoy aún sin la meta: la llama en blanco y negro (y el número, apagado) */
+  .pick-streak.is-idle { color: var(--p-muted); }
+  .pick-streak.is-idle .ps-flame { filter: grayscale(1) drop-shadow(calc(2 * var(--u)) calc(2 * var(--u)) 0 var(--p-shadow)); }
+  .pick-streak:focus { outline: none; }
+  .pick-streak:focus-visible { outline: calc(3 * var(--u)) solid var(--p-accent); outline-offset: calc(4 * var(--u)); }
+  /* calendario del mes: sale al pasar el ratón (o al tocar en pantallas táctiles) */
+  .ps-cal { position: absolute; z-index: 30; top: calc(100% + 14 * var(--u)); left: 0; display: block; width: calc(318 * var(--u)); max-width: calc(100vw - 36px); box-sizing: border-box; padding: calc(14 * var(--u)) calc(18 * var(--u)) calc(14 * var(--u)); background: var(--p-card); color: var(--p-ink); border: calc(4 * var(--u)) solid var(--p-line); border-radius: calc(26 * var(--u)); box-shadow: calc(6 * var(--u)) calc(6 * var(--u)) 0 var(--p-shadow); text-align: left; cursor: default; visibility: hidden; opacity: 0; transform: translateY(calc(-6 * var(--u))); transition: opacity .15s ease, transform .15s ease, visibility 0s linear .15s; pointer-events: none; }
+  .pick-streak:hover .ps-cal, .pick-streak:focus-visible .ps-cal, .pick-streak.is-open .ps-cal { visibility: visible; opacity: 1; transform: none; transition-delay: 0s; pointer-events: auto; }
+  .ps-cal-h { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: calc(8 * var(--u)); font-family: "Fredoka", sans-serif; font-weight: 700; font-size: max(15px, calc(25 * var(--u))); line-height: 1.1; text-transform: capitalize; }
+  .ps-cal-n { font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: max(10px, calc(14 * var(--u))); letter-spacing: .06em; text-transform: uppercase; color: var(--p-muted); }
+  .ps-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: calc(4 * var(--u)); }
+  .ps-dow { text-align: center; padding-bottom: calc(3 * var(--u)); font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: max(9px, calc(13 * var(--u))); color: var(--p-muted); }
+  .ps-d { display: grid; place-items: center; aspect-ratio: 1; border-radius: 50%; font-family: "Fredoka", sans-serif; font-weight: 600; font-size: max(11px, calc(16 * var(--u))); line-height: 1; color: var(--p-ink); }
+  .ps-d.is-done { background: var(--flame); color: var(--p-card); }
+  .ps-d.is-part { box-shadow: inset 0 0 0 calc(3 * var(--u)) var(--flame); }
+  .ps-d.is-today { outline: calc(3 * var(--u)) solid var(--p-ink); outline-offset: calc(2 * var(--u)); }
+  .ps-d.is-future { color: var(--p-muted); opacity: .5; }
+  .ps-cal-f { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: calc(10 * var(--u)); font-family: "IBM Plex Mono", monospace; font-size: max(9.5px, calc(13 * var(--u))); color: var(--p-muted); }
+  .ps-key { display: inline-flex; align-items: center; gap: 6px; }
+  .ps-key i { display: inline-block; width: max(9px, calc(13 * var(--u))); height: max(9px, calc(13 * var(--u))); border-radius: 50%; }
+  .ps-key .k-done { background: var(--flame); }
+  .ps-key .k-part { box-shadow: inset 0 0 0 max(2px, calc(2.5 * var(--u))) var(--flame); }
+  .ps-cal-t { display: block; margin-top: calc(6 * var(--u)); font-family: "Nunito", "Inter", system-ui, sans-serif; font-weight: 700; font-size: max(12px, calc(17 * var(--u))); color: var(--p-ink); }
   .goal-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 16px; font-size: 14px; }
   .goal-row label { color: var(--ink); }
   .goal-row + .act-sub { margin-top: 16px; }   /* el texto explicativo no va pegado a la meta */
@@ -2984,10 +3007,14 @@
     }
 
     .pick-streak .ps-flame {
-      width: 60px;
-      height: 60px;
-      margin: -10px -2px -10px -3px;
+      width: 42px;
+      height: 42px;
+      margin: 0 2px 0 0;
       filter: drop-shadow(2px 2px 0 var(--p-shadow));
+    }
+
+    .pick-streak.is-idle .ps-flame {
+      filter: grayscale(1) drop-shadow(2px 2px 0 var(--p-shadow));
     }
 
     .pick-streak b {
@@ -6474,6 +6501,11 @@
       if (opt) { var code = opt.getAttribute("data-lang"); closeLangMenu(); if (code && code !== S.lang) location.hash = "#" + code; return; }
       closeLangMenu();
     });
+    document.addEventListener("click", function (ev) { // sin ratón (táctil) el calendario de la racha se abre al tocar la llama
+      var ps = document.getElementById("pickStreak"); if (!ps) return;
+      if (ev.target.closest && ev.target.closest("#pickStreak") && window.matchMedia && matchMedia("(hover: none)").matches) ps.classList.toggle("is-open");
+      else ps.classList.remove("is-open");
+    });
     document.addEventListener("keydown", function (ev) {
       var m = document.getElementById("langMenu"); if (!m || m.hidden) return;
       if (ev.key === "Escape") { ev.preventDefault(); closeLangMenu(true); return; }
@@ -6635,7 +6667,8 @@
           wiktSplit(t[2]).forEach(function (x) { var e = x.indexOf("="); if (e > 0) p[x.slice(0, e).trim()] = x.slice(e + 1); });
           for (var i = 1; i <= 6; i++) {
             var w = eswClean(p["t" + i]);
-            if (w && !seen[w.toLowerCase()]) { seen[w.toLowerCase()] = 1; out.push({ w: w, sense: sense }); }
+            var gg = String(p["g" + i] || "").trim().toLowerCase(); // género que anota el Wikcionario (cuando lo trae)
+            if (w && !seen[w.toLowerCase()]) { seen[w.toLowerCase()] = 1; out.push({ w: w, sense: sense, g: /^[mfn]$/.test(gg) ? gg : "" }); }
           }
         }
       }
@@ -6688,12 +6721,41 @@
       }
       return titles.map(function (t) { return { title: t, text: suggCache[t] }; });
     }
+    // «la mariposa» → las traducciones también llevan artículo («a borboleta»): solo si lo escrito en español lo trae (en singular) y el idioma tiene artículos
+    function wantsArticle(es, code) { return !!(ART_EXAMPLE[code] && /^(?:el|la|un|una)\s+\S/i.test(String(es || "").trim())); }
+    function artFor(code, g, w) { // el mismo artículo que ofrece el aviso «Añadir…» (sin elisiones); en italiano, «uno» ante z, gn, ps, x, y y s + consonante
+      var a = ART_EXAMPLE[code] && ART_EXAMPLE[code][g];
+      if (a && code === "it" && g === "m" && /^(?:z|gn|ps|x|y|s[^aeiouàèéìòù\s])/i.test(w)) a = "uno";
+      return a || "";
+    }
+    // el género de cada traducción: el que anota el propio Wikcionario en español o, si no lo trae, el del Wikcionario en inglés (solo con el género automático activado)
+    async function suggArticles(items, code) {
+      var jobs = [], titles = {};
+      items.forEach(function (it) {
+        if (it.g || startsWithArticle(it.w, code)) return;
+        var forms = wiktForms(it.w);
+        if (!forms.length) return;
+        jobs.push({ it: it, forms: forms });
+        forms.forEach(function (f) { wiktVariants(f, code).forEach(function (v) { titles[v] = 1; }); });
+      });
+      if (jobs.length && S.autoGen) {
+        var pages = await wiktPages(Object.keys(titles));
+        jobs.forEach(function (j) { var g = wiktEntryGender(j.forms, pages, code); if (/^[mfn]$/.test(g)) j.it.g = g; });
+      }
+      return items.map(function (it) {
+        var a = /^[mfn]$/.test(it.g || "") && !startsWithArticle(it.w, code) ? artFor(code, it.g, it.w) : "";
+        return a ? { w: a + " " + it.w, sense: it.sense, g: it.g } : it;
+      });
+    }
     async function suggLookup(es, code) {
       var pages = await suggPages(suggTitles(es)), g = esEntryGender(pages);
       for (var i = 0; i < pages.length; i++) {
         if (!pages[i].text) continue;
         var items = eswTranslations(pages[i].text, code);
-        if (items.length) return { items: items.slice(0, 8), title: pages[i].title, g: g };
+        if (!items.length) continue;
+        items = items.slice(0, 8);
+        if (wantsArticle(es, code)) { try { items = await suggArticles(items, code); } catch (err) { /* sin conexión con el Wikcionario en inglés: se quedan sin artículo */ } }
+        return { items: items, title: pages[i].title, g: g };
       }
       return { items: [], title: "", g: g };
     }
@@ -7124,7 +7186,7 @@
         '<div class="info-body">' +
         "<p>Vocabulando es un cuaderno de vocabulario con tarjetas de repaso espaciado. Cada idioma tiene su propio mazo de palabras y frases, con sus repasos y estadísticas. Con el chip del idioma (arriba) cambias de idioma sin pasar por la pantalla de inicio, y con el nombre «Vocabulando» vuelves a ella." + (sibShow ? " El botón con el logo (junto al del tema) te lleva a Conjugario (conjugaciones), a Declinario (declinaciones y pronombres) o a Mundario (números, hora, países…), en el mismo idioma." : "") + "</p>" +
         "<h3>Crear</h3><ul>" +
-        "<li>Escribe la palabra en español: debajo del campo del idioma aparecen <b>traducciones sugeridas</b> del Wikcionario. Púlsalas para rellenar el campo, o escribe tú la palabra.</li>" +
+        "<li>Escribe la palabra en español: debajo del campo del idioma aparecen <b>traducciones sugeridas</b> del Wikcionario. Púlsalas para rellenar el campo, o escribe tú la palabra. Si escribes el sustantivo con artículo («la mariposa»), las sugerencias también lo llevan («a borboleta»).</li>" +
         "<li>Cada campo de palabra lleva a la izquierda un botón de <b>género</b> (♂ ♀ neutro, ambiguo o ninguno), también el del español. Se detecta solo por el artículo («der Spiegel», «el coche») o consultando el Wikcionario, y también puedes elegirlo tú. La palabra se colorea —y también donde aparece en la frase—: azul masculino, rojo femenino, verde neutro, morado ambiguo; así ves de un vistazo si el género coincide en los dos idiomas. Si guardas un sustantivo sin su artículo se te avisa: se memoriza mejor con él.</li>" +
         "<li>El botón <b>Sugerir frases</b> (la burbuja dentro de la oración en español) trae frases reales de Tatoeba que contienen la palabra y, si has rellenado las dos palabras, solo las que la usan con el significado de tu traducción (si Tatoeba falla o no tiene la palabra, ejemplos del Wikcionario, con traducción al inglés: el español se traduce solo al elegirlos); el botón <b>Traducir</b> (icono de idiomas, aparece en la oración que está vacía) traduce la que hayas escrito (MyMemory). Las traducciones automáticas pueden fallar: revísalas antes de guardar. En portugués se avisa de las frases con rasgos de Brasil. Las oraciones se guardan sin el punto final (se conservan «…», «?», «!» y los signos combinados).</li>" +
         "<li>El botón ✨ abre ChatGPT con una petición que se adapta a lo que hayas rellenado: con una sola palabra, la traduce y propone una frase; con las dos, genera una frase con ese significado concreto; con oraciones, las traduce o revisa la traducción. Al pasar el ratón ves qué va a pedir.</li></ul>" +
@@ -7604,12 +7666,29 @@
       if (n) { var lbl = n + " por repasar"; el.title = lbl; el.setAttribute("aria-label", lbl); }
       else { el.removeAttribute("title"); el.removeAttribute("aria-label"); }
     }
-    function pickStreakFill() { // la racha, en la esquina del selector: llama grande y los días
+    var MES_ES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+    function streakCalHtml(s) { // el mes en curso: días con la meta cumplida (relleno), con algún repaso sin llegar a ella (aro) y hoy
+      var tk = todayKey(), p = tk.split("-"), y = +p[0], m = +p[1] - 1, today = +p[2], tot = dayTotals();
+      var lead = (new Date(Date.UTC(y, m, 1)).getUTCDay() + 6) % 7, n = new Date(Date.UTC(y, m + 1, 0)).getUTCDate(), done = 0, cells = "", i, d;
+      for (i = 0; i < lead; i++) cells += "<span></span>";
+      for (d = 1; d <= n; d++) {
+        var c = tot[y + "-" + pad(m + 1) + "-" + pad(d)] || 0, cls = "ps-d";
+        if (c >= s.goal) { cls += " is-done"; done++; } else if (c > 0) cls += " is-part";
+        if (d === today) cls += " is-today"; else if (d > today) cls += " is-future";
+        cells += '<span class="' + cls + '">' + d + "</span>";
+      }
+      return '<span class="ps-cal" aria-hidden="true">' +
+        '<span class="ps-cal-h"><span>' + MES_ES[m] + " " + y + '</span><span class="ps-cal-n">' + done + (done === 1 ? " día" : " días") + "</span></span>" +
+        '<span class="ps-grid">' + ["L", "M", "X", "J", "V", "S", "D"].map(function (x) { return '<span class="ps-dow">' + x + "</span>"; }).join("") + cells + "</span>" +
+        '<span class="ps-cal-f"><span class="ps-key"><i class="k-done"></i>meta cumplida</span><span class="ps-key"><i class="k-part"></i>algún repaso</span></span>' +
+        '<span class="ps-cal-t">' + (s.done ? "Hoy: meta cumplida ✓" : "Hoy: " + s.count + " de " + s.goal + " repasos") + "</span></span>";
+    }
+    function pickStreakFill() { // la racha, en la esquina del selector: llama y los días; al pasar el ratón, el calendario del mes. Sin la meta de hoy, la llama va en blanco y negro
       var el = document.getElementById("pickStreak"); if (!el) return;
-      var s = streakInfo(), u = s.cur === 1 ? "día" : "días", lbl = s.cur + " " + u + " de racha";
-      el.className = "pick-streak" + (s.cur ? "" : " is-zero");
-      el.title = lbl; el.setAttribute("role", "img"); el.setAttribute("aria-label", lbl);
-      el.innerHTML = PICK_FLAME + '<span class="ps-txt"><b>' + s.cur + "</b><small>" + u + "</small></span>";
+      var s = streakInfo(), u = s.cur === 1 ? "día" : "días", lbl = s.cur + " " + u + " de racha" + (s.done ? ", hoy cumplido" : ", hoy " + s.count + " de " + s.goal + " repasos");
+      el.className = "pick-streak" + (s.cur ? "" : " is-zero") + (s.done ? "" : " is-idle") + (el.classList.contains("is-open") ? " is-open" : "");
+      el.removeAttribute("title"); el.setAttribute("role", "group"); el.setAttribute("tabindex", "0"); el.setAttribute("aria-label", lbl);
+      el.innerHTML = PICK_FLAME + '<span class="ps-txt"><b>' + s.cur + "</b><small>" + u + "</small></span>" + streakCalHtml(s);
     }
     function goalSelect() {
       var vals = GOALS.slice();
