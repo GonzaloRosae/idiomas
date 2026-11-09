@@ -483,7 +483,7 @@
   .pick-streak:focus { outline: none; }
   .pick-streak:focus-visible { outline: calc(3 * var(--u)) solid var(--p-accent); outline-offset: calc(4 * var(--u)); }
   /* calendario del mes: sale al pasar el ratón (o al tocar en pantallas táctiles) */
-  .ps-cal { position: absolute; z-index: 30; top: calc(100% + 14 * var(--u)); left: 0; display: block; width: calc(318 * var(--u)); max-width: calc(100vw - 36px); box-sizing: border-box; padding: calc(14 * var(--u)) calc(18 * var(--u)) calc(14 * var(--u)); background: var(--p-card); color: var(--p-ink); border: calc(4 * var(--u)) solid var(--p-line); border-radius: calc(26 * var(--u)); box-shadow: calc(6 * var(--u)) calc(6 * var(--u)) 0 var(--p-shadow); text-align: left; cursor: default; visibility: hidden; opacity: 0; transform: translateY(calc(-6 * var(--u))); transition: opacity .15s ease, transform .15s ease, visibility 0s linear .15s; pointer-events: none; }
+  .ps-cal { position: absolute; z-index: 30; top: calc(100% + 14 * var(--u)); right: 0; display: block; width: calc(318 * var(--u)); max-width: calc(100vw - 36px); box-sizing: border-box; padding: calc(14 * var(--u)) calc(18 * var(--u)) calc(14 * var(--u)); background: var(--p-card); color: var(--p-ink); border: calc(4 * var(--u)) solid var(--p-line); border-radius: calc(26 * var(--u)); box-shadow: calc(6 * var(--u)) calc(6 * var(--u)) 0 var(--p-shadow); text-align: left; cursor: default; visibility: hidden; opacity: 0; transform: translateY(calc(-6 * var(--u))); transition: opacity .15s ease, transform .15s ease, visibility 0s linear .15s; pointer-events: none; }
   .pick-streak:hover .ps-cal, .pick-streak:focus-visible .ps-cal, .pick-streak.is-open .ps-cal { visibility: visible; opacity: 1; transform: none; transition-delay: 0s; pointer-events: auto; }
   .ps-cal-h { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: calc(8 * var(--u)); font-family: "Fredoka", sans-serif; font-weight: 700; font-size: max(15px, calc(25 * var(--u))); line-height: 1.1; text-transform: capitalize; }
   .ps-cal-n { font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: max(10px, calc(14 * var(--u))); letter-spacing: .06em; text-transform: uppercase; color: var(--p-muted); }
@@ -499,7 +499,17 @@
   .ps-key i { display: inline-block; width: max(9px, calc(13 * var(--u))); height: max(9px, calc(13 * var(--u))); border-radius: 50%; }
   .ps-key .k-done { background: var(--flame); }
   .ps-key .k-part { box-shadow: inset 0 0 0 max(2px, calc(2.5 * var(--u))) var(--flame); }
-  .ps-cal-t { display: block; margin-top: calc(6 * var(--u)); font-family: "Nunito", "Inter", system-ui, sans-serif; font-weight: 700; font-size: max(12px, calc(17 * var(--u))); color: var(--p-ink); }
+  /* hoy: los repasos de hoy frente a la meta diaria, en la esquina izquierda del selector */
+  .pick-today { --flame: #E4491C; display: inline-flex; align-items: center; gap: calc(14 * var(--u)); padding: calc(5 * var(--u)) calc(28 * var(--u)) calc(5 * var(--u)) calc(14 * var(--u)); background: var(--p-card); border: calc(4 * var(--u)) solid var(--p-line); border-radius: 999px; box-shadow: calc(6 * var(--u)) calc(6 * var(--u)) 0 var(--p-shadow); color: var(--p-ink); cursor: default; }
+  body.theme-dark .pick-today { --flame: #FF8A4C; }
+  .pick-today .pt-ring { flex: none; width: calc(62 * var(--u)); height: calc(62 * var(--u)); }
+  .pick-today .pt-track { stroke: var(--p-muted); opacity: .32; }
+  .pick-today .pt-bar, .pick-today .pt-ok { stroke: var(--flame); }
+  .pick-today .pt-txt { display: flex; flex-direction: column; align-items: flex-start; }
+  .pick-today b { font-family: "Fredoka", sans-serif; font-weight: 700; font-size: calc(52 * var(--u)); line-height: 1; letter-spacing: -.01em; }
+  .pick-today b i { margin-left: .08em; font-style: normal; font-weight: 600; font-size: .5em; letter-spacing: 0; color: var(--p-muted); }
+  .pick-today small { white-space: nowrap; margin-top: calc(2 * var(--u)); font-family: "IBM Plex Mono", monospace; font-weight: 500; font-size: calc(15 * var(--u)); line-height: 1; letter-spacing: .08em; text-transform: uppercase; color: var(--p-muted); }
+  .pick-today.is-done b { color: var(--flame); }
   .goal-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 16px; font-size: 14px; }
   .goal-row label { color: var(--ink); }
   .goal-row + .act-sub { margin-top: 16px; }   /* el texto explicativo no va pegado a la meta */
@@ -1777,13 +1787,21 @@
     column-gap: calc(24 * var(--u));
   }
 
-  .pick-head .pick-streak {
+  .pick-head .pick-today {
     grid-column: 1;
+    grid-row: 1;
     justify-self: start;
+  }
+
+  .pick-head .pick-streak {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: end;
   }
 
   .pick-head .pick-h2 {
     grid-column: 2;
+    grid-row: 1;
   }
 
   .pick-h2 {
@@ -2861,13 +2879,23 @@
     }
 
     .pick-head {
-      grid-template-columns: 1fr;
+      grid-template-columns: auto auto;
+      justify-content: space-between;
+      column-gap: 12px;
       row-gap: 18px;
     }
 
-    .pick-head .pick-streak,
-    .pick-head .pick-h2 {
+    .pick-head .pick-today {
       grid-column: 1;
+    }
+
+    .pick-head .pick-streak {
+      grid-column: 2;
+    }
+
+    .pick-head .pick-h2 {
+      grid-column: 1 / -1;
+      grid-row: 2;
     }
   }
 
@@ -3023,6 +3051,30 @@
 
     .pick-streak small {
       font-size: 12px;
+    }
+
+    .pick-today {
+      gap: 8px;
+      padding: 3px 18px 3px 8px;
+      border-width: 3px;
+      box-shadow: 4px 4px 0 var(--p-shadow);
+    }
+
+    .pick-today .pt-ring {
+      width: 42px;
+      height: 42px;
+    }
+
+    .pick-today b {
+      font-size: 38px;
+    }
+
+    .pick-today small {
+      font-size: 12px;
+    }
+
+    .pick-today .pt-w {
+      display: none;
     }
   }
 
@@ -3262,6 +3314,7 @@
   <div class="data-slot"></div>
   <main class="pick-panel">
     <div class="pick-head">
+      <div class="pick-today" id="pickToday"></div>
       <div class="pick-streak" id="pickStreak"></div>
       <h2 class="pick-h2">¿Qué idioma vas a practicar?</h2>
     </div>
@@ -6459,6 +6512,7 @@
     }
 
     function buildPicker() {
+      pickTodayFill();
       pickStreakFill();
       document.getElementById("langGrid").innerHTML = LANGS.map(function (l) {
         var sm = langSummary(l.code), rows = "";
@@ -7681,7 +7735,17 @@
         '<span class="ps-cal-h"><span>' + MES_ES[m] + " " + y + '</span><span class="ps-cal-n">' + done + (done === 1 ? " día" : " días") + "</span></span>" +
         '<span class="ps-grid">' + ["L", "M", "X", "J", "V", "S", "D"].map(function (x) { return '<span class="ps-dow">' + x + "</span>"; }).join("") + cells + "</span>" +
         '<span class="ps-cal-f"><span class="ps-key"><i class="k-done"></i>meta cumplida</span><span class="ps-key"><i class="k-part"></i>algún repaso</span></span>' +
-        '<span class="ps-cal-t">' + (s.done ? "Hoy: meta cumplida ✓" : "Hoy: " + s.count + " de " + s.goal + " repasos") + "</span></span>";
+        "</span>";
+    }
+    function pickTodayFill() { // hoy: los repasos de hoy (todos los idiomas) frente a la meta diaria, con un aro que se llena
+      var el = document.getElementById("pickToday"); if (!el) return;
+      var s = streakInfo(), pct = Math.min(1, s.goal ? s.count / s.goal : 0), C = 56.55;
+      el.className = "pick-today" + (s.done ? " is-done" : "");
+      el.setAttribute("role", "group"); el.setAttribute("aria-label", "Hoy: " + s.count + " de " + s.goal + " repasos" + (s.done ? ", meta cumplida" : ""));
+      el.innerHTML = '<svg class="pt-ring" viewBox="0 0 24 24" aria-hidden="true"><circle class="pt-track" cx="12" cy="12" r="9" fill="none" stroke-width="3.4"/>' +
+        (pct > 0 ? '<circle class="pt-bar" cx="12" cy="12" r="9" fill="none" stroke-width="3.4" stroke-linecap="round" stroke-dasharray="' + C + '" stroke-dashoffset="' + (C * (1 - pct)).toFixed(2) + '" transform="rotate(-90 12 12)"/>' : "") +
+        (s.done ? '<path class="pt-ok" d="m8 12.4 2.7 2.7L16 9.4" fill="none" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>' : "") + "</svg>" +
+        '<span class="pt-txt"><b>' + s.count + "<i>/" + s.goal + "</i></b><small>" + (s.done ? '<span class="pt-w">meta </span>cumplida' : '<span class="pt-w">repasos </span>hoy') + "</small></span>";
     }
     function pickStreakFill() { // la racha, en la esquina del selector: llama y los días; al pasar el ratón, el calendario del mes. Sin la meta de hoy, la llama va en blanco y negro
       var el = document.getElementById("pickStreak"); if (!el) return;
