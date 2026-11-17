@@ -515,16 +515,52 @@
   .goal-row + .act-sub { margin-top: 16px; }   /* el texto explicativo no va pegado a la meta */
 
   /* ---- escribir la respuesta ---- */
-  .typed { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
-  .typed .in { font-size: 18px; text-align: center; }
-  .typed-btns { display: flex; align-items: center; justify-content: center; gap: 18px; }
-  .typed-btns .btn { width: auto; flex: 0 0 auto; min-width: 180px; }
-  .typed-btns .link-btn { margin-top: 0; white-space: nowrap; }
-  .typed-res { margin-top: 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; font-size: 14px; line-height: 1.5; text-align: center; }
-  .typed-res.ok { border-color: var(--easy); }
-  .typed-res.near { border-color: var(--hard); }
-  .typed-res.bad { border-color: var(--again); }
+  .typed { margin-top: 26px; display: flex; flex-direction: column; gap: 10px; }
+  .typed .in { font-size: 17px; padding: 13px 14px; }
+  .typed-btns { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+  .typed-btns .btn { padding: 13px 18px; }
+  .typed-btns .btn-ghost { width: auto; color: var(--muted); }
+  .typed-res { margin-top: 18px; --tc: var(--muted); }
+  .typed-res.is-ok { --tc: var(--easy); }
+  .typed-res.is-near { --tc: var(--hard); }
+  .typed-res.is-bad { --tc: var(--again); }
+  .tr-lab { font-family: "IBM Plex Mono", monospace; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+  .tr-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-top: 5px; }
+  .tr-ans { font-size: 19px; font-weight: 600; color: var(--tc); word-break: break-word; }
+  .tr-mark { font-size: 13px; font-weight: 700; color: var(--tc); }
+  .tr-time { font-family: "IBM Plex Mono", monospace; font-size: 11.5px; color: var(--muted); }
+  .tr-fix { margin-top: 4px; font-size: 13.5px; color: var(--muted); }
+  .tr-fix b { color: var(--ink); }
   .r.suggested { border-color: currentColor; box-shadow: 0 0 0 2px currentColor; }
+  .r.is-sel { border-color: currentColor; box-shadow: 0 0 0 2px currentColor; cursor: default; }
+  .r.is-sel span { font-weight: 700; }
+  .r-again.is-sel { background: #FBEAE8; }
+  .r-hard.is-sel { background: #F6EEDD; }
+  .r-good.is-sel { background: var(--accent-soft); }
+  .r-easy.is-sel { background: #DDF1EA; }
+  .r.is-dim { opacity: .42; }
+  .r.is-dim:hover { opacity: 1; }
+  .r:disabled { cursor: default; }
+  .typed-cap { margin-top: 12px; font-size: 13.5px; color: var(--muted); }
+  .typed-next { margin-top: 12px; }
+
+  /* ---- ajustes de estudio (engranaje de la pestaña Estudiar) ---- */
+  .study-bar { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .gear { flex: none; margin-top: 3px; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 10px; background: transparent; color: var(--muted); cursor: pointer; }
+  .gear svg { width: 19px; height: 19px; }
+  .gear:hover, .gear[aria-expanded="true"] { color: var(--accent); background: var(--accent-soft); }
+  .study-set { margin: 0 0 18px; padding: 16px 18px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); animation: rise .25s ease both; }
+  .ss-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 13px; }
+  .ss-row + .ss-row { margin-top: 12px; }
+  .ss-t { min-width: 112px; font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+  .ss-fields { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .ss-fields label, .ss-u { color: var(--ink); }
+  .ss-pair { display: inline-flex; align-items: center; gap: 8px; }
+  .ss-note { margin: 12px 0 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .ss-sw { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--line); }
+  .ss-sw .switch { width: 100%; justify-content: space-between; gap: 16px; text-align: left; }
+  .ss-sw .switch-label { font-family: "Inter", system-ui, sans-serif; font-size: 13.5px; letter-spacing: 0; text-transform: none; color: var(--ink); }
+  .ss-sw .switch-track { flex: none; }
 
   /* ---- pausar y entradas difíciles ---- */
   .k-pause { border: 0; background: transparent; color: var(--muted); cursor: pointer; padding: 6px; border-radius: 7px; line-height: 0; }
@@ -549,17 +585,6 @@
   .k-dict-front { font-size: 22px; }
   .k-dict { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
   .typed-diff { margin-top: 8px; font-size: 15px; line-height: 1.7; }
-  .typed-auto { margin-top: 20px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
-  .ta-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; }
-  .ta-badge { padding: 4px 16px; border: 1.5px solid currentColor; border-radius: 999px; font-weight: 700; font-size: 15px; }
-  .ta-again { color: var(--again); }
-  .ta-hard { color: var(--hard); }
-  .ta-good { color: var(--good); }
-  .ta-easy { color: var(--easy); }
-  .ta-why { font-size: 13.5px; color: var(--muted); }
-  .ta-btns { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 18px; }
-  .ta-btns .btn { width: auto; flex: 0 0 auto; min-width: 180px; }
-  .ta-btns .link-btn { margin-top: 0; white-space: nowrap; }
   .dd-bad { color: var(--again); text-decoration: underline; font-weight: 600; }
   .dd-acc { text-decoration: underline wavy var(--hard); }
   .k-xl { margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--line); display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; font-size: 14px; }
@@ -3186,6 +3211,22 @@
     background: #14342A;
   }
 
+  body.theme-dark .r-again.is-sel {
+    background: #3A2320;
+  }
+
+  body.theme-dark .r-hard.is-sel {
+    background: #332A15;
+  }
+
+  body.theme-dark .r-good.is-sel {
+    background: var(--accent-soft);
+  }
+
+  body.theme-dark .r-easy.is-sel {
+    background: #14342A;
+  }
+
   body.theme-dark .done-mark {
     background: #14342A;
   }
@@ -5617,7 +5658,7 @@
     var DECK_PAGE = 100; // filas de la lista del mazo que se dibujan de una vez (el resto, con «Mostrar más»)
     var S = {
       lang: null, tab: "estudiar", deckDir: "es-it", autoSentence: false, theme: "dark",
-      editing: null, confirmDelete: null, expanded: {}, deckShown: DECK_PAGE, q: "", fState: "all", fSent: "all", fGender: "all", fSort: "new", qSent: true, goal: 10, typeOn: false, typed: null, typedClock: null, autoRate: true, clozeOn: false, dictOn: false, xlOpen: {}, nextTab: null, dictPlayed: "", editFrom: null, editY: 0, restoreY: null, imp: null, restore: null, ipaOpen: {}, anyVoice: false, undo: [], newExtra: {}, newWords: 20, newSents: 10, revOn: false, autoSpeak: false, mode: "word",
+      editing: null, confirmDelete: null, expanded: {}, deckShown: DECK_PAGE, q: "", fState: "all", fSent: "all", fGender: "all", fSort: "new", qSent: true, goal: 10, typeOn: false, typed: null, typedClock: null, autoRate: true, studySet: false, clozeOn: false, dictOn: false, xlOpen: {}, nextTab: null, dictPlayed: "", editFrom: null, editY: 0, restoreY: null, imp: null, restore: null, ipaOpen: {}, anyVoice: false, undo: [], newExtra: {}, newWords: 20, newSents: 10, revOn: false, autoSpeak: false, mode: "word",
       current: null, flipped: false, showSentence: false, studyAhead: false, bannerOff: false,
       formGender: "", formEsGender: "", formWikt: null, formBusy: false, suggErr: null, autoGen: true, detecting: false, autoSugg: true, sugg: null, suggBusy: false, sents: null, sentsBusy: false, sentsSlow: false, transBusy: false, tatDownAt: 0,
       deck: [], review: {}, stats: { reviewsTotal: 0, byDay: {} }
@@ -5995,7 +6036,7 @@
       } finally { rateBusy = false; }
     }
     // Deshace los últimos repasos de esta sesión, de uno en uno (Z). Solo si la tarjeta sigue como la dejó ese repaso.
-    async function undoLast() {
+    async function undoLast(quiet) {
       if (rateBusy) return;
       var u = S.undo[S.undo.length - 1];
       if (!u || u.code !== S.lang) return;
@@ -6024,7 +6065,7 @@
         S.tab = "estudiar"; S.studyAhead = false; S.showSentence = S.autoSentence;
         if (modeEnabled(u.mode)) { S.mode = u.mode; S.current = { key: u.key, entry: findEntry(u.key.split(":")[0]) }; S.flipped = true; }
         else S.current = null;
-        render(); toast("Repaso deshecho");
+        if (!quiet) { render(); toast("Repaso deshecho"); }
       } finally { rateBusy = false; }
     }
 
@@ -7270,9 +7311,9 @@
         "<li><b>Palabras y frases nuevas por día:</b> en la propia pestaña Estudiar eliges cuántas palabras nuevas y cuántas frases nuevas se te ofrecen cada día (por defecto 20 y 10, o sin límite); el resto espera su turno. «Inversa» usa el límite de palabras. Si te quedas con ganas, el botón «Estudiar nuevas más» añade 10. Los repasos que toquen salen siempre.</li>" +
         "<li><b>Deshacer</b> (Z o el botón «Deshacer») anula los últimos repasos de esta sesión, de uno en uno, mientras sigas en este idioma.</li>" +
         "<li><b>Pronunciación:</b> usa una voz de tu navegador o de tu sistema <b>con acento europeo</b> (francés de Francia y no de Canadá, portugués de Portugal y no de Brasil, inglés británico y no americano…). Si no hay ninguna para el idioma, no aparecen los botones de audio: en Actividad, en «Voces», ves qué voz se usa en cada idioma, qué falta y cómo instalarla. Con el interruptor «usar la que haya» puedes permitir también voces de otros acentos.</li>" +
-        "<li><b>Escribir la respuesta:</b> en Actividad puedes activar que, en Palabras, teclees la traducción en vez de mostrarla. Se corrige sin que importen las mayúsculas ni los acentos (te dice «casi» si fallan) y se acepta cualquiera de las alternativas separadas por «/». La valoración se da sola según lo que escribas y lo que tardes (el tiempo cuenta desde que sale la tarjeta y se compara con lo que hay que escribir: cuantas más letras, más margen): acierto rápido = Fácil, acierto = Bien, acierto muy lento o con fallo de acentos, mayúsculas o artículo = Difícil, y fallo o «No lo sé» = Otra vez. Con «Cambiar valoración» (o Z) la deshaces para elegirla tú; en Actividad puedes quitar la valoración automática y entonces solo se te sugiere. Vale igual para Hueco y Dictado.</li>" +
-        "<li><b>Hueco:</b> en Actividad puedes activar «frases con hueco»: se muestra tu frase en " + "el idioma con la palabra de la ficha tapada (y su traducción como pista) y escribes la palabra que falta, con la forma que lleva en la frase. Solo salen las frases en las que se localiza la palabra. Es recordar la palabra en contexto, que se retiene mejor que la tarjeta suelta. Se corrige como «escribir la respuesta» y sugiere la valoración.</li>" +
-        "<li><b>Dictado:</b> también en Actividad (si tu navegador tiene voz para el idioma): suena una de tus frases y la escribes entera. Se compara palabra por palabra, sin que importen la puntuación ni la mayúscula inicial; las palabras que fallas se subrayan. «Más despacio» la repite más lenta y la tecla P la repite.</li>" +
+        "<li><b>Escribir la respuesta:</b> en los ajustes de Estudio (el engranaje de la pestaña Estudiar) puedes activar que, en Palabras, teclees la traducción en vez de mostrarla. Se corrige sin que importen las mayúsculas ni los acentos (te dice «casi» si fallan) y se acepta cualquiera de las alternativas separadas por «/». La valoración se da sola según lo que escribas y lo que tardes (el tiempo cuenta desde que sale la tarjeta y se compara con lo que hay que escribir: cuantas más letras, más margen): acierto rápido = Fácil, acierto = Bien, acierto muy lento o con fallo de acentos, mayúsculas o artículo = Difícil, y fallo o «No lo sé» = Otra vez. Toca otra de las cuatro notas (o pulsa J, K, L o Ñ) para cambiarla, o Z para deshacerla; en los ajustes de Estudio puedes quitar la valoración automática y entonces solo se te sugiere. Vale igual para Hueco y Dictado.</li>" +
+        "<li><b>Hueco:</b> en los ajustes de Estudio (el engranaje) puedes activar «frases con hueco»: se muestra tu frase en " + "el idioma con la palabra de la ficha tapada (y su traducción como pista) y escribes la palabra que falta, con la forma que lleva en la frase. Solo salen las frases en las que se localiza la palabra. Es recordar la palabra en contexto, que se retiene mejor que la tarjeta suelta. Se corrige como «escribir la respuesta» y sugiere la valoración.</li>" +
+        "<li><b>Dictado:</b> también en los ajustes de Estudio (si tu navegador tiene voz para el idioma): suena una de tus frases y la escribes entera. Se compara palabra por palabra, sin que importen la puntuación ni la mayúscula inicial; las palabras que fallas se subrayan. «Más despacio» la repite más lenta y la tecla P la repite.</li>" +
         "<li><b>En tus otros idiomas:</b> al mostrar la respuesta, y con el botón «idiomas» de cada fila de Mazo, ves cómo tienes guardada esa misma palabra española en tus otros idiomas. Sirve para notar parecidos y no confundir francés, italiano, portugués o catalán.</li>" +
         "<li><b>Pausar:</b> el botón de pausa de la tarjeta (y el de cada fila de Mazo) aparta una entrada: no sale al estudiar ni cuenta en la previsión hasta que la reanudas. Las que te fallan mucho (" + LEECH + " veces o más) se marcan como «difíciles» en Mazo, con su filtro, y al mostrarte una te sugiere cambiarla o pausarla.</li>" +
         "<li><b>Eliminar:</b> la papelera de la tarjeta (y la × de cada fila de Mazo) quita la entrada del mazo, con todo su progreso, después de pedirte confirmación.</li>" +
@@ -7669,6 +7710,7 @@
       '<path class="fi" fill="url(#psFlameI)" d="M12 21.6a3.5 3.5 0 0 1-3.5-3.5c0-2 1.5-3 2.1-4.7.9.9 1.4 1.8 1.4 2.8.8-.3 1.3-1 1.4-1.9 1 1 1.1 2.1 1.1 3.8A3.5 3.5 0 0 1 12 21.6z"/></svg>';
     var ICON_PAUSE = gsvg('<rect x="6.5" y="5" width="3.6" height="14" rx="1"/><rect x="13.9" y="5" width="3.6" height="14" rx="1"/>');
     var ICON_PLAY = gsvg('<path d="M7.5 5.5v13l11-6.5z"/>');
+    var ICON_GEAR = gsvg('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>');
     var ICON_DEL = gsvg('<path d="M4 7h16"/><path d="M9.5 7V4.5h5V7"/><path d="M6.5 7l1 13h9l1-13"/><path d="M10 11v5M14 11v5"/>');
     var ICON_IMP = gsvg('<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>');
     var GOALS = [1, 5, 10, 20, 30, 50];
@@ -7842,14 +7884,18 @@
       return { v: "bad", html: html };
     }
     function typedHtml() {
-      var ph = S.mode === "cloze" ? "Escribe la palabra que falta…" : S.mode === "dict" ? "Escribe lo que oigas…" : "Escribe la traducción en " + langName() + "…";
+      var ph = S.mode === "cloze" ? "Escribe la palabra que falta…" : S.mode === "dict" ? "Escribe lo que oigas…" : "Escribe en " + langName() + "…";
       return '<div class="typed"><input id="typedIn" class="in" type="text" data-key="' + esc(S.current.key) + '" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="' + ph + '" aria-label="Tu respuesta" />' +
-        '<div class="typed-btns"><button class="btn btn-primary" id="typedCheck">Comprobar</button><button class="link-btn" id="typedSkip">No lo sé</button></div></div>';
+        '<div class="typed-btns"><button class="btn btn-primary" id="typedCheck">Comprobar</button><button class="btn btn-ghost" id="typedSkip">No lo sé</button></div></div>';
     }
     function fmtSecs(s) { return s < 10 ? (Math.round(s * 10) / 10).toString().replace(".", ",") + "\u00a0s" : s < 60 ? Math.round(s) + "\u00a0s" : Math.floor(s / 60) + "\u00a0min " + Math.round(s % 60) + "\u00a0s"; }
-    function typedResHtml(t) {
-      var label = t.skipped ? "Sin respuesta ✗" : t.v === "ok" ? "Correcto ✓" : t.v === "near" ? "Casi: " + t.why + (t.fix ? " (" + esc(t.fix) + ")" : "") : "No coincide ✗";
-      return '<div class="typed-res ' + t.v + '">Tu respuesta: <b>' + (t.text ? esc(t.text) : "—") + "</b> · " + label + (t.secs != null && !t.skipped ? " · " + fmtSecs(t.secs) : "") + (t.html ? '<div class="typed-diff">Debería ser: ' + t.html + "</div>" : "") + "</div>";
+    function typedResHtml(t) { // lo que escribiste: etiqueta pequeña, tu respuesta con el color del resultado y el tiempo
+      var cls = t.skipped ? "bad" : t.v, mark = t.skipped ? "" : t.v === "ok" ? "✓" : t.v === "near" ? "casi" : "✗";
+      var fix = t.v === "near" && !t.skipped ? '<div class="tr-fix">' + (t.fix ? "Debería ser <b>" + esc(t.fix) + "</b> · " : "") + esc(t.why || "") + "</div>" : "";
+      return '<div class="typed-res is-' + cls + '"><div class="tr-lab">Tu respuesta</div><div class="tr-line"><span class="tr-ans">' + (t.text ? esc(t.text) : "—") + "</span>" +
+        (mark ? '<span class="tr-mark">' + mark + "</span>" : "") +
+        (t.skipped ? '<span class="tr-time">sin respuesta</span>' : t.secs !== null && t.secs !== undefined ? '<span class="tr-time">' + fmtSecs(t.secs) + "</span>" : "") + "</div>" +
+        fix + (t.html ? '<div class="typed-diff">Debería ser: ' + t.html + "</div>" : "") + "</div>";
     }
     // Valoración de lo que se escribe: fallo o sin respuesta → Otra vez · casi (acento, mayúscula, artículo, forma…) → Difícil · acierto: según el
     // tiempo, en relación con lo que hay que escribir (segundos = base + por carácter): rápido → Fácil, normal → Bien, muy lento → Difícil.
@@ -7872,18 +7918,29 @@
     });
     var TYPED_NAME = { Again: "Otra vez", Hard: "Difícil", Good: "Bien", Easy: "Fácil" };
     function typedWhy(t) {
+      if (t.manual) return "Valoración cambiada a mano";
       if (t.skipped) return "Sin respuesta";
       if (t.v === "bad") return "No coincide";
-      if (t.v === "near") return "Casi: con algún fallo";
+      if (t.v === "near") return "Casi";
       return t.rating === "Easy" ? "Correcto y rápido" : t.rating === "Good" ? "Correcto" : "Correcto, pero lento";
     }
-    function typedAutoHtml(t) { // la valoración que se ha dado sola, y seguir (o cambiarla)
-      var done = t.auto === "done";
-      return '<div class="typed-auto"><div class="ta-top"><span class="ta-badge ta-' + t.rating.toLowerCase() + '">' + TYPED_NAME[t.rating] + '</span><span class="ta-why">' + typedWhy(t) + "</span></div>" +
-        '<div class="ta-btns"><button class="btn btn-primary" id="typedNext"' + (done ? "" : " disabled") + ">Siguiente</button>" +
-        (done ? '<button class="link-btn" id="typedChange" title="Deshace esta valoración para elegirla tú (Z)">Cambiar valoración</button>' : "") + "</div></div>";
-    }
     function typedNext() { if (S.typed && S.typed.auto === "done") { pickNext(); render(); } }
+    // cambiar la nota que se dio sola: se deshace el repaso y se guarda con la nueva (sin salir de la tarjeta)
+    async function typedRerate(name) {
+      var t = S.typed;
+      if (rateBusy || !t || t.auto !== "done" || t.rating === name || !TYPED_NAME[name]) return;
+      var u = S.undo[S.undo.length - 1];
+      if (!u || u.key !== t.key || u.code !== S.lang) return;
+      await undoLast(true);
+      if (!S.typed || S.typed.key !== t.key || S.typed.auto !== "undone" || !S.current || S.current.key !== t.key) return; // no se pudo deshacer
+      rateBusy = true;
+      var ok = false;
+      try { ok = await rate(t.key, name); } finally { rateBusy = false; }
+      if (!S.typed || S.typed.key !== t.key) return;
+      if (ok) { S.typed.rating = name; S.typed.manual = true; }
+      S.typed.auto = ok ? "done" : "fail"; S.typed.doneAt = Date.now();
+      render();
+    }
     async function checkTyped(skip) {
       if (!S.current || S.flipped) return;
       var inp = document.getElementById("typedIn"), e = findEntry(S.current.entry.id) || S.current.entry, key = S.current.key, txt = "";
@@ -7895,6 +7952,7 @@
       }
       S.typed.key = key; S.typed.secs = typedElapsed();
       S.typed.rating = typedRating(S.typed, S.typed.secs, tidy(txt).length);
+      S.typed.preview = schedPreview(getCard(key)); // lo que supondría cada nota, calculado antes de valorar
       if (!S.autoRate) { flipCard(); return; } // valoración a mano: solo se sugiere
       if (rateBusy) return;
       rateBusy = true; S.typed.auto = "wait"; S.flipped = true; render();
@@ -9136,10 +9194,25 @@
       return '<select id="' + id + '" class="in sel-sm" aria-label="Límite diario de ' + what + ' nuevas">' +
         vals.map(function (n) { return '<option value="' + n + '"' + (cur === n ? " selected" : "") + ">" + (n ? n : "Sin límite") + "</option>"; }).join("") + "</select>";
     }
-    function limitsHtml() {
-      return '<div class="newlim"><span class="newlim-t">Nuevas al día:</span>' +
-        '<label class="newlim-i" for="newWords">Palabras</label>' + limitSelect("newWords", S.newWords, "palabras") +
-        '<label class="newlim-i" for="newSents">Frases</label>' + limitSelect("newSents", S.newSents, "frases") + "</div>";
+    function studyGear() {
+      return '<button type="button" class="gear" id="studyGear" aria-label="Ajustes de estudio" aria-expanded="' + (S.studySet ? "true" : "false") + '" title="Ajustes de estudio">' + ICON_GEAR + "</button>";
+    }
+    function studySetHtml() { // todas las opciones de estudio: nuevas al día, meta diaria y los modos
+      var hasVoice = !!ttsVoice(S.lang);
+      return '<div class="study-set" id="studySet">' +
+        '<div class="ss-row"><span class="ss-t">Nuevas al día</span><div class="ss-fields"><span class="ss-pair"><label for="newWords">Palabras</label>' + limitSelect("newWords", S.newWords, "palabras") +
+        '</span><span class="ss-pair"><label for="newSents">Frases</label>' + limitSelect("newSents", S.newSents, "frases") + "</span></div></div>" +
+        '<div class="ss-row"><label class="ss-t" for="goalSel">Meta diaria</label><div class="ss-fields">' + goalSelect() + '<span class="ss-u">repasos, sumando todos los idiomas</span></div></div>' +
+        '<p class="ss-note">Las palabras y las frases nuevas se introducen poco a poco (el día empieza a las 4:00); los repasos que toquen salen siempre.</p>' +
+        '<div class="ss-sw">' +
+        switchBtn("revSw", S.revOn, "Practicar también del idioma al español (tarjeta inversa)") +
+        switchBtn("typeSw", S.typeOn, "Escribir la respuesta en Palabras, en vez de mostrarla") +
+        switchBtn("autoRateSw", S.autoRate, "Valorar sola la respuesta escrita (según acierto, acentos y tiempo)") +
+        switchBtn("clozeSw", S.clozeOn, "Practicar también frases con hueco (escribir la palabra que falta)") +
+        (hasVoice ? switchBtn("dictSw", S.dictOn, "Practicar también dictado de frases (escuchar y escribir)") + switchBtn("autoSpeakSw", S.autoSpeak, "Pronunciar al mostrar la respuesta") : "") +
+        "</div>" +
+        (hasVoice ? "" : '<p class="ss-note">Este navegador no tiene una voz con acento europeo para ' + langName() + ', así que no hay botones de pronunciación ni dictado (ver «Voces» en Actividad).</p>') +
+        "</div>";
     }
     function renderEstudiar() {
       if (!modeEnabled(S.mode)) S.mode = "word";
@@ -9147,14 +9220,14 @@
       var canUndo = S.undo.length && S.undo[S.undo.length - 1].code === S.lang;
       var npaused = S.deck.filter(function (e) { return e.paused; }).length;
       var segs = MODES.filter(function (m) { return modeEnabled(m); }).map(function (m) { return [m, MODE_LABEL[m]]; });
-      var header = '<div class="seg">' + segs.map(function (g) {
+      var header = '<div class="study-bar"><div class="seg">' + segs.map(function (g) {
           return '<button class="seg-btn ' + (mode === g[0] ? "is-active" : "") + '" data-mode="' + g[0] + '">' + g[1] + "</button>";
-        }).join("") + "</div>" +
+        }).join("") + "</div>" + studyGear() + "</div>" +
         '<div class="stats"><span class="stat"><b>' + q.reviews.length + '</b> por repasar</span>' +
         '<span class="stat stat-muted"><b>' + q.news.length + "</b> " + (q.news.length === 1 ? "nueva" : "nuevas") + (capFor(mode) ? " hoy" : "") + "</span>" +
         (q.waiting ? '<span class="stat stat-muted">' + q.waiting + " en espera</span>" : "") +
         (npaused ? '<span class="stat stat-muted">' + npaused + (npaused === 1 ? " pausada" : " pausadas") + "</span>" : "") +
-        (canUndo ? '<button class="link-btn undo-btn" id="undoBtn" title="Deshacer el último repaso (Z)">↶ Deshacer</button>' : "") + "</div>" + limitsHtml();
+        (canUndo ? '<button class="link-btn undo-btn" id="undoBtn" title="Deshacer el último repaso (Z)">↶ Deshacer</button>' : "") + "</div>" + (S.studySet ? studySetHtml() : "");
       var body;
       if (!q.all.length) {
         body = '<div class="empty">' + (mode === "sentence" || mode === "dict"
@@ -9229,15 +9302,16 @@
           inner += '<div class="leech-note">Esta entrada te ha fallado <b>' + lap + '</b> veces. Quizá ayude cambiarla (otra traducción o una frase de ejemplo) o pausarla un tiempo. ' +
             '<button class="link-btn" data-pause="card">Pausarla</button> · <button class="link-btn" data-edit="' + esc(e.id) + '">Editarla</button></div>';
         }
-        var preview = schedPreview(getCard(S.current.key));
+        var auto = !!(typing && S.typed && (S.typed.auto === "wait" || S.typed.auto === "done"));
+        var preview = auto && S.typed.preview ? S.typed.preview : schedPreview(getCard(S.current.key));
         function iv(r) { return fmtCard(preview[r]); }
-        var sug = typing && S.typed ? S.typed.rating || "" : "";
-        function sg(r) { return sug === r ? " suggested" : ""; }
-        inner += (typing && S.typed && (S.typed.auto === "wait" || S.typed.auto === "done")) ? typedAutoHtml(S.typed) : '<div class="rate">' +
-          '<button class="r r-again' + sg("Again") + '" data-rate="Again"><span>Otra vez</span><em>' + iv("Again") + "</em></button>" +
-          '<button class="r r-hard' + sg("Hard") + '" data-rate="Hard"><span>Difícil</span><em>' + iv("Hard") + "</em></button>" +
-          '<button class="r r-good' + sg("Good") + '" data-rate="Good"><span>Bien</span><em>' + iv("Good") + "</em></button>" +
-          '<button class="r r-easy' + sg("Easy") + '" data-rate="Easy"><span>Fácil</span><em>' + iv("Easy") + "</em></button></div>";
+        var sug = typing && S.typed && !auto ? S.typed.rating || "" : "";
+        function sg(r) { return auto ? (S.typed.rating === r ? " is-sel" : " is-dim") : (sug === r ? " suggested" : ""); }
+        function ra(r) { return auto ? ' data-rerate="' + r + '" title="' + (S.typed.rating === r ? "Valoración dada" : "Cambiar a «" + TYPED_NAME[r] + "»") + '"' + (S.typed.auto === "wait" ? " disabled" : "") : ' data-rate="' + r + '"'; }
+        inner += '<div class="rate">' + ["Again", "Hard", "Good", "Easy"].map(function (r) {
+          return '<button class="r r-' + r.toLowerCase() + sg(r) + '"' + ra(r) + "><span>" + TYPED_NAME[r] + "</span><em>" + iv(r) + "</em></button>";
+        }).join("") + "</div>";
+        if (auto) inner += '<div class="typed-cap">' + typedWhy(S.typed) + '</div><button class="btn btn-primary typed-next" id="typedNext"' + (S.typed.auto === "done" ? "" : " disabled") + ">Siguiente</button>";
       }
       return '<div class="karte ' + (S.flipped ? "is-flipped" : "") + '">' + inner + "</div>";
     }
@@ -9278,19 +9352,8 @@
         card("Repasos hoy", fc[0], "pendientes de repasar") + "</div>" +
         '<div class="act-label" style="margin:22px 0 4px">Próximos 7 días</div><div class="fc">' + bars + "</div></section>";
     }
-    function studyPanel() {
-      var hasVoice = !!ttsVoice(S.lang);
-      return '<section class="panel"><h2 class="panel-title">Estudio</h2>' +
-        '<p class="act-sub" style="margin-top:0">Las palabras y las frases nuevas se introducen poco a poco: el límite diario de cada una se elige en la pestaña Estudiar (el día empieza a las 4:00). Los repasos que toquen salen siempre.</p>' +
-        '<div class="sw-row">' + switchBtn("revSw", S.revOn, "Practicar también del idioma al español (tarjeta inversa)") + "</div>" +
-        '<div class="sw-row">' + switchBtn("typeSw", S.typeOn, "Escribir la respuesta en Palabras, en vez de mostrarla") + "</div>" +
-        '<div class="sw-row">' + switchBtn("autoRateSw", S.autoRate, "Valorar sola la respuesta escrita (según acierto, acentos y tiempo)") + "</div>" +
-        '<div class="sw-row">' + switchBtn("clozeSw", S.clozeOn, "Practicar también frases con hueco (escribir la palabra que falta)") + "</div>" +
-        (hasVoice ? '<div class="sw-row">' + switchBtn("dictSw", S.dictOn, "Practicar también dictado de frases (escuchar y escribir)") + "</div>"
-          : "") +
-        (hasVoice ? '<div class="sw-row">' + switchBtn("autoSpeakSw", S.autoSpeak, "Pronunciar al mostrar la respuesta") + "</div>"
-          : '<p class="act-sub" style="margin:14px 0 0">Este navegador no tiene una voz con acento europeo para ' + langName() + ', así que no hay botones de pronunciación (ver «Voces» más abajo).</p>') +
-        voicesHtml() + "</section>";
+    function studyPanel() { // los ajustes de estudio están en Estudiar (engranaje); aquí solo las voces
+      return '<section class="panel"><h2 class="panel-title">Voces</h2>' + voicesHtml() + "</section>";
     }
     // qué voz se usa en cada idioma: solo con acento europeo (francés de Francia, portugués de Portugal, inglés británico…)
     function voicesHtml() {
@@ -9306,8 +9369,7 @@
         }
         return '<li class="' + cls + (l.code === S.lang ? " cur" : "") + '"><span class="vk">' + (inf.v ? (inf.eu ? "✓" : "⚠") : "✗") + "</span>" + flag(l.code) + '<span class="vg">' + esc(l.name) + "</span>" + txt + "</li>";
       }).join("");
-      return '<h3 class="act-label" style="margin:22px 0 4px">Voces</h3>' +
-        '<p class="act-sub" style="margin:0">El audio solo usa voces con acento <b>europeo</b> (francés de Francia y no de Canadá, portugués de Portugal y no de Brasil, inglés británico y no americano…). Las voces son las de tu navegador y tu sistema.</p>' +
+      return '<p class="act-sub" style="margin:0">El audio solo usa voces con acento <b>europeo</b> (francés de Francia y no de Canadá, portugués de Portugal y no de Brasil, inglés británico y no americano…). Las voces son las de tu navegador y tu sistema.</p>' +
         '<ul class="voice-list">' + rows + "</ul>" +
         (missing ? '<p class="act-sub" style="margin:8px 0 0">Para tener una voz que falta, instálala en los ajustes de voz del sistema (Windows: Configuración › Hora e idioma › Voz › Agregar voces, p. ej. «Portugués (Portugal)»; Mac: Ajustes del Sistema › Accesibilidad › Contenido leído › Voz del sistema › Gestionar voces; iPad o iPhone: Ajustes › Accesibilidad › Contenido leído › Voces). En Windows, Chrome suele traer solo algunas variantes y Microsoft Edge trae más voces.</p>' : "") +
         '<div class="sw-row">' + switchBtn("anyVoiceSw", S.anyVoice, "Si no hay voz europea, usar la que haya (puede tener acento de Brasil, EE. UU., Canadá…)") + "</div>";
@@ -9588,7 +9650,9 @@
       if (t.closest("#typedCheck")) { checkTyped(false); return; }
       if (t.closest("#typedSkip")) { checkTyped(true); return; }
       if (t.closest("#typedNext")) { typedNext(); return; }
-      if (t.closest("#typedChange")) { undoLast(); return; }
+      var rrt = t.closest("[data-rerate]");
+      if (rrt) { typedRerate(rrt.getAttribute("data-rerate")); return; }
+      if (t.closest("#studyGear")) { S.studySet = !S.studySet; render(); var gb = document.getElementById("studyGear"); if (gb) gb.focus(); return; }
       if (t.closest("#clozeSw")) { S.clozeOn = !S.clozeOn; lsSet(K_CLOZE, S.clozeOn ? "1" : "0"); if (!S.clozeOn && S.mode === "cloze") { S.mode = "word"; S.current = null; } render(); return; }
       if (t.closest("#dictSw")) { S.dictOn = !S.dictOn; lsSet(K_DICT, S.dictOn ? "1" : "0"); if (!S.dictOn && S.mode === "dict") { S.mode = "word"; S.current = null; } render(); return; }
       if (t.closest("#autoRateSw")) { S.autoRate = !S.autoRate; lsSet(K_AUTORATE, S.autoRate ? "1" : "0"); render(); return; }
@@ -9650,14 +9714,18 @@
       if (ev.key === "Enter" && ev.target && /^(esSent|deSent)$/.test(ev.target.id)) { ev.preventDefault(); return; }
       if (ev.key === "Escape") { closeGenderMenu(); closeInfo(); }
       if (S.confirmDelete) { if (ev.key === "Escape") { S.confirmDelete = null; render(); } return; }
+      if (ev.key === "Escape" && S.studySet && S.lang && S.tab === "estudiar") { S.studySet = false; render(); return; }
       if (S.lang && S.tab === "estudiar" && (ev.key === "z" || ev.key === "Z") && !ev.altKey && !(ev.target && /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName))) { ev.preventDefault(); undoLast(); return; }
       if (ev.key === "Enter" && ev.target && ev.target.id === "typedIn") { ev.preventDefault(); checkTyped(false); return; }
       if (!S.lang || S.tab !== "estudiar" || !S.current) return;
       if (ev.target && /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)) return;
       if (ev.ctrlKey || ev.metaKey || ev.altKey) return; // son atajos del navegador (Cmd+0 zoom, Cmd+1…3 pestañas, Cmd+L barra de direcciones…), no del repaso
       if ((ev.key === "p" || ev.key === "P") && !ev.ctrlKey && !ev.metaKey && !ev.altKey && (S.flipped || S.mode === "rev" || S.mode === "dict")) { speak(cardTarget(findEntry(S.current.entry.id) || S.current.entry, S.mode)); return; }
-      if (S.flipped && S.typed && (S.typed.auto === "wait" || S.typed.auto === "done")) { // valorada sola: Intro, espacio o → pasan a la siguiente
-        if ((ev.key === "Enter" || ev.key === " " || ev.key === "ArrowRight") && !ev.repeat && S.typed.auto === "done" && Date.now() - S.typed.doneAt > 300) { ev.preventDefault(); typedNext(); }
+      if (S.flipped && S.typed && (S.typed.auto === "wait" || S.typed.auto === "done")) { // valorada sola: Intro, espacio o → pasan a la siguiente; J K L Ñ (o 0-3) cambian la nota
+        if (S.typed.auto !== "done" || ev.repeat) return;
+        if ((ev.key === "Enter" || ev.key === " " || ev.key === "ArrowRight") && Date.now() - S.typed.doneAt > 300) { ev.preventDefault(); typedNext(); return; }
+        var rkm = { "j": "Again", "0": "Again", "k": "Hard", "1": "Hard", "l": "Good", "2": "Good", "ñ": "Easy", "3": "Easy" }, rk = rkm[ev.key.length === 1 ? ev.key.toLowerCase() : ev.key];
+        if (rk) { ev.preventDefault(); typedRerate(rk); }
         return;
       }
       if (!S.flipped) {
